@@ -46,6 +46,7 @@ coverage/
 
 # PHPUnit
 .phpunit.result.cache
+.phpunit.cache/*
 /coverage
 /coverage.xml
 

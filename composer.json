@@ -1,0 +1,85 @@
+{
+    "name": "jerthedev/admin-panel",
+    "description": "A modern Laravel admin panel package with Nova-like features and Vue.js SPA architecture",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jeremy Fall",
+            "email": "jerthedev@gmail.com",
+            "homepage": "https://jerthedev.com",
+            "role": "Developer"
+        }
+    ],
+    "homepage": "https://github.com/jerthedev/admin-panel",
+    "readme": "README.md",
+    "support": {
+        "issues": "https://github.com/jerthedev/admin-panel/issues",
+        "source": "https://github.com/jerthedev/admin-panel"
+    },
+    "keywords": [
+        "laravel",
+        "admin",
+        "panel",
+        "vue",
+        "spa",
+        "inertia",
+        "nova",
+        "crud",
+        "dashboard"
+    ],
+    "require": {
+        "php": "^8.1",
+        "inertiajs/inertia-laravel": "^1.0",
+        "laravel/framework": "^10.0|^11.0|^12.0",
+        "spatie/image": "^3.0",
+        "spatie/laravel-medialibrary": "^11.0",
+        "tightenco/ziggy": "^2.5"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0",
+        "phpunit/phpunit": "^10.0",
+        "mockery/mockery": "^1.4.4",
+        "nunomaduro/collision": "^7.0|^8.0",
+        "phpstan/phpstan": "^1.10",
+        "laravel/pint": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "JTD\\AdminPanel\\": "src/"
+        },
+        "files": [
+            "src/Support/helpers.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "JTD\\AdminPanel\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "JTD\\AdminPanel\\AdminPanelServiceProvider"
+            ],
+            "aliases": {
+                "AdminPanel": "JTD\\AdminPanel\\Support\\AdminPanel"
+            }
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
+        "analyse": "vendor/bin/phpstan analyse",
+        "format": "vendor/bin/pint",
+        "format-test": "vendor/bin/pint --test"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

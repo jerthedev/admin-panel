@@ -1,0 +1,101 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Illuminate\Http\Request;
+use JTD\AdminPanel\Fields\Boolean;
+use JTD\AdminPanel\Fields\Date;
+use JTD\AdminPanel\Fields\Email;
+use JTD\AdminPanel\Fields\Number;
+use JTD\AdminPanel\Fields\Text;
+use JTD\AdminPanel\Resources\Resource;
+use {{ modelClass }};
+
+/**
+ * {{ class }}
+ * 
+ * Admin panel resource for managing {{ model }} records.
+ * 
+ * @package {{ namespace }}
+ */
+class {{ class }} extends Resource
+{
+    /**
+     * The model the resource corresponds to.
+     */
+    public static string $model = {{ modelClass }}::class;
+
+    /**
+     * The single value that should be used to represent the resource when being displayed.
+     */
+    public static string $title = 'id';
+
+    /**
+     * The columns that should be searched.
+     */
+    public static array $search = [
+        'id',
+    ];
+
+    /**
+     * Get the fields displayed by the resource.
+     */
+    public function fields(Request $request): array
+    {
+        return [
+            Number::make('ID')
+                ->sortable()
+                ->onlyOnIndex(),
+
+            Text::make('Name')
+                ->sortable()
+                ->rules('required', 'max:255'),
+
+            Email::make('Email')
+                ->sortable()
+                ->rules('required', 'email', 'max:255'),
+
+            Date::make('Created At')
+                ->onlyOnIndex()
+                ->sortable(),
+
+            Date::make('Updated At')
+                ->onlyOnIndex()
+                ->sortable(),
+        ];
+    }
+
+    /**
+     * Get the cards available for the request.
+     */
+    public function cards(Request $request): array
+    {
+        return [];
+    }
+
+    /**
+     * Get the filters available for the resource.
+     */
+    public function filters(Request $request): array
+    {
+        return [];
+    }
+
+    /**
+     * Get the lenses available for the resource.
+     */
+    public function lenses(Request $request): array
+    {
+        return [];
+    }
+
+    /**
+     * Get the actions available for the resource.
+     */
+    public function actions(Request $request): array
+    {
+        return [];
+    }
+}

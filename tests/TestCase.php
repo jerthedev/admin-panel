@@ -1,0 +1,199 @@
+<?php
+
+declare(strict_types=1);
+
+namespace JTD\AdminPanel\Tests;
+
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
+use Inertia\Testing\AssertableInertia;
+use Inertia\ServiceProvider as InertiaServiceProvider;
+use JTD\AdminPanel\AdminPanelServiceProvider;
+use JTD\AdminPanel\Tests\Fixtures\User;
+use Orchestra\Testbench\TestCase as Orchestra;
+
+/**
+ * Base Test Case
+ *
+ * Base test case for all admin panel tests providing common
+ * setup, utilities, and helper methods.
+ *
+ * @author Jeremy Fall <jerthedev@gmail.com>
+ */
+abstract class TestCase extends Orchestra
+{
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Factory::guessFactoryNamesUsing(
+            fn (string $modelName) => 'JTD\\AdminPanel\\Tests\\Factories\\' . class_basename($modelName) . 'Factory'
+        );
+
+        $this->setUpDatabase();
+    }
+
+    protected function getPackageProviders($app): array
+    {
+        return [
+            InertiaServiceProvider::class,
+            AdminPanelServiceProvider::class,
+        ];
+    }
+
+    public function getEnvironmentSetUp($app): void
+    {
+        config()->set('app.key', 'base64:'.base64_encode(random_bytes(32)));
+
+        config()->set('database.default', 'testing');
+        config()->set('database.connections.testing', [
+            'driver' => 'sqlite',
+            'database' => ':memory:',
+            'prefix' => '',
+        ]);
+
+        // Configure admin panel
+        config()->set('admin-panel.auth.guard', 'web');
+        config()->set('admin-panel.auth.user_model', User::class);
+        config()->set('admin-panel.path', 'admin');
+        config()->set('admin-panel.middleware', ['web']);
+
+        // Configure authentication
+        config()->set('auth.defaults.guard', 'web');
+        config()->set('auth.guards.web', [
+            'driver' => 'session',
+            'provider' => 'users',
+        ]);
+        config()->set('auth.providers.users', [
+            'driver' => 'eloquent',
+            'model' => User::class,
+        ]);
+    }
+
+    protected function setUpDatabase(): void
+    {
+        Schema::create('users', function ($table) {
+            $table->id();
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->boolean('is_admin')->default(false);
+            $table->boolean('is_active')->default(true);
+            $table->rememberToken();
+            $table->timestamps();
+        });
+
+        Schema::create('posts', function ($table) {
+            $table->id();
+            $table->string('title');
+            $table->text('content');
+            $table->string('status')->default('draft');
+            $table->boolean('is_published')->default(false);
+            $table->boolean('is_featured')->default(false);
+            $table->foreignId('user_id')->constrained();
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        Schema::create('categories', function ($table) {
+            $table->id();
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->text('description')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+    }
+
+    protected function createAdminUser(array $attributes = []): User
+    {
+        return User::factory()->admin()->create($attributes);
+    }
+
+    protected function createUser(array $attributes = []): User
+    {
+        return User::factory()->create($attributes);
+    }
+
+    protected function actingAsAdmin(array $attributes = []): static
+    {
+        $admin = $this->createAdminUser($attributes);
+        $this->actingAs($admin);
+
+        return $this;
+    }
+
+    protected function actingAsUser(array $attributes = []): static
+    {
+        $user = $this->createUser($attributes);
+        $this->actingAs($user);
+
+        return $this;
+    }
+
+    protected function assertDatabaseHasModel($model): static
+    {
+        $this->assertDatabaseHas($model->getTable(), [
+            $model->getKeyName() => $model->getKey(),
+        ]);
+
+        return $this;
+    }
+
+    protected function assertDatabaseMissingModel($model): static
+    {
+        $this->assertDatabaseMissing($model->getTable(), [
+            $model->getKeyName() => $model->getKey(),
+        ]);
+
+        return $this;
+    }
+
+    protected function assertRedirectToLogin(): static
+    {
+        $this->assertRedirect(route('admin-panel.login'));
+
+        return $this;
+    }
+
+    protected function assertRedirectToDashboard(): static
+    {
+        $this->assertRedirect(route('admin-panel.dashboard'));
+
+        return $this;
+    }
+
+    protected function assertInertiaComponent(string $component): static
+    {
+        $this->assertInertia(fn (AssertableInertia $page) => $page->component($component));
+
+        return $this;
+    }
+
+    protected function assertInertiaHas(string $key): static
+    {
+        $this->assertInertia(fn (AssertableInertia $page) => $page->has($key));
+
+        return $this;
+    }
+
+    protected function assertInertiaCount(string $key, int $count): static
+    {
+        $this->assertInertia(fn (AssertableInertia $page) => $page->count($key, $count));
+
+        return $this;
+    }
+
+    protected function assertStringContains(string $needle, string $haystack, string $message = ''): void
+    {
+        $this->assertThat(
+            $haystack,
+            $this->stringContains($needle),
+            $message
+        );
+    }
+}

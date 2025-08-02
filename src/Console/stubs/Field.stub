@@ -1,0 +1,65 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Illuminate\Http\Request;
+use JTD\AdminPanel\Fields\Field;
+
+/**
+ * {{ class }} Field
+ *
+ * Custom field for the admin panel.
+ *
+ * @package {{ namespace }}
+ */
+class {{ class }} extends Field
+{
+    /**
+     * The field's component.
+     */
+    public string $component = '{{ class }}Field';
+
+    /**
+     * Create a new field instance.
+     */
+    public function __construct(string $name, ?string $attribute = null, ?callable $resolveCallback = null)
+    {
+        parent::__construct($name, $attribute, $resolveCallback);
+    }
+
+    /**
+     * Resolve the field's value.
+     */
+    public function resolve($resource, ?string $attribute = null): mixed
+    {
+        $attribute = $attribute ?? $this->attribute;
+
+        if ($this->resolveCallback) {
+            return call_user_func($this->resolveCallback, $resource, $attribute);
+        }
+
+        return data_get($resource, $attribute);
+    }
+
+    /**
+     * Hydrate the given attribute on the model based on the incoming request.
+     */
+    public function fill(Request $request, $model): void
+    {
+        if ($request->exists($this->attribute)) {
+            $model->{$this->attribute} = $request->input($this->attribute);
+        }
+    }
+
+    /**
+     * Get additional meta information to merge with the field payload.
+     */
+    public function meta(): array
+    {
+        return array_merge(parent::meta(), [
+            // Add custom meta data here
+        ]);
+    }
+}

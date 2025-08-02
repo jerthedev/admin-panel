@@ -1,0 +1,13 @@
+parameters:
+    level: 8
+    paths:
+        - src
+    excludePaths:
+        - src/Console/stubs
+    ignoreErrors:
+        - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Builder::.*#'
+        - '#Call to an undefined method Illuminate\\Database\\Query\\Builder::.*#'
+        - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model::\$.*#'
+    checkMissingIterableValueType: false
+    checkGenericClassInNonGenericObjectType: false
+    reportUnmatchedIgnoredErrors: false

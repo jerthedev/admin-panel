@@ -1,0 +1,230 @@
+/**
+ * Admin Panel Styles - Tailwind v4 Compatible
+ *
+ * Main stylesheet for the JTD AdminPanel with Tailwind CSS v4 integration.
+ * Uses the new @theme directive for configuration.
+ *
+ * @author Jeremy Fall <jerthedev@gmail.com>
+ * @version 1.0.0 - Tailwind v4 Compatible
+ */
+
+/* Import Tailwind CSS v4 */
+@import "tailwindcss";
+
+/* Tailwind v4 Theme Configuration */
+@theme {
+    --font-family-sans: Figtree, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+    --color-admin-primary-50: #eff6ff;
+    --color-admin-primary-100: #dbeafe;
+    --color-admin-primary-200: #bfdbfe;
+    --color-admin-primary-300: #93c5fd;
+    --color-admin-primary-400: #60a5fa;
+    --color-admin-primary-500: #3b82f6;
+    --color-admin-primary-600: #2563eb;
+    --color-admin-primary-700: #1d4ed8;
+    --color-admin-primary-800: #1e40af;
+    --color-admin-primary-900: #1e3a8a;
+
+    --color-admin-secondary-50: #f9fafb;
+    --color-admin-secondary-100: #f3f4f6;
+    --color-admin-secondary-200: #e5e7eb;
+    --color-admin-secondary-300: #d1d5db;
+    --color-admin-secondary-400: #9ca3af;
+    --color-admin-secondary-500: #6b7280;
+    --color-admin-secondary-600: #4b5563;
+    --color-admin-secondary-700: #374151;
+    --color-admin-secondary-800: #1f2937;
+    --color-admin-secondary-900: #111827;
+
+    --spacing-18: 4.5rem;
+    --spacing-88: 22rem;
+    --spacing-128: 32rem;
+
+    --z-index-60: 60;
+    --z-index-70: 70;
+    --z-index-80: 80;
+    --z-index-90: 90;
+    --z-index-100: 100;
+}
+
+/* Admin Panel Base Styles */
+@layer base {
+    body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Loading state */
+    body.admin-loading {
+        cursor: wait;
+    }
+
+    body.admin-loading * {
+        pointer-events: none;
+    }
+}
+
+/* Admin Panel Components - Tailwind v4 Compatible */
+@layer components {
+    /* Card Components */
+    .admin-card {
+        @apply bg-white shadow-sm border border-gray-200 rounded-md p-6;
+    }
+
+    /* Input Components */
+    .admin-input {
+        @apply px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white;
+    }
+
+    .admin-input-dark {
+        @apply bg-gray-700 border-gray-600 text-white focus:ring-blue-400 focus:border-blue-400;
+    }
+
+    .admin-select {
+        @apply px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white;
+    }
+
+    .admin-textarea {
+        @apply px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white resize-y;
+    }
+
+    .admin-label {
+        @apply block text-sm font-medium text-gray-700;
+    }
+
+    .admin-label-dark {
+        @apply text-gray-300;
+    }
+
+    /* Button Components */
+    .admin-btn-primary {
+        @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+    }
+
+    .admin-btn-secondary {
+        @apply inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+    }
+
+    .admin-btn-outline {
+        @apply inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-transparent hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+    }
+
+    .admin-btn-danger {
+        @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500;
+    }
+
+    /* Navigation Components */
+    .admin-nav-item {
+        @apply flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200;
+    }
+
+    .admin-nav-item-active {
+        @apply bg-blue-100 text-blue-700 border-r-2 border-blue-500;
+    }
+
+    .admin-nav-item-active-dark {
+        @apply bg-blue-900 text-blue-200 border-r-2 border-blue-400;
+    }
+
+    .admin-nav-item-inactive {
+        @apply text-gray-600 hover:bg-gray-50 hover:text-gray-900;
+    }
+
+    .admin-nav-item-inactive-dark {
+        @apply text-gray-300 hover:bg-gray-700 hover:text-white;
+    }
+
+    /* Table Components */
+    .admin-table {
+        @apply min-w-full divide-y divide-gray-200;
+    }
+
+    .admin-table-header {
+        @apply bg-gray-50;
+    }
+
+    .admin-table-header-dark {
+        @apply bg-gray-800;
+    }
+
+    .admin-table-cell {
+        @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+    }
+
+    .admin-table-cell-dark {
+        @apply text-gray-300;
+    }
+}
+
+/*
+ * Tailwind v4 Compatible CSS
+ *
+ * All component styling has been moved to utility classes in Vue templates.
+ * This approach is recommended by the Tailwind team for better performance
+ * and maintainability in Tailwind v4.
+ *
+ * For component styling, use utility classes directly in your Vue templates:
+ *
+ * Example:
+ * <div class="fixed left-0 top-0 h-full bg-white border-r border-gray-200 shadow-sm z-30">
+ *   <!-- Sidebar content -->
+ * </div>
+ *
+ * <main class="min-h-screen bg-gray-50">
+ *   <!-- Main content -->
+ * </main>
+ *
+ * <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+ *   <!-- Card content -->
+ * </div>
+ *
+ * <button class="inline-flex items-center px-4 py-2 border border-transparent rounded-md font-medium text-sm bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+ *   <!-- Button content -->
+ * </button>
+ */
+
+/* Admin Panel Utilities - Pure CSS without @apply */
+@layer utilities {
+    .admin-shadow-soft {
+        box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+    }
+
+    .admin-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: rgb(156 163 175) transparent;
+    }
+
+    .admin-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .admin-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .admin-scrollbar::-webkit-scrollbar-thumb {
+        background-color: rgb(156 163 175);
+        border-radius: 3px;
+    }
+
+    .admin-scrollbar::-webkit-scrollbar-thumb:hover {
+        background-color: rgb(107 114 128);
+    }
+
+    /* Responsive sidebar utilities */
+    @media (max-width: 768px) {
+        .admin-sidebar-mobile {
+            transform: translateX(-100%);
+            transition: transform 300ms ease-in-out;
+        }
+
+        .admin-sidebar-mobile.open {
+            transform: translateX(0);
+        }
+
+        .admin-main-mobile {
+            margin-left: 0;
+        }
+    }
+}

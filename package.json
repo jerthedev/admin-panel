@@ -1,0 +1,58 @@
+{
+  "name": "@jerthedev/admin-panel",
+  "version": "1.0.0",
+  "description": "Laravel Admin Panel Package with Vue.js Frontend",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "watch": "vite build --watch",
+    "production": "vite build --mode production"
+  },
+  "keywords": [
+    "laravel",
+    "admin",
+    "panel",
+    "vue",
+    "inertia",
+    "tailwind"
+  ],
+  "author": "Jeremy Fall <jerthedev@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@headlessui/vue": "^1.7.16",
+    "@heroicons/vue": "^2.0.18",
+    "@inertiajs/vue3": "^1.0.14",
+    "@tailwindcss/vite": "^4.0.0",
+    "@vitejs/plugin-vue": "^4.5.2",
+    "autoprefixer": "^10.4.16",
+    "axios": "^1.6.2",
+    "laravel-vite-plugin": "^1.0.0",
+    "pinia": "^2.1.7",
+    "postcss": "^8.4.32",
+    "vite": "^5.0.0",
+    "vue": "^3.3.8"
+  },
+  "dependencies": {
+    "@vueuse/core": "^10.7.0",
+    "date-fns": "^2.30.0",
+    "lodash": "^4.17.21",
+    "ziggy-js": "^2.5.3"
+  },
+  "peerDependencies": {
+    "laravel-mix": "^6.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jerthedev/admin-panel.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jerthedev/admin-panel/issues"
+  },
+  "homepage": "https://github.com/jerthedev/admin-panel#readme"
+}

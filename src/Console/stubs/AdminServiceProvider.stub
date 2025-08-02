@@ -1,0 +1,69 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Illuminate\Support\ServiceProvider;
+use JTD\AdminPanel\Support\AdminPanel;
+
+/**
+ * Admin Service Provider
+ * 
+ * Register admin panel resources, pages, and configuration.
+ * 
+ * @package {{ namespace }}
+ */
+class {{ class }} extends ServiceProvider
+{
+    /**
+     * Register any application services.
+     */
+    public function register(): void
+    {
+        //
+    }
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        $this->registerResources();
+        $this->registerPages();
+        $this->registerMetrics();
+    }
+
+    /**
+     * Register admin panel resources.
+     */
+    protected function registerResources(): void
+    {
+        AdminPanel::resources([
+            // Register your resources here
+            // \App\Admin\Resources\UserResource::class,
+        ]);
+    }
+
+    /**
+     * Register custom admin pages.
+     */
+    protected function registerPages(): void
+    {
+        AdminPanel::pages([
+            // Register your custom pages here
+            // \App\Admin\Pages\AnalyticsPage::class,
+        ]);
+    }
+
+    /**
+     * Register dashboard metrics.
+     */
+    protected function registerMetrics(): void
+    {
+        AdminPanel::metrics([
+            // Register your dashboard metrics here
+            // \App\Admin\Metrics\UserCount::class,
+        ]);
+    }
+}

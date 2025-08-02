@@ -2,10 +2,10 @@
 
 A modern, feature-rich admin panel package for Laravel applications built with Vue.js and Inertia.js.
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/jerthedev/admin-panel.svg?style=flat-square)](https://packagist.org/packages/jerthedev/admin-panel)
-[![GitHub Tests Action Status](https://img.shields.io/github/workflow/status/jerthedev/admin-panel/run-tests?label=tests)](https://github.com/jerthedev/admin-panel/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/workflow/status/jerthedev/admin-panel/Check%20&%20fix%20styling?label=code%20style)](https://github.com/jerthedev/admin-panel/actions?query=workflow%3A"Check+%26+fix+styling"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/jerthedev/admin-panel.svg?style=flat-square)](https://packagist.org/packages/jerthedev/admin-panel)
+[![PHP Version](https://img.shields.io/badge/php-%5E8.1-blue?style=flat-square)](https://php.net)
+[![Laravel Version](https://img.shields.io/badge/laravel-%5E12.0-red?style=flat-square)](https://laravel.com)
+[![Vue.js](https://img.shields.io/badge/vue.js-3.x-green?style=flat-square)](https://vuejs.org)
+[![License](https://img.shields.io/badge/license-MIT-brightgreen?style=flat-square)](LICENSE.md)
 
 ## Features
 
@@ -34,7 +34,7 @@ A modern, feature-rich admin panel package for Laravel applications built with V
 ## Requirements
 
 - PHP 8.1+
-- Laravel 10.0+
+- Laravel 12.0+
 - Node.js 16+ (for frontend compilation)
 
 ## Installation

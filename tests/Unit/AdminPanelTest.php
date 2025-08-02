@@ -188,4 +188,38 @@ class AdminPanelTest extends TestCase
             'Pre-built assets should exist in public/build/assets directory'
         );
     }
+
+    /**
+     * Test that pages() method can be called statically
+     */
+    public function test_pages_method_can_be_called_statically(): void
+    {
+        $reflection = new \ReflectionMethod(AdminPanel::class, 'pages');
+
+        $this->assertTrue(
+            $reflection->isStatic(),
+            'AdminPanel::pages() should be a static method for AdminServiceProvider'
+        );
+
+        // Test static call works
+        AdminPanel::pages([]);
+        $this->assertTrue(true, 'Static call to pages() should work');
+    }
+
+    /**
+     * Test that metrics() method can be called statically
+     */
+    public function test_metrics_method_can_be_called_statically(): void
+    {
+        $reflection = new \ReflectionMethod(AdminPanel::class, 'metrics');
+
+        $this->assertTrue(
+            $reflection->isStatic(),
+            'AdminPanel::metrics() should be a static method for AdminServiceProvider'
+        );
+
+        // Test static call works
+        AdminPanel::metrics([]);
+        $this->assertTrue(true, 'Static call to metrics() should work');
+    }
 }

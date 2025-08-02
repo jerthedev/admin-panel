@@ -112,9 +112,18 @@ class AdminPanel
     }
 
     /**
-     * Register pages with the admin panel.
+     * Register pages with the admin panel (static version for AdminServiceProvider).
      */
-    public function pages(array $pages): static
+    public static function pages(array $pages): void
+    {
+        $instance = app(static::class);
+        $instance->registerPages($pages);
+    }
+
+    /**
+     * Register pages with the admin panel (instance version).
+     */
+    public function registerPages(array $pages): static
     {
         $this->pages = array_merge($this->pages, $pages);
 
@@ -140,9 +149,18 @@ class AdminPanel
     }
 
     /**
-     * Register dashboard metrics.
+     * Register dashboard metrics (static version for AdminServiceProvider).
      */
-    public function metrics(array $metrics): static
+    public static function metrics(array $metrics): void
+    {
+        $instance = app(static::class);
+        $instance->registerMetrics($metrics);
+    }
+
+    /**
+     * Register dashboard metrics (instance version).
+     */
+    public function registerMetrics(array $metrics): static
     {
         $this->metrics = array_merge($this->metrics, $metrics);
 

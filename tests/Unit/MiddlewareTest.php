@@ -135,7 +135,7 @@ class MiddlewareTest extends TestCase
         $this->assertTrue($result);
     }
 
-    public function test_admin_authenticate_default_authorization_returns_false_for_non_admin(): void
+    public function test_admin_authenticate_default_authorization_respects_config(): void
     {
         $auth = $this->app['auth'];
         $middleware = new AdminAuthenticate($auth);
@@ -151,7 +151,10 @@ class MiddlewareTest extends TestCase
 
         $result = $method->invoke($middleware, $user);
 
-        $this->assertFalse($result);
+        // Result should match the allow_all_authenticated configuration
+        $expectedResult = config('admin-panel.auth.allow_all_authenticated', true);
+        $this->assertEquals($expectedResult, $result,
+            'Authorization should respect allow_all_authenticated config setting');
     }
 
     public function test_admin_authenticate_with_custom_authorization_callback(): void

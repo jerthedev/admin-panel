@@ -41,7 +41,7 @@ class AuthenticationTest extends TestCase
         $this->assertAuthenticatedAs($admin);
     }
 
-    public function test_non_admin_user_cannot_login(): void
+    public function test_non_admin_user_login_respects_config(): void
     {
         $user = $this->createUser([
             'email' => 'user@example.com',
@@ -54,8 +54,15 @@ class AuthenticationTest extends TestCase
             'password' => 'password',
         ]);
 
-        $response->assertSessionHasErrors(['email']);
-        $this->assertGuest();
+        if ($this->nonAdminShouldHaveAccess()) {
+            // When allow_all_authenticated = true, non-admin users can login
+            $response->assertRedirect('/admin');
+            $this->assertAuthenticated();
+        } else {
+            // When allow_all_authenticated = false, non-admin users cannot login
+            $response->assertSessionHasErrors(['email']);
+            $this->assertGuest();
+        }
     }
 
     public function test_login_with_invalid_credentials(): void
@@ -138,14 +145,46 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect();
     }
 
-    public function test_authenticated_non_admin_user_cannot_access_dashboard(): void
+    public function test_authenticated_non_admin_user_access_respects_config(): void
     {
         $user = $this->createUser(['is_admin' => false]);
         $this->actingAs($user);
 
         $response = $this->get('/admin');
 
+        // Assert based on configuration
+        $this->assertNonAdminResponse($response);
+    }
+
+    public function test_strict_authorization_mode_blocks_non_admin_users(): void
+    {
+        // Temporarily set strict authorization
+        config(['admin-panel.auth.allow_all_authenticated' => false]);
+
+        $user = $this->createUser(['is_admin' => false]);
+        $this->actingAs($user);
+
+        $response = $this->get('/admin');
         $response->assertStatus(403);
+
+        // Test login is also blocked
+        $loginResponse = $this->post('/admin/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+        $loginResponse->assertSessionHasErrors(['email']);
+    }
+
+    public function test_permissive_authorization_mode_allows_authenticated_users(): void
+    {
+        // Explicitly set permissive authorization (Nova-like default)
+        config(['admin-panel.auth.allow_all_authenticated' => true]);
+
+        $user = $this->createUser(['is_admin' => false]);
+        $this->actingAs($user);
+
+        $response = $this->get('/admin');
+        $response->assertStatus(200);
     }
 
     public function test_profile_page_is_accessible_to_admin(): void

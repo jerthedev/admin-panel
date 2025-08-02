@@ -48,7 +48,8 @@ coverage/
 .phpunit.result.cache
 .phpunit.cache/*
 /coverage
-/coverage.xml
+/coverage-html
+/coverage.*
 
 # Temporary files
 *.tmp

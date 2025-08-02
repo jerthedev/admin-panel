@@ -196,4 +196,31 @@ abstract class TestCase extends Orchestra
             $message
         );
     }
+
+    /**
+     * Get expected status code for non-admin user access based on configuration.
+     */
+    protected function expectedNonAdminStatusCode(): int
+    {
+        // If allow_all_authenticated is true (Nova-like), non-admin users get access (200)
+        // If false, they should get 403 Forbidden
+        return config('admin-panel.auth.allow_all_authenticated', true) ? 200 : 403;
+    }
+
+    /**
+     * Check if non-admin users should have admin access based on configuration.
+     */
+    protected function nonAdminShouldHaveAccess(): bool
+    {
+        return config('admin-panel.auth.allow_all_authenticated', true);
+    }
+
+    /**
+     * Assert response status based on admin panel configuration.
+     */
+    protected function assertNonAdminResponse($response): void
+    {
+        $expectedStatus = $this->expectedNonAdminStatusCode();
+        $response->assertStatus($expectedStatus);
+    }
 }

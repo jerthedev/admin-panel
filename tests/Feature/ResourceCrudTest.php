@@ -206,14 +206,15 @@ class ResourceCrudTest extends TestCase
         $response->assertNotFound();
     }
 
-    public function test_unauthorized_user_cannot_access_resources(): void
+    public function test_non_admin_user_resource_access_respects_config(): void
     {
         $user = $this->createUser(['is_admin' => false]);
 
         $response = $this->actingAs($user)
             ->get('/admin/resources/users');
 
-        $response->assertStatus(403);
+        // Assert based on configuration
+        $this->assertNonAdminResponse($response);
     }
 
     public function test_guest_user_redirected_to_login(): void

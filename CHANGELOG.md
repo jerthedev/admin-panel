@@ -179,12 +179,23 @@ This is the first stable release of JTD Admin Panel - a modern, elegant admin pa
 - **Improved Build Process**: Clean 3-file builds with proper asset cleanup
 - **Fixed Asset Accumulation**: Rebuild command now properly removes old assets before publishing new ones
 
-#### Search Functionality Enhancement (2025-08-02)
+#### Field Method Enhancements (2025-08-02)
 - **Dual Searchable Support**: Resources now support both `$search` array and `searchable()` field methods
-- **Intelligent Reconciliation**: Automatically merges search columns from both approaches with duplicate removal
-- **Universal Field Support**: Added `searchable()` method to base Field class (available on all field types)
-- **Backward Compatibility**: Existing `$search` array usage continues to work unchanged
-- **Enhanced Testing**: Added comprehensive tests for both search approaches and their combination
+  - Added `searchable()` method to base Field class (available on all field types)
+  - Enhanced `Resource::searchableColumns()` to intelligently merge both approaches
+  - Automatic duplicate removal when both methods define same columns
+  - Backward compatibility with existing `$search` array usage
+- **Required Field Method**: Added convenient `required()` method to base Field class
+  - Cleaner syntax: `Text::make('Name')->required()` instead of `->rules('required')`
+  - Intelligent rule management: prevents duplicate 'required' rules
+  - Supports enabling/disabling: `->required(false)` removes required validation
+  - Available on all field types through inheritance
+- **Nova Compatibility Methods**: Added 5 critical display control methods for Nova compatibility
+  - `showOnIndex()`, `showOnDetail()`, `showOnCreating()`, `showOnUpdating()` - Positive display control
+  - `displayUsing()` - Format fields for display only (separate from resolveUsing)
+  - Enhanced developer experience with familiar Nova method names
+  - Maintains backward compatibility with existing hide* methods
+- **Enhanced Testing**: Added comprehensive tests for both search and required functionality
 
 ### 🔧 Fixed
 

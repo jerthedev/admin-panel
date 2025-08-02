@@ -276,4 +276,100 @@ class FieldTest extends TestCase
         $this->assertArrayHasKey('searchable', $json);
         $this->assertFalse($json['searchable']);
     }
+
+    public function test_field_can_be_made_required(): void
+    {
+        $field = Text::make('Name');
+        $field->required();
+
+        $this->assertContains('required', $field->rules);
+    }
+
+    public function test_required_method_adds_to_existing_rules(): void
+    {
+        $field = Text::make('Name');
+        $field->rules('max:255');
+        $field->required();
+
+        $this->assertContains('required', $field->rules);
+        $this->assertContains('max:255', $field->rules);
+    }
+
+    public function test_required_method_does_not_duplicate_rule(): void
+    {
+        $field = Text::make('Name');
+        $field->rules('required', 'max:255');
+        $field->required(); // Should not add duplicate
+
+        $requiredCount = count(array_filter($field->rules, fn($rule) => $rule === 'required'));
+        $this->assertEquals(1, $requiredCount, 'Should not duplicate required rule');
+    }
+
+    public function test_required_can_be_disabled(): void
+    {
+        $field = Text::make('Name');
+        $field->required();
+        $field->required(false);
+
+        $this->assertNotContains('required', $field->rules);
+    }
+
+    // Test the 5 critical Nova compatibility methods
+    public function test_show_on_index_method(): void
+    {
+        $field = Text::make('Name');
+        $field->showOnIndex();
+
+        $this->assertTrue($field->showOnIndex);
+    }
+
+    public function test_show_on_detail_method(): void
+    {
+        $field = Text::make('Name');
+        $field->showOnDetail();
+
+        $this->assertTrue($field->showOnDetail);
+    }
+
+    public function test_show_on_creating_method(): void
+    {
+        $field = Text::make('Name');
+        $field->showOnCreating();
+
+        $this->assertTrue($field->showOnCreation);
+    }
+
+    public function test_show_on_updating_method(): void
+    {
+        $field = Text::make('Name');
+        $field->showOnUpdating();
+
+        $this->assertTrue($field->showOnUpdate);
+    }
+
+    public function test_display_using_method(): void
+    {
+        $field = Text::make('Name');
+        $field->displayUsing(function ($value) {
+            return strtoupper($value);
+        });
+
+        $model = (object) ['name' => 'john doe'];
+        $value = $field->resolveValue($model);
+
+        $this->assertEquals('JOHN DOE', $value);
+    }
+
+    public function test_display_using_receives_resource_and_attribute(): void
+    {
+        $field = Text::make('Name');
+        $field->displayUsing(function ($value, $resource, $attribute) {
+            return "{$attribute}: {$value} (ID: {$resource->id})";
+        });
+
+        $model = (object) ['name' => 'john', 'id' => 123];
+        $value = $field->resolveValue($model);
+
+        $this->assertEquals('name: john (ID: 123)', $value);
+    }
 }

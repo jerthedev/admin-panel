@@ -49,6 +49,11 @@ abstract class Field
     public $fillCallback;
 
     /**
+     * The callback used to format the field for display.
+     */
+    public $displayCallback;
+
+    /**
      * The validation rules for the field.
      */
     public array $rules = [];
@@ -222,11 +227,31 @@ abstract class Field
     }
 
     /**
+     * Show the field on the index view.
+     */
+    public function showOnIndex(bool $show = true): static
+    {
+        $this->showOnIndex = $show;
+
+        return $this;
+    }
+
+    /**
      * Hide the field from the detail view.
      */
     public function hideFromDetail(bool $hide = true): static
     {
         $this->showOnDetail = ! $hide;
+
+        return $this;
+    }
+
+    /**
+     * Show the field on the detail view.
+     */
+    public function showOnDetail(bool $show = true): static
+    {
+        $this->showOnDetail = $show;
 
         return $this;
     }
@@ -242,11 +267,31 @@ abstract class Field
     }
 
     /**
+     * Show the field when creating.
+     */
+    public function showOnCreating(bool $show = true): static
+    {
+        $this->showOnCreation = $show;
+
+        return $this;
+    }
+
+    /**
      * Hide the field when updating.
      */
     public function hideWhenUpdating(bool $hide = true): static
     {
         $this->showOnUpdate = ! $hide;
+
+        return $this;
+    }
+
+    /**
+     * Show the field when updating.
+     */
+    public function showOnUpdating(bool $show = true): static
+    {
+        $this->showOnUpdate = $show;
 
         return $this;
     }
@@ -350,6 +395,16 @@ abstract class Field
     }
 
     /**
+     * Set the callback used to format the field for display only.
+     */
+    public function displayUsing(callable $callback): static
+    {
+        $this->displayCallback = $callback;
+
+        return $this;
+    }
+
+    /**
      * Determine if the field is authorized for the given request.
      */
     public function authorize(Request $request): bool
@@ -392,7 +447,14 @@ abstract class Field
     {
         $this->resolve($resource);
 
-        return $this->value ?? $this->default;
+        $value = $this->value ?? $this->default;
+
+        // Apply display callback if set (for display formatting only)
+        if ($this->displayCallback) {
+            $value = call_user_func($this->displayCallback, $value, $resource, $this->attribute);
+        }
+
+        return $value;
     }
 
     /**
@@ -435,6 +497,24 @@ abstract class Field
     public function searchable(bool $searchable = true): static
     {
         $this->searchable = $searchable;
+
+        return $this;
+    }
+
+    /**
+     * Make the field required.
+     */
+    public function required(bool $required = true): static
+    {
+        if ($required) {
+            // Add 'required' to rules if not already present
+            if (!in_array('required', $this->rules)) {
+                $this->rules[] = 'required';
+            }
+        } else {
+            // Remove 'required' from rules
+            $this->rules = array_filter($this->rules, fn($rule) => $rule !== 'required');
+        }
 
         return $this;
     }

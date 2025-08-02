@@ -119,6 +119,11 @@ abstract class Field
     public bool $readonly = false;
 
     /**
+     * Whether the field is searchable.
+     */
+    public bool $searchable = false;
+
+    /**
      * Create a new field instance.
      */
     public function __construct(string $name, ?string $attribute = null, ?callable $resolveCallback = null)
@@ -425,6 +430,16 @@ abstract class Field
     }
 
     /**
+     * Make the field searchable.
+     */
+    public function searchable(bool $searchable = true): static
+    {
+        $this->searchable = $searchable;
+
+        return $this;
+    }
+
+    /**
      * Prepare the field for JSON serialization.
      */
     public function jsonSerialize(): array
@@ -435,6 +450,7 @@ abstract class Field
             'attribute' => $this->attribute,
             'value' => $this->value,
             'sortable' => $this->sortable,
+            'searchable' => $this->searchable,
             'nullable' => $this->nullable,
             'readonly' => $this->readonly,
             'helpText' => $this->helpText,

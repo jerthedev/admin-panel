@@ -250,4 +250,30 @@ class FieldTest extends TestCase
 
         $this->assertEquals('John Doe', $value);
     }
+
+    public function test_field_can_be_made_searchable(): void
+    {
+        $field = Text::make('Name');
+        $field->searchable();
+
+        $this->assertTrue($field->searchable);
+    }
+
+    public function test_searchable_property_is_included_in_json(): void
+    {
+        $field = Text::make('Name')->searchable();
+        $json = $field->jsonSerialize();
+
+        $this->assertArrayHasKey('searchable', $json);
+        $this->assertTrue($json['searchable']);
+    }
+
+    public function test_searchable_defaults_to_false(): void
+    {
+        $field = Text::make('Name');
+        $json = $field->jsonSerialize();
+
+        $this->assertArrayHasKey('searchable', $json);
+        $this->assertFalse($json['searchable']);
+    }
 }

@@ -165,10 +165,40 @@ abstract class Resource
 
     /**
      * Get the searchable columns for the resource.
+     * Combines both $search array and fields marked as searchable().
      */
     public static function searchableColumns(): array
     {
-        return empty(static::$search) ? [static::$title] : static::$search;
+        // Start with explicitly defined search columns
+        $searchColumns = static::$search ?? [];
+
+        // Add columns from fields marked as searchable
+        $searchableFields = static::getSearchableFieldColumns();
+
+        // Merge and remove duplicates
+        $allColumns = array_unique(array_merge($searchColumns, $searchableFields));
+
+        // If no search columns defined anywhere, fall back to title column
+        return empty($allColumns) ? [static::$title] : $allColumns;
+    }
+
+    /**
+     * Get database columns from fields marked as searchable().
+     */
+    protected static function getSearchableFieldColumns(): array
+    {
+        $resource = new static(static::newModel());
+        $fields = $resource->fields(request());
+
+        $searchableColumns = [];
+
+        foreach ($fields as $field) {
+            if (isset($field->searchable) && $field->searchable === true) {
+                $searchableColumns[] = $field->attribute;
+            }
+        }
+
+        return $searchableColumns;
     }
 
     /**

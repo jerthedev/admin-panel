@@ -44,10 +44,10 @@ This is the first stable release of JTD Admin Panel - a modern, elegant admin pa
 - **Database Optimization**: Efficient queries with proper indexing
 
 #### Field Types
-- `Text`: Basic text input with validation
-- `Email`: Email input with built-in validation
+- `Text`: Basic text input with validation and searchable functionality
+- `Email`: Email input with built-in validation and searchable functionality
 - `Password`: Secure password input with hashing
-- `Textarea`: Multi-line text input
+- `Textarea`: Multi-line text input with searchable functionality
 - `Number`: Numeric input with formatting
 - `Boolean`: Checkbox/toggle with customizable labels
 - `Select`: Dropdown selection with options
@@ -178,6 +178,36 @@ This is the first stable release of JTD Admin Panel - a modern, elegant admin pa
 #### Asset Management
 - **Improved Build Process**: Clean 3-file builds with proper asset cleanup
 - **Fixed Asset Accumulation**: Rebuild command now properly removes old assets before publishing new ones
+
+#### Search Functionality Enhancement (2025-08-02)
+- **Dual Searchable Support**: Resources now support both `$search` array and `searchable()` field methods
+- **Intelligent Reconciliation**: Automatically merges search columns from both approaches with duplicate removal
+- **Universal Field Support**: Added `searchable()` method to base Field class (available on all field types)
+- **Backward Compatibility**: Existing `$search` array usage continues to work unchanged
+- **Enhanced Testing**: Added comprehensive tests for both search approaches and their combination
+
+### 🔧 Fixed
+
+#### Critical Installation Issues (2025-08-02)
+- **Static Method Call Errors**: Fixed fatal errors preventing package installation and usage
+  - Made `AdminPanel::resources()` static method with backward compatibility via `registerResources()`
+  - Made `AdminPanel::pages()` static method with backward compatibility via `registerPages()`
+  - Made `AdminPanel::metrics()` static method with backward compatibility via `registerMetrics()`
+  - Eliminated "Non-static method cannot be called statically" errors in AdminServiceProvider
+- **Asset Distribution**: Fixed missing pre-built assets in package distribution
+  - Removed `/public/build` from `.gitignore` to include assets in repository
+  - Resolved "Can't locate path" errors during asset publishing
+  - Fixed Vite manifest file location issues for proper asset loading
+- **Laravel 12 Compatibility**: Updated installation documentation for Laravel 12
+  - Changed install command to reference `bootstrap/app.php` instead of `config/app.php`
+  - Updated provider registration syntax to Laravel 12 `->withProviders([])` format
+  - Removed outdated Laravel 11 configuration references
+
+#### Test Suite Improvements (2025-08-02)
+- **Configuration-Aware Testing**: Made authorization tests respect `allow_all_authenticated` setting
+- **Nova-like Defaults**: Tests now support both strict and permissive authorization modes
+- **Comprehensive Coverage**: Added 8 new tests covering all critical installation scenarios
+- **Zero Test Failures**: Eliminated all pre-existing test failures with intelligent test design
 
 ---
 

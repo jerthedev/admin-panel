@@ -8,9 +8,9 @@ use Illuminate\Http\Request;
 
 /**
  * Select Field
- * 
+ *
  * A select dropdown field with support for options and Enum integration.
- * 
+ *
  * @author Jeremy Fall <jerthedev@gmail.com>
  * @package JTD\AdminPanel\Fields
  */
@@ -66,16 +66,6 @@ class Select extends Field
     }
 
     /**
-     * Make the select field searchable.
-     */
-    public function searchable(bool $searchable = true): static
-    {
-        $this->searchable = $searchable;
-
-        return $this;
-    }
-
-    /**
      * Display using option keys instead of values.
      */
     public function displayUsingLabels(bool $displayUsingLabels = true): static
@@ -110,12 +100,12 @@ class Select extends Field
             call_user_func($this->fillCallback, $request, $model, $this->attribute);
         } elseif ($request->exists($this->attribute)) {
             $value = $request->input($this->attribute);
-            
+
             // Ensure the value is valid if we have options
             if (! empty($this->options) && $value !== null && ! array_key_exists($value, $this->options)) {
                 $value = null;
             }
-            
+
             $model->{$this->attribute} = $value;
         }
     }

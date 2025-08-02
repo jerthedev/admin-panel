@@ -244,8 +244,10 @@ class InstallCommand extends Command
 
             $this->newLine();
             $this->warn('📋 Manual Step Required:');
-            $this->line('   Add AdminServiceProvider to your config/app.php providers array:');
-            $this->line('   App\\Providers\\AdminServiceProvider::class,');
+            $this->line('   Add AdminServiceProvider to your bootstrap/app.php:');
+            $this->line('   ->withProviders([');
+            $this->line('       App\\Providers\\AdminServiceProvider::class,');
+            $this->line('   ])');
             $this->newLine();
             $this->comment('💡 This provider allows manual resource registration alongside auto-discovery');
         } else {

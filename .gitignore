@@ -3,7 +3,7 @@
 /vendor
 
 # Build outputs
-/public/build
+# Note: /public/build is NOT ignored for Laravel packages - pre-built assets must be distributed
 /public/hot
 /public/mix-manifest.json
 

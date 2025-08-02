@@ -48,9 +48,21 @@ class AdminPanel
     }
 
     /**
-     * Register resources with the admin panel.
+     * Register resources with the admin panel (static version for AdminServiceProvider).
      */
-    public function resources(array $resources): static
+    public static function resources(array $resources): void
+    {
+        $instance = app(static::class);
+
+        foreach ($resources as $resource) {
+            $instance->resource($resource);
+        }
+    }
+
+    /**
+     * Register resources with the admin panel (instance version).
+     */
+    public function registerResources(array $resources): static
     {
         foreach ($resources as $resource) {
             $this->resource($resource);
@@ -60,11 +72,11 @@ class AdminPanel
     }
 
     /**
-     * Register resources with the admin panel (alias for resources).
+     * Register resources with the admin panel (alias for registerResources).
      */
     public function register(array $resources): static
     {
-        return $this->resources($resources);
+        return $this->registerResources($resources);
     }
 
     /**

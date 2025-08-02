@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JTD\AdminPanel\Tests\Unit;
 
+use Illuminate\Support\Facades\File;
 use JTD\AdminPanel\Support\AdminPanel;
 use JTD\AdminPanel\Tests\Fixtures\UserResource;
 use JTD\AdminPanel\Tests\TestCase;
@@ -152,5 +153,39 @@ class AdminPanelTest extends TestCase
 
         $this->assertTrue($exists);
         $this->assertFalse($notExists);
+    }
+
+    /**
+     * Test Issue #3: AdminPanel::resources() method should be static
+     * This reproduces the error: "Non-static method cannot be called statically"
+     */
+    public function test_resources_method_can_be_called_statically(): void
+    {
+        // This should work without throwing "Non-static method cannot be called statically" error
+        $reflection = new \ReflectionMethod(AdminPanel::class, 'resources');
+
+        $this->assertTrue(
+            $reflection->isStatic(),
+            'AdminPanel::resources() should be a static method to allow static calls in AdminServiceProvider'
+        );
+    }
+
+    /**
+     * Test Issue #1: Package should include pre-built assets
+     */
+    public function test_package_has_prebuilt_assets(): void
+    {
+        $packagePath = __DIR__ . '/../../public/build';
+
+        $this->assertTrue(
+            File::exists($packagePath),
+            'Package should include pre-built assets in public/build directory'
+        );
+
+        // Check that assets actually exist
+        $this->assertTrue(
+            count(File::files($packagePath . '/assets')) > 0,
+            'Pre-built assets should exist in public/build/assets directory'
+        );
     }
 }

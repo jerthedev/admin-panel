@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use JTD\AdminPanel\Menu\MenuItem;
 
 /**
  * Base Resource Class
@@ -421,5 +422,14 @@ abstract class Resource
         return $fields->map(function ($field) {
             return $field->jsonSerialize();
         })->toArray();
+    }
+
+    /**
+     * Get the menu that should represent the resource.
+     */
+    public function menu(Request $request): MenuItem
+    {
+        return MenuItem::make(static::label(), route('admin-panel.resources.index', static::uriKey()))
+            ->withIcon(static::$icon ?? 'DocumentTextIcon');
     }
 }

@@ -22,6 +22,21 @@ class Boolean extends Field
     public string $component = 'BooleanField';
 
     /**
+     * The display mode (checkbox, switch, button).
+     */
+    public string $displayMode = 'checkbox';
+
+    /**
+     * The color theme for the field.
+     */
+    public string $color = 'primary';
+
+    /**
+     * The size of the field.
+     */
+    public string $size = 'medium';
+
+    /**
      * The value to store when the field is true.
      */
     public mixed $trueValue = true;
@@ -149,6 +164,74 @@ class Boolean extends Field
             'trueText' => $this->trueText,
             'falseText' => $this->falseText,
             'asToggle' => $this->asToggle,
+            'displayMode' => $this->displayMode,
+            'color' => $this->color,
+            'size' => $this->size,
         ]);
+    }
+
+    /**
+     * Display as a switch.
+     */
+    public function displayAsSwitch(): static
+    {
+        $this->displayMode = 'switch';
+        $this->asToggle = true;
+
+        return $this;
+    }
+
+    /**
+     * Display as a button.
+     */
+    public function displayAsButton(): static
+    {
+        $this->displayMode = 'button';
+        $this->asToggle = false;
+
+        return $this;
+    }
+
+    /**
+     * Display as a checkbox.
+     */
+    public function displayAsCheckbox(): static
+    {
+        $this->displayMode = 'checkbox';
+        $this->asToggle = false;
+
+        return $this;
+    }
+
+    /**
+     * Set the color theme.
+     */
+    public function color(string $color): static
+    {
+        $this->color = $color;
+
+        return $this;
+    }
+
+    /**
+     * Set the size.
+     */
+    public function size(string $size): static
+    {
+        $this->size = $size;
+
+        return $this;
+    }
+
+    /**
+     * Resolve the display value for a boolean.
+     */
+    public function resolveDisplayValue($value): string
+    {
+        if ($value) {
+            return $this->trueText;
+        }
+
+        return $this->falseText;
     }
 }

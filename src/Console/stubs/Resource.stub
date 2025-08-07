@@ -10,14 +10,15 @@ use JTD\AdminPanel\Fields\Date;
 use JTD\AdminPanel\Fields\Email;
 use JTD\AdminPanel\Fields\Number;
 use JTD\AdminPanel\Fields\Text;
+use JTD\AdminPanel\Menu\MenuItem;
 use JTD\AdminPanel\Resources\Resource;
 use {{ modelClass }};
 
 /**
  * {{ class }}
- * 
+ *
  * Admin panel resource for managing {{ model }} records.
- * 
+ *
  * @package {{ namespace }}
  */
 class {{ class }} extends Resource
@@ -38,6 +39,14 @@ class {{ class }} extends Resource
     public static array $search = [
         'id',
     ];
+
+    /**
+     * The logical group associated with the resource.
+     *
+     * Resources with the same group will be organized together
+     * in the admin panel navigation menu.
+     */
+    public static ?string $group = 'Content';
 
     /**
      * Get the fields displayed by the resource.
@@ -65,6 +74,26 @@ class {{ class }} extends Resource
                 ->onlyOnIndex()
                 ->sortable(),
         ];
+    }
+
+    /**
+     * Get the menu that should represent the resource.
+     *
+     * Customize the navigation menu item for this resource.
+     * You can add badges, change icons, and control visibility.
+     */
+    public function menu(Request $request): MenuItem
+    {
+        return parent::menu($request)
+            ->withBadge(fn() => static::$model::count())
+            ->badgeType('primary');
+
+        // Examples of other customizations:
+        // ->withIcon('users')
+        // ->withBadge(fn() => static::$model::where('active', true)->count(), 'success')
+        // ->when($request->user()->isAdmin(), fn($menu) =>
+        //     $menu->withBadge(fn() => static::$model::count(), 'warning')
+        // )
     }
 
     /**

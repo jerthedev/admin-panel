@@ -12,10 +12,10 @@ use ReflectionClass;
 
 /**
  * Resource Discovery Service
- * 
+ *
  * Automatically discovers and registers admin panel resources from the
  * configured discovery path with caching for performance optimization.
- * 
+ *
  * @author Jeremy Fall <jerthedev@gmail.com>
  * @package JTD\AdminPanel\Support
  */
@@ -53,7 +53,7 @@ class ResourceDiscovery
     protected function performDiscovery(): Collection
     {
         $discoveryPath = $this->getDiscoveryPath();
-        
+
         if (! File::exists($discoveryPath)) {
             return collect();
         }
@@ -67,7 +67,7 @@ class ResourceDiscovery
             }
 
             $className = $this->getClassNameFromFile($file);
-            
+
             if ($this->isValidResourceClass($className)) {
                 $resources->push($className);
             }
@@ -82,7 +82,7 @@ class ResourceDiscovery
     protected function getDiscoveryPath(): string
     {
         $path = config('admin-panel.resources.discovery_path', 'app/Admin/Resources');
-        
+
         return base_path($path);
     }
 
@@ -94,10 +94,10 @@ class ResourceDiscovery
         $relativePath = str_replace(base_path() . '/', '', $file->getPathname());
         $relativePath = str_replace('.php', '', $relativePath);
         $relativePath = str_replace('/', '\\', $relativePath);
-        
+
         // Convert app/Admin/Resources/UserResource to App\Admin\Resources\UserResource
         $className = str_replace('app\\', 'App\\', $relativePath);
-        
+
         return $className;
     }
 
@@ -112,7 +112,7 @@ class ResourceDiscovery
 
         try {
             $reflection = new ReflectionClass($className);
-            
+
             // Must be a subclass of Resource and not abstract
             return $reflection->isSubclassOf(Resource::class) && ! $reflection->isAbstract();
         } catch (\Exception $e) {
@@ -127,7 +127,7 @@ class ResourceDiscovery
     {
         $discoveryPath = $this->getDiscoveryPath();
         $pathHash = md5($discoveryPath);
-        
+
         return self::CACHE_KEY . '_' . $pathHash;
     }
 
@@ -156,7 +156,7 @@ class ResourceDiscovery
     public function findByUriKey(string $uriKey): ?Resource
     {
         $resources = $this->getResourceInstances();
-        
+
         return $resources->first(function (Resource $resource) use ($uriKey) {
             return $resource::uriKey() === $uriKey;
         });
@@ -167,9 +167,16 @@ class ResourceDiscovery
      */
     public function getGroupedResources(): Collection
     {
-        return $this->getResourceInstances()->groupBy(function (Resource $resource) {
-            return $resource::$group ?? 'Default';
-        });
+        return $this->getResourceInstances()
+            ->groupBy(function (Resource $resource) {
+                return $resource::$group ?? 'Default';
+            })
+            ->map(function (Collection $groupResources) {
+                // Sort resources alphabetically within each group
+                return $groupResources->sortBy(function (Resource $resource) {
+                    return $resource::label();
+                })->values();
+            });
     }
 
     /**

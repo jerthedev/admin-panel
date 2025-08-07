@@ -57,14 +57,22 @@ class HandleAdminInertiaRequests extends Middleware
                 'admin_path' => config('admin-panel.path', '/admin'),
                 'timezone' => config('app.timezone', 'UTC'),
             ],
-            'resources' => $adminPanel->getNavigationResources()->map(function ($resource) {
+            'resources' => $adminPanel->getNavigationResources()->map(function ($resource) use ($request) {
+                $menuItem = $resource->menu($request);
+
                 return [
                     'uriKey' => $resource::uriKey(),
                     'label' => $resource::label(),
                     'singularLabel' => $resource::singularLabel(),
-                    'icon' => $resource::$icon ?? 'DocumentTextIcon',
+                    'icon' => $menuItem->icon ?? $resource::$icon ?? 'DocumentTextIcon',
                     'group' => $resource::$group ?? 'Default',
+                    'badge' => $menuItem->resolveBadge($request),
+                    'badgeType' => $menuItem->badgeType,
+                    'visible' => $menuItem->isVisible($request),
+                    'meta' => $menuItem->meta,
                 ];
+            })->filter(function ($resource) {
+                return $resource['visible'];
             })->values(),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

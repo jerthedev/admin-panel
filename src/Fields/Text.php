@@ -7,12 +7,11 @@ namespace JTD\AdminPanel\Fields;
 use Illuminate\Http\Request;
 
 /**
- * Text Field
- * 
+ * Text Field.
+ *
  * A basic text input field with support for suggestions and validation.
- * 
+ *
  * @author Jeremy Fall <jerthedev@gmail.com>
- * @package JTD\AdminPanel\Fields
  */
 class Text extends Field
 {
@@ -35,6 +34,11 @@ class Text extends Field
      * Whether the field should be displayed as a password.
      */
     public bool $asPassword = false;
+
+    /**
+     * Whether to enforce maximum length client-side.
+     */
+    public bool $enforceMaxlength = false;
 
     /**
      * Set suggestions for the field.
@@ -67,6 +71,16 @@ class Text extends Field
     }
 
     /**
+     * Enforce maximum length client-side.
+     */
+    public function enforceMaxlength(bool $enforceMaxlength = true): static
+    {
+        $this->enforceMaxlength = $enforceMaxlength;
+
+        return $this;
+    }
+
+    /**
      * Hydrate the given attribute on the model based on the incoming request.
      */
     public function fill(Request $request, $model): void
@@ -75,12 +89,12 @@ class Text extends Field
             call_user_func($this->fillCallback, $request, $model, $this->attribute);
         } elseif ($request->exists($this->attribute)) {
             $value = $request->input($this->attribute);
-            
+
             // Trim whitespace unless it's a password field
             if (! $this->asPassword && is_string($value)) {
                 $value = trim($value);
             }
-            
+
             $model->{$this->attribute} = $value;
         }
     }
@@ -94,6 +108,7 @@ class Text extends Field
             'suggestions' => $this->suggestions,
             'maxLength' => $this->maxLength,
             'asPassword' => $this->asPassword,
+            'enforceMaxlength' => $this->enforceMaxlength,
         ]);
     }
 }

@@ -14,25 +14,25 @@ class MenuIntegrationTest extends TestCase
     public function test_pages_appear_in_navigation(): void
     {
         $adminPanel = app(AdminPanel::class);
-        $adminPanel->registerPages([TestMenuPage::class]);
+        $adminPanel->registerPages([MenuIntegrationTestPage::class]);
 
         $navigationPages = $adminPanel->getNavigationPages();
 
         $this->assertCount(1, $navigationPages);
-        $this->assertInstanceOf(TestMenuPage::class, $navigationPages->first());
+        $this->assertInstanceOf(MenuIntegrationTestPage::class, $navigationPages->first());
     }
 
     public function test_pages_are_grouped_correctly(): void
     {
         $adminPanel = app(AdminPanel::class);
         $adminPanel->registerPages([
-            TestMenuPage::class,
-            TestSystemPage::class,
-            TestUserPage::class,
+            MenuIntegrationTestPage::class,
+            MenuIntegrationTestSystemPage::class,
+            MenuIntegrationTestUserPage::class,
         ]);
 
         $navigationPages = $adminPanel->getNavigationPages();
-        
+
         // Group pages by their group property
         $groupedPages = $navigationPages->groupBy(function ($page) {
             return $page::group() ?? 'Default';
@@ -41,14 +41,14 @@ class MenuIntegrationTest extends TestCase
         $this->assertArrayHasKey('Testing', $groupedPages);
         $this->assertArrayHasKey('System', $groupedPages);
         $this->assertArrayHasKey('Users', $groupedPages);
-        
+
         $this->assertCount(1, $groupedPages['Testing']);
         $this->assertCount(1, $groupedPages['System']);
         $this->assertCount(1, $groupedPages['Users']);
     }
 }
 
-class TestMenuPage extends Page
+class MenuIntegrationTestPage extends Page
 {
     public static array $components = ['Pages/TestMenu'];
     public static ?string $title = 'Test Menu Page';
@@ -76,7 +76,7 @@ class TestMenuPage extends Page
     }
 }
 
-class TestSystemPage extends Page
+class MenuIntegrationTestSystemPage extends Page
 {
     public static array $components = ['Pages/TestSystem'];
     public static ?string $title = 'Test System Page';
@@ -104,7 +104,7 @@ class TestSystemPage extends Page
     }
 }
 
-class TestUserPage extends Page
+class MenuIntegrationTestUserPage extends Page
 {
     public static array $components = ['Pages/TestUser'];
     public static ?string $title = 'Test User Page';

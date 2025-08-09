@@ -7,12 +7,11 @@ namespace JTD\AdminPanel\Fields;
 use Illuminate\Http\Request;
 
 /**
- * Select Field
+ * Select Field.
  *
  * A select dropdown field with support for options and Enum integration.
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
- * @package JTD\AdminPanel\Fields
  */
 class Select extends Field
 {
@@ -61,6 +60,16 @@ class Select extends Field
         }
 
         $this->options = $options;
+
+        return $this;
+    }
+
+    /**
+     * Make the select field searchable.
+     */
+    public function searchable(bool $searchable = true): static
+    {
+        $this->searchable = $searchable;
 
         return $this;
     }

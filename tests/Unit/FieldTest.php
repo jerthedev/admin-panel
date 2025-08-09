@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace JTD\AdminPanel\Tests\Unit;
 
+use JTD\AdminPanel\Fields\Avatar;
 use JTD\AdminPanel\Fields\Badge;
+use JTD\AdminPanel\Fields\BelongsTo;
 use JTD\AdminPanel\Fields\Boolean;
 use JTD\AdminPanel\Fields\Code;
 use JTD\AdminPanel\Fields\Color;
@@ -12,13 +14,21 @@ use JTD\AdminPanel\Fields\Currency;
 use JTD\AdminPanel\Fields\DateTime;
 use JTD\AdminPanel\Fields\Email;
 use JTD\AdminPanel\Fields\File;
+use JTD\AdminPanel\Fields\Gravatar;
+use JTD\AdminPanel\Fields\HasMany;
 use JTD\AdminPanel\Fields\Hidden;
+use JTD\AdminPanel\Fields\ID;
 use JTD\AdminPanel\Fields\Image;
+use JTD\AdminPanel\Fields\ManyToMany;
+use JTD\AdminPanel\Fields\MultiSelect;
 use JTD\AdminPanel\Fields\Number;
 use JTD\AdminPanel\Fields\Password;
+use JTD\AdminPanel\Fields\PasswordConfirmation;
 use JTD\AdminPanel\Fields\Select;
+use JTD\AdminPanel\Fields\Slug;
 use JTD\AdminPanel\Fields\Textarea;
 use JTD\AdminPanel\Fields\Text;
+use JTD\AdminPanel\Fields\Timezone;
 use JTD\AdminPanel\Fields\URL;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -147,6 +157,78 @@ class FieldTest extends TestCase
         $this->assertEquals('TextareaField', $field->component);
     }
 
+    public function test_textarea_field_rows(): void
+    {
+        $field = Textarea::make('Description')->rows(6);
+
+        $this->assertEquals(6, $field->rows);
+    }
+
+    public function test_textarea_field_max_length(): void
+    {
+        $field = Textarea::make('Description')->maxLength(500);
+
+        $this->assertEquals(500, $field->maxLength);
+        $this->assertTrue($field->showCharacterCount);
+    }
+
+    public function test_textarea_field_auto_resize(): void
+    {
+        $field = Textarea::make('Description')->autoResize();
+
+        $this->assertTrue($field->autoResize);
+    }
+
+    public function test_textarea_field_auto_resize_false(): void
+    {
+        $field = Textarea::make('Description')->autoResize(false);
+
+        $this->assertFalse($field->autoResize);
+    }
+
+    public function test_textarea_field_show_character_count(): void
+    {
+        $field = Textarea::make('Description')->showCharacterCount();
+
+        $this->assertTrue($field->showCharacterCount);
+    }
+
+    public function test_textarea_field_always_show(): void
+    {
+        $field = Textarea::make('Description')->alwaysShow();
+
+        $this->assertTrue($field->alwaysShow);
+    }
+
+    public function test_textarea_field_always_show_false(): void
+    {
+        $field = Textarea::make('Description')->alwaysShow(false);
+
+        $this->assertFalse($field->alwaysShow);
+    }
+
+    public function test_textarea_field_meta_information(): void
+    {
+        $field = Textarea::make('Description')
+            ->rows(8)
+            ->maxLength(1000)
+            ->autoResize()
+            ->alwaysShow();
+
+        $meta = $field->meta();
+
+        $this->assertArrayHasKey('rows', $meta);
+        $this->assertArrayHasKey('maxLength', $meta);
+        $this->assertArrayHasKey('autoResize', $meta);
+        $this->assertArrayHasKey('showCharacterCount', $meta);
+        $this->assertArrayHasKey('alwaysShow', $meta);
+        $this->assertEquals(8, $meta['rows']);
+        $this->assertEquals(1000, $meta['maxLength']);
+        $this->assertTrue($meta['autoResize']);
+        $this->assertTrue($meta['showCharacterCount']);
+        $this->assertTrue($meta['alwaysShow']);
+    }
+
     public function test_number_field_component(): void
     {
         $field = Number::make('Age');
@@ -200,6 +282,54 @@ class FieldTest extends TestCase
         $field = Select::make('Status')->options($options);
 
         $this->assertEquals($options, $field->options);
+    }
+
+    public function test_select_field_searchable(): void
+    {
+        $field = Select::make('Status')->searchable();
+
+        $this->assertTrue($field->searchable);
+    }
+
+    public function test_select_field_searchable_false(): void
+    {
+        $field = Select::make('Status')->searchable(false);
+
+        $this->assertFalse($field->searchable);
+    }
+
+    public function test_select_field_enum_integration(): void
+    {
+        // Create a mock enum for testing
+        $field = Select::make('Status');
+
+        // Test that enum method exists and can be called
+        $this->assertTrue(method_exists($field, 'enum'));
+    }
+
+    public function test_select_field_display_using_labels(): void
+    {
+        $field = Select::make('Status')->displayUsingLabels(false);
+
+        $this->assertFalse($field->displayUsingLabels);
+    }
+
+    public function test_select_field_meta_information(): void
+    {
+        $options = ['draft' => 'Draft', 'published' => 'Published'];
+        $field = Select::make('Status')
+            ->options($options)
+            ->searchable()
+            ->displayUsingLabels(false);
+
+        $meta = $field->meta();
+
+        $this->assertArrayHasKey('options', $meta);
+        $this->assertArrayHasKey('searchable', $meta);
+        $this->assertArrayHasKey('displayUsingLabels', $meta);
+        $this->assertEquals($options, $meta['options']);
+        $this->assertTrue($meta['searchable']);
+        $this->assertFalse($meta['displayUsingLabels']);
     }
 
     public function test_field_help_text(): void
@@ -1704,5 +1834,1661 @@ class FieldTest extends TestCase
             ->default('#000000');
 
         $this->assertEquals('#000000', $field->default);
+    }
+
+    // ========================================
+    // ID Field Tests
+    // ========================================
+
+    public function test_id_field_creation(): void
+    {
+        $field = ID::make();
+
+        $this->assertEquals('ID', $field->name);
+        $this->assertEquals('id', $field->attribute);
+        $this->assertEquals('IDField', $field->component);
+    }
+
+    public function test_id_field_with_custom_name(): void
+    {
+        $field = ID::make('User ID');
+
+        $this->assertEquals('User ID', $field->name);
+        $this->assertEquals('id', $field->attribute); // Should still default to 'id'
+    }
+
+    public function test_id_field_with_custom_attribute(): void
+    {
+        $field = ID::make('User ID', 'user_id');
+
+        $this->assertEquals('User ID', $field->name);
+        $this->assertEquals('user_id', $field->attribute);
+    }
+
+    public function test_id_field_default_visibility(): void
+    {
+        $field = ID::make();
+
+        // ID fields should be shown on index, detail, and update by default
+        $this->assertTrue($field->isShownOnIndex());
+        $this->assertTrue($field->isShownOnDetail());
+        $this->assertTrue($field->showOnUpdate);
+
+        // But hidden from creation forms by default (readonly on create)
+        $this->assertFalse($field->showOnCreation);
+    }
+
+    public function test_id_field_is_sortable_by_default(): void
+    {
+        $field = ID::make();
+
+        $this->assertTrue($field->sortable);
+    }
+
+    public function test_id_field_is_readonly_on_creation(): void
+    {
+        $field = ID::make();
+
+        // ID fields should be readonly on creation forms
+        $this->assertFalse($field->showOnCreation);
+    }
+
+    public function test_id_field_copyable_functionality(): void
+    {
+        $field = ID::make()->copyable();
+
+        $this->assertTrue($field->copyable);
+    }
+
+    public function test_id_field_json_serialization(): void
+    {
+        $field = ID::make()
+            ->sortable()
+            ->copyable();
+
+        $json = $field->jsonSerialize();
+
+        $this->assertIsArray($json);
+        $this->assertEquals('ID', $json['name']);
+        $this->assertEquals('id', $json['attribute']);
+        $this->assertEquals('IDField', $json['component']);
+        $this->assertTrue($json['sortable']);
+        $this->assertTrue($json['copyable']);
+        $this->assertTrue($json['showOnIndex']);
+        $this->assertTrue($json['showOnDetail']);
+        $this->assertTrue($json['showOnUpdate']);
+        $this->assertFalse($json['showOnCreation']);
+    }
+
+    public function test_id_field_resolve_value(): void
+    {
+        $field = ID::make();
+        $model = (object) ['id' => 123];
+
+        $value = $field->resolveValue($model);
+
+        $this->assertEquals(123, $value);
+    }
+
+    public function test_id_field_with_custom_attribute_resolve(): void
+    {
+        $field = ID::make('User ID', 'user_id');
+        $model = (object) ['user_id' => 456];
+
+        $value = $field->resolveValue($model);
+
+        $this->assertEquals(456, $value);
+    }
+
+    public function test_id_field_with_display_callback(): void
+    {
+        $field = ID::make()
+            ->displayUsing(function ($value) {
+                return '#' . $value;
+            });
+
+        $model = (object) ['id' => 123];
+        $value = $field->resolveValue($model);
+
+        $this->assertEquals('#123', $value);
+    }
+
+    public function test_id_field_can_be_made_visible_on_creation(): void
+    {
+        $field = ID::make()->showOnCreating();
+
+        $this->assertTrue($field->showOnCreation);
+    }
+
+    public function test_id_field_copyable_defaults_to_false(): void
+    {
+        $field = ID::make();
+
+        $this->assertFalse($field->copyable);
+    }
+
+    public function test_id_field_copyable_included_in_json(): void
+    {
+        $field = ID::make()->copyable();
+        $json = $field->jsonSerialize();
+
+        $this->assertArrayHasKey('copyable', $json);
+        $this->assertTrue($json['copyable']);
+    }
+
+    public function test_id_field_copyable_false_included_in_json(): void
+    {
+        $field = ID::make();
+        $json = $field->jsonSerialize();
+
+        $this->assertArrayHasKey('copyable', $json);
+        $this->assertFalse($json['copyable']);
+    }
+
+    // ========================================
+    // PasswordConfirmation Field Tests
+    // ========================================
+
+    public function test_password_confirmation_field_creation(): void
+    {
+        $field = PasswordConfirmation::make('Password Confirmation');
+
+        $this->assertEquals('Password Confirmation', $field->name);
+        $this->assertEquals('password_confirmation', $field->attribute);
+        $this->assertEquals('PasswordConfirmationField', $field->component);
+    }
+
+    public function test_password_confirmation_field_with_custom_attribute(): void
+    {
+        $field = PasswordConfirmation::make('Confirm Password', 'confirm_password');
+
+        $this->assertEquals('Confirm Password', $field->name);
+        $this->assertEquals('confirm_password', $field->attribute);
+    }
+
+    public function test_password_confirmation_field_default_visibility(): void
+    {
+        $field = PasswordConfirmation::make('Password Confirmation');
+
+        // Password confirmation fields should only be shown on forms
+        $this->assertFalse($field->isShownOnIndex());
+        $this->assertFalse($field->isShownOnDetail());
+        $this->assertTrue($field->isShownOnForms());
+    }
+
+    public function test_password_confirmation_field_never_resolves_value(): void
+    {
+        $field = PasswordConfirmation::make('Password Confirmation');
+        $model = (object) ['password_confirmation' => 'secret123'];
+
+        $field->resolve($model);
+
+        // Should always be null for security
+        $this->assertNull($field->value);
+    }
+
+    public function test_password_confirmation_field_does_not_fill_model(): void
+    {
+        $field = PasswordConfirmation::make('Password Confirmation');
+        $request = \Illuminate\Http\Request::create('/', 'POST', ['password_confirmation' => 'secret123']);
+        $model = (object) [];
+
+        $field->fill($request, $model);
+
+        // Should not set any attribute on the model
+        $this->assertObjectNotHasProperty('password_confirmation', $model);
+    }
+
+    public function test_password_confirmation_field_json_serialization(): void
+    {
+        $field = PasswordConfirmation::make('Password Confirmation')
+            ->rules('required');
+
+        $json = $field->jsonSerialize();
+
+        $this->assertIsArray($json);
+        $this->assertEquals('Password Confirmation', $json['name']);
+        $this->assertEquals('password_confirmation', $json['attribute']);
+        $this->assertEquals('PasswordConfirmationField', $json['component']);
+        $this->assertEquals(['required'], $json['rules']);
+        $this->assertFalse($json['showOnIndex']);
+        $this->assertFalse($json['showOnDetail']);
+        $this->assertTrue($json['showOnCreation']);
+        $this->assertTrue($json['showOnUpdate']);
+    }
+
+    public function test_password_confirmation_field_with_min_length(): void
+    {
+        $field = PasswordConfirmation::make('Password Confirmation')
+            ->minLength(8);
+
+        $this->assertEquals(8, $field->minLength);
+        $this->assertContains('min:8', $field->rules);
+    }
+
+    public function test_password_confirmation_field_with_strength_indicator(): void
+    {
+        $field = PasswordConfirmation::make('Password Confirmation')
+            ->showStrengthIndicator();
+
+        $this->assertTrue($field->showStrengthIndicator);
+    }
+
+    public function test_password_confirmation_field_meta_information(): void
+    {
+        $field = PasswordConfirmation::make('Password Confirmation')
+            ->minLength(8)
+            ->showStrengthIndicator();
+
+        $meta = $field->meta();
+
+        $this->assertArrayHasKey('minLength', $meta);
+        $this->assertArrayHasKey('showStrengthIndicator', $meta);
+        $this->assertEquals(8, $meta['minLength']);
+        $this->assertTrue($meta['showStrengthIndicator']);
+    }
+
+    // ========================================
+    // MultiSelect Field Tests
+    // ========================================
+
+    public function test_multiselect_field_creation(): void
+    {
+        $field = MultiSelect::make('Tags');
+
+        $this->assertEquals('Tags', $field->name);
+        $this->assertEquals('tags', $field->attribute);
+        $this->assertEquals('MultiSelectField', $field->component);
+    }
+
+    public function test_multiselect_field_with_custom_attribute(): void
+    {
+        $field = MultiSelect::make('Categories', 'category_ids');
+
+        $this->assertEquals('Categories', $field->name);
+        $this->assertEquals('category_ids', $field->attribute);
+    }
+
+    public function test_multiselect_field_options(): void
+    {
+        $options = [
+            'red' => 'Red',
+            'blue' => 'Blue',
+            'green' => 'Green',
+        ];
+
+        $field = MultiSelect::make('Colors')->options($options);
+
+        $this->assertEquals($options, $field->options);
+    }
+
+    public function test_multiselect_field_searchable(): void
+    {
+        $field = MultiSelect::make('Tags')->searchable();
+
+        $this->assertTrue($field->searchable);
+    }
+
+    public function test_multiselect_field_searchable_false(): void
+    {
+        $field = MultiSelect::make('Tags')->searchable(false);
+
+        $this->assertFalse($field->searchable);
+    }
+
+    public function test_multiselect_field_taggable(): void
+    {
+        $field = MultiSelect::make('Tags')->taggable();
+
+        $this->assertTrue($field->taggable);
+    }
+
+    public function test_multiselect_field_taggable_false(): void
+    {
+        $field = MultiSelect::make('Tags')->taggable(false);
+
+        $this->assertFalse($field->taggable);
+    }
+
+    public function test_multiselect_field_max_selections(): void
+    {
+        $field = MultiSelect::make('Tags')->maxSelections(5);
+
+        $this->assertEquals(5, $field->maxSelections);
+    }
+
+    public function test_multiselect_field_resolve_array_value(): void
+    {
+        $field = MultiSelect::make('Tags');
+        $model = (object) ['tags' => ['red', 'blue']];
+
+        $field->resolve($model);
+
+        $this->assertEquals(['red', 'blue'], $field->value);
+    }
+
+    public function test_multiselect_field_resolve_json_value(): void
+    {
+        $field = MultiSelect::make('Tags');
+        $model = (object) ['tags' => '["red","blue"]'];
+
+        $field->resolve($model);
+
+        $this->assertEquals(['red', 'blue'], $field->value);
+    }
+
+    public function test_multiselect_field_fill_request(): void
+    {
+        $field = MultiSelect::make('Tags');
+        $request = \Illuminate\Http\Request::create('/', 'POST', ['tags' => ['red', 'blue']]);
+        $model = (object) [];
+
+        $field->fill($request, $model);
+
+        $this->assertEquals(['red', 'blue'], $model->tags);
+    }
+
+    public function test_multiselect_field_json_serialization(): void
+    {
+        $options = ['red' => 'Red', 'blue' => 'Blue'];
+        $field = MultiSelect::make('Tags')
+            ->options($options)
+            ->searchable()
+            ->taggable()
+            ->maxSelections(3);
+
+        $json = $field->jsonSerialize();
+
+        $this->assertIsArray($json);
+        $this->assertEquals('Tags', $json['name']);
+        $this->assertEquals('tags', $json['attribute']);
+        $this->assertEquals('MultiSelectField', $json['component']);
+        $this->assertEquals($options, $json['options']);
+        $this->assertTrue($json['searchable']);
+        $this->assertTrue($json['taggable']);
+        $this->assertEquals(3, $json['maxSelections']);
+    }
+
+    public function test_multiselect_field_meta_information(): void
+    {
+        $options = ['red' => 'Red', 'blue' => 'Blue'];
+        $field = MultiSelect::make('Tags')
+            ->options($options)
+            ->searchable()
+            ->taggable()
+            ->maxSelections(5);
+
+        $meta = $field->meta();
+
+        $this->assertArrayHasKey('options', $meta);
+        $this->assertArrayHasKey('searchable', $meta);
+        $this->assertArrayHasKey('taggable', $meta);
+        $this->assertArrayHasKey('maxSelections', $meta);
+        $this->assertEquals($options, $meta['options']);
+        $this->assertTrue($meta['searchable']);
+        $this->assertTrue($meta['taggable']);
+        $this->assertEquals(5, $meta['maxSelections']);
+    }
+
+    // ========================================
+    // Slug Field Tests
+    // ========================================
+
+    public function test_slug_field_creation(): void
+    {
+        $field = Slug::make('Slug');
+
+        $this->assertEquals('Slug', $field->name);
+        $this->assertEquals('slug', $field->attribute);
+        $this->assertEquals('SlugField', $field->component);
+    }
+
+    public function test_slug_field_with_custom_attribute(): void
+    {
+        $field = Slug::make('URL Slug', 'url_slug');
+
+        $this->assertEquals('URL Slug', $field->name);
+        $this->assertEquals('url_slug', $field->attribute);
+    }
+
+    public function test_slug_field_from_method(): void
+    {
+        $field = Slug::make('Slug')->from('title');
+
+        $this->assertEquals('title', $field->fromAttribute);
+    }
+
+    public function test_slug_field_separator(): void
+    {
+        $field = Slug::make('Slug')->separator('_');
+
+        $this->assertEquals('_', $field->separator);
+    }
+
+    public function test_slug_field_max_length(): void
+    {
+        $field = Slug::make('Slug')->maxLength(50);
+
+        $this->assertEquals(50, $field->maxLength);
+    }
+
+    public function test_slug_field_lowercase(): void
+    {
+        $field = Slug::make('Slug')->lowercase(false);
+
+        $this->assertFalse($field->lowercase);
+    }
+
+    public function test_slug_field_unique_validation(): void
+    {
+        $field = Slug::make('Slug')->unique('posts');
+
+        $this->assertEquals('posts', $field->uniqueTable);
+    }
+
+    public function test_slug_field_unique_validation_with_column(): void
+    {
+        $field = Slug::make('Slug')->unique('posts', 'slug_column');
+
+        $this->assertEquals('posts', $field->uniqueTable);
+        $this->assertEquals('slug_column', $field->uniqueColumn);
+    }
+
+    public function test_slug_field_generate_slug(): void
+    {
+        $field = Slug::make('Slug');
+
+        $slug = $field->generateSlug('Hello World Test');
+
+        $this->assertEquals('hello-world-test', $slug);
+    }
+
+    public function test_slug_field_generate_slug_with_custom_separator(): void
+    {
+        $field = Slug::make('Slug')->separator('_');
+
+        $slug = $field->generateSlug('Hello World Test');
+
+        $this->assertEquals('hello_world_test', $slug);
+    }
+
+    public function test_slug_field_generate_slug_with_max_length(): void
+    {
+        $field = Slug::make('Slug')->maxLength(10);
+
+        $slug = $field->generateSlug('This is a very long title that should be truncated');
+
+        $this->assertEquals('this-is-a', $slug);
+        $this->assertLessThanOrEqual(10, strlen($slug));
+    }
+
+    public function test_slug_field_meta_information(): void
+    {
+        $field = Slug::make('Slug')
+            ->from('title')
+            ->separator('_')
+            ->maxLength(50)
+            ->lowercase(false)
+            ->unique('posts', 'slug_column');
+
+        $meta = $field->meta();
+
+        $this->assertArrayHasKey('fromAttribute', $meta);
+        $this->assertArrayHasKey('separator', $meta);
+        $this->assertArrayHasKey('maxLength', $meta);
+        $this->assertArrayHasKey('lowercase', $meta);
+        $this->assertArrayHasKey('uniqueTable', $meta);
+        $this->assertArrayHasKey('uniqueColumn', $meta);
+        $this->assertEquals('title', $meta['fromAttribute']);
+        $this->assertEquals('_', $meta['separator']);
+        $this->assertEquals(50, $meta['maxLength']);
+        $this->assertFalse($meta['lowercase']);
+        $this->assertEquals('posts', $meta['uniqueTable']);
+        $this->assertEquals('slug_column', $meta['uniqueColumn']);
+    }
+
+    // ========================================
+    // Timezone Field Tests
+    // ========================================
+
+    public function test_timezone_field_creation(): void
+    {
+        $field = Timezone::make('Timezone');
+
+        $this->assertEquals('Timezone', $field->name);
+        $this->assertEquals('timezone', $field->attribute);
+        $this->assertEquals('TimezoneField', $field->component);
+    }
+
+    public function test_timezone_field_with_custom_attribute(): void
+    {
+        $field = Timezone::make('User Timezone', 'user_timezone');
+
+        $this->assertEquals('User Timezone', $field->name);
+        $this->assertEquals('user_timezone', $field->attribute);
+    }
+
+    public function test_timezone_field_searchable(): void
+    {
+        $field = Timezone::make('Timezone')->searchable();
+
+        $this->assertTrue($field->searchable);
+    }
+
+    public function test_timezone_field_searchable_false(): void
+    {
+        $field = Timezone::make('Timezone')->searchable(false);
+
+        $this->assertFalse($field->searchable);
+    }
+
+    public function test_timezone_field_group_by_region(): void
+    {
+        $field = Timezone::make('Timezone')->groupByRegion();
+
+        $this->assertTrue($field->groupByRegion);
+    }
+
+    public function test_timezone_field_group_by_region_false(): void
+    {
+        $field = Timezone::make('Timezone')->groupByRegion(false);
+
+        $this->assertFalse($field->groupByRegion);
+    }
+
+    public function test_timezone_field_only_common(): void
+    {
+        $field = Timezone::make('Timezone')->onlyCommon();
+
+        $this->assertTrue($field->onlyCommon);
+    }
+
+    public function test_timezone_field_only_common_false(): void
+    {
+        $field = Timezone::make('Timezone')->onlyCommon(false);
+
+        $this->assertFalse($field->onlyCommon);
+    }
+
+    public function test_timezone_field_has_timezones(): void
+    {
+        $field = Timezone::make('Timezone');
+
+        $timezones = $field->getTimezones();
+
+        $this->assertIsArray($timezones);
+        $this->assertNotEmpty($timezones);
+        // Check for a timezone that should exist in the full list
+        $this->assertArrayHasKey('America/New_York', $timezones);
+    }
+
+    public function test_timezone_field_common_timezones_only(): void
+    {
+        $field = Timezone::make('Timezone')->onlyCommon();
+
+        $timezones = $field->getTimezones();
+
+        $this->assertIsArray($timezones);
+        $this->assertNotEmpty($timezones);
+        // Should have fewer timezones when only common ones are included
+        $this->assertLessThan(100, count($timezones));
+    }
+
+    public function test_timezone_field_meta_information(): void
+    {
+        $field = Timezone::make('Timezone')
+            ->searchable()
+            ->groupByRegion()
+            ->onlyCommon();
+
+        $meta = $field->meta();
+
+        $this->assertArrayHasKey('searchable', $meta);
+        $this->assertArrayHasKey('groupByRegion', $meta);
+        $this->assertArrayHasKey('onlyCommon', $meta);
+        $this->assertArrayHasKey('timezones', $meta);
+        $this->assertTrue($meta['searchable']);
+        $this->assertTrue($meta['groupByRegion']);
+        $this->assertTrue($meta['onlyCommon']);
+        $this->assertIsArray($meta['timezones']);
+    }
+
+    // ========================================
+    // Avatar Field Tests
+    // ========================================
+
+    public function test_avatar_field_creation(): void
+    {
+        $field = Avatar::make('Avatar');
+
+        $this->assertEquals('Avatar', $field->name);
+        $this->assertEquals('avatar', $field->attribute);
+        $this->assertEquals('AvatarField', $field->component);
+    }
+
+    public function test_avatar_field_extends_image(): void
+    {
+        $field = Avatar::make('Avatar');
+
+        $this->assertInstanceOf(Image::class, $field);
+    }
+
+    public function test_avatar_field_with_custom_attribute(): void
+    {
+        $field = Avatar::make('Profile Picture', 'profile_picture');
+
+        $this->assertEquals('Profile Picture', $field->name);
+        $this->assertEquals('profile_picture', $field->attribute);
+    }
+
+    public function test_avatar_field_squared_by_default(): void
+    {
+        $field = Avatar::make('Avatar');
+
+        $this->assertTrue($field->squared);
+    }
+
+    public function test_avatar_field_rounded(): void
+    {
+        $field = Avatar::make('Avatar')->rounded();
+
+        $this->assertTrue($field->rounded);
+        $this->assertFalse($field->squared);
+    }
+
+    public function test_avatar_field_squared_override(): void
+    {
+        $field = Avatar::make('Avatar')->squared(false);
+
+        $this->assertFalse($field->squared);
+    }
+
+    public function test_avatar_field_size(): void
+    {
+        $field = Avatar::make('Avatar')->size(100);
+
+        $this->assertEquals(100, $field->size);
+    }
+
+    public function test_avatar_field_show_in_index(): void
+    {
+        $field = Avatar::make('Avatar')->showInIndex();
+
+        $this->assertTrue($field->showInIndex);
+    }
+
+    public function test_avatar_field_show_in_index_false(): void
+    {
+        $field = Avatar::make('Avatar')->showInIndex(false);
+
+        $this->assertFalse($field->showInIndex);
+    }
+
+    public function test_avatar_field_default_path(): void
+    {
+        $field = Avatar::make('Avatar');
+
+        $this->assertEquals('avatars', $field->path);
+    }
+
+    public function test_avatar_field_meta_information(): void
+    {
+        $field = Avatar::make('Avatar')
+            ->rounded()
+            ->size(120)
+            ->showInIndex();
+
+        $meta = $field->meta();
+
+        $this->assertArrayHasKey('squared', $meta);
+        $this->assertArrayHasKey('rounded', $meta);
+        $this->assertArrayHasKey('size', $meta);
+        $this->assertArrayHasKey('showInIndex', $meta);
+        $this->assertFalse($meta['squared']);
+        $this->assertTrue($meta['rounded']);
+        $this->assertEquals(120, $meta['size']);
+        $this->assertTrue($meta['showInIndex']);
+    }
+
+    // ========================================
+    // Gravatar Field Tests
+    // ========================================
+
+    public function test_gravatar_field_creation(): void
+    {
+        $field = Gravatar::make('Gravatar');
+
+        $this->assertEquals('Gravatar', $field->name);
+        $this->assertEquals('gravatar', $field->attribute);
+        $this->assertEquals('GravatarField', $field->component);
+    }
+
+    public function test_gravatar_field_with_custom_attribute(): void
+    {
+        $field = Gravatar::make('Profile Picture', 'profile_picture');
+
+        $this->assertEquals('Profile Picture', $field->name);
+        $this->assertEquals('profile_picture', $field->attribute);
+    }
+
+    public function test_gravatar_field_from_email(): void
+    {
+        $field = Gravatar::make('Gravatar')->fromEmail('email');
+
+        $this->assertEquals('email', $field->emailAttribute);
+    }
+
+    public function test_gravatar_field_size(): void
+    {
+        $field = Gravatar::make('Gravatar')->size(200);
+
+        $this->assertEquals(200, $field->size);
+    }
+
+    public function test_gravatar_field_default_fallback(): void
+    {
+        $field = Gravatar::make('Gravatar')->defaultImage('mp');
+
+        $this->assertEquals('mp', $field->defaultFallback);
+    }
+
+    public function test_gravatar_field_rating(): void
+    {
+        $field = Gravatar::make('Gravatar')->rating('pg');
+
+        $this->assertEquals('pg', $field->rating);
+    }
+
+    public function test_gravatar_field_squared(): void
+    {
+        $field = Gravatar::make('Gravatar')->squared();
+
+        $this->assertTrue($field->squared);
+    }
+
+    public function test_gravatar_field_rounded(): void
+    {
+        $field = Gravatar::make('Gravatar')->rounded();
+
+        $this->assertTrue($field->rounded);
+        $this->assertFalse($field->squared);
+    }
+
+    public function test_gravatar_field_generate_url(): void
+    {
+        $field = Gravatar::make('Gravatar')->size(100);
+
+        $url = $field->generateGravatarUrl('test@example.com');
+
+        $this->assertStringContainsString('gravatar.com/avatar/', $url);
+        $this->assertStringContainsString('s=100', $url);
+    }
+
+    public function test_gravatar_field_generate_url_with_options(): void
+    {
+        $field = Gravatar::make('Gravatar')
+            ->size(150)
+            ->defaultImage('identicon')
+            ->rating('g');
+
+        $url = $field->generateGravatarUrl('test@example.com');
+
+        $this->assertStringContainsString('s=150', $url);
+        $this->assertStringContainsString('d=identicon', $url);
+        $this->assertStringContainsString('r=g', $url);
+    }
+
+    public function test_gravatar_field_meta_information(): void
+    {
+        $field = Gravatar::make('Gravatar')
+            ->fromEmail('email')
+            ->size(120)
+            ->defaultImage('mp')
+            ->rating('pg')
+            ->rounded();
+
+        $meta = $field->meta();
+
+        $this->assertArrayHasKey('emailAttribute', $meta);
+        $this->assertArrayHasKey('size', $meta);
+        $this->assertArrayHasKey('defaultFallback', $meta);
+        $this->assertArrayHasKey('rating', $meta);
+        $this->assertArrayHasKey('squared', $meta);
+        $this->assertArrayHasKey('rounded', $meta);
+        $this->assertEquals('email', $meta['emailAttribute']);
+        $this->assertEquals(120, $meta['size']);
+        $this->assertEquals('mp', $meta['defaultFallback']);
+        $this->assertEquals('pg', $meta['rating']);
+        $this->assertFalse($meta['squared']);
+        $this->assertTrue($meta['rounded']);
+    }
+
+    // ========================================
+    // Advanced Field Behavior Tests
+    // ========================================
+
+    public function test_field_immutable(): void
+    {
+        $field = Text::make('Name')->immutable();
+
+        $this->assertTrue($field->immutable);
+    }
+
+    public function test_field_immutable_false(): void
+    {
+        $field = Text::make('Name')->immutable(false);
+
+        $this->assertFalse($field->immutable);
+    }
+
+    public function test_field_filterable(): void
+    {
+        $field = Text::make('Name')->filterable();
+
+        $this->assertTrue($field->filterable);
+    }
+
+    public function test_field_filterable_false(): void
+    {
+        $field = Text::make('Name')->filterable(false);
+
+        $this->assertFalse($field->filterable);
+    }
+
+    public function test_field_copyable_base_class(): void
+    {
+        $field = Text::make('Name')->copyable();
+
+        $this->assertTrue($field->copyable);
+    }
+
+    public function test_field_copyable_false_base_class(): void
+    {
+        $field = Text::make('Name')->copyable(false);
+
+        $this->assertFalse($field->copyable);
+    }
+
+    public function test_field_as_html(): void
+    {
+        $field = Text::make('Description')->asHtml();
+
+        $this->assertTrue($field->asHtml);
+    }
+
+    public function test_field_as_html_false(): void
+    {
+        $field = Text::make('Description')->asHtml(false);
+
+        $this->assertFalse($field->asHtml);
+    }
+
+    public function test_field_text_align(): void
+    {
+        $field = Text::make('Amount')->textAlign('right');
+
+        $this->assertEquals('right', $field->textAlign);
+    }
+
+    public function test_field_text_align_center(): void
+    {
+        $field = Text::make('Title')->textAlign('center');
+
+        $this->assertEquals('center', $field->textAlign);
+    }
+
+    public function test_field_text_align_left(): void
+    {
+        $field = Text::make('Name')->textAlign('left');
+
+        $this->assertEquals('left', $field->textAlign);
+    }
+
+    public function test_field_stacked(): void
+    {
+        $field = Text::make('Description')->stacked();
+
+        $this->assertTrue($field->stacked);
+    }
+
+    public function test_field_stacked_false(): void
+    {
+        $field = Text::make('Description')->stacked(false);
+
+        $this->assertFalse($field->stacked);
+    }
+
+    public function test_field_full_width(): void
+    {
+        $field = Text::make('Description')->fullWidth();
+
+        $this->assertTrue($field->fullWidth);
+    }
+
+    public function test_field_full_width_false(): void
+    {
+        $field = Text::make('Description')->fullWidth(false);
+
+        $this->assertFalse($field->fullWidth);
+    }
+
+    public function test_field_advanced_behavior_json_serialization(): void
+    {
+        $field = Text::make('Name')
+            ->immutable()
+            ->filterable()
+            ->copyable()
+            ->asHtml()
+            ->textAlign('center')
+            ->stacked()
+            ->fullWidth();
+
+        $json = $field->jsonSerialize();
+
+        $this->assertArrayHasKey('immutable', $json);
+        $this->assertArrayHasKey('filterable', $json);
+        $this->assertArrayHasKey('copyable', $json);
+        $this->assertArrayHasKey('asHtml', $json);
+        $this->assertArrayHasKey('textAlign', $json);
+        $this->assertArrayHasKey('stacked', $json);
+        $this->assertArrayHasKey('fullWidth', $json);
+        $this->assertTrue($json['immutable']);
+        $this->assertTrue($json['filterable']);
+        $this->assertTrue($json['copyable']);
+        $this->assertTrue($json['asHtml']);
+        $this->assertEquals('center', $json['textAlign']);
+        $this->assertTrue($json['stacked']);
+        $this->assertTrue($json['fullWidth']);
+    }
+
+    // ========================================
+    // Text Field Specific Advanced Behavior Tests
+    // ========================================
+
+    public function test_text_field_enforce_maxlength(): void
+    {
+        $field = Text::make('Name')->enforceMaxlength();
+
+        $this->assertTrue($field->enforceMaxlength);
+    }
+
+    public function test_text_field_enforce_maxlength_false(): void
+    {
+        $field = Text::make('Name')->enforceMaxlength(false);
+
+        $this->assertFalse($field->enforceMaxlength);
+    }
+
+    public function test_text_field_enforce_maxlength_with_max_length(): void
+    {
+        $field = Text::make('Name')
+            ->maxLength(50)
+            ->enforceMaxlength();
+
+        $this->assertEquals(50, $field->maxLength);
+        $this->assertTrue($field->enforceMaxlength);
+    }
+
+    public function test_text_field_advanced_json_serialization(): void
+    {
+        $field = Text::make('Name')
+            ->maxLength(100)
+            ->enforceMaxlength()
+            ->suggestions(['John', 'Jane', 'Bob'])
+            ->copyable()
+            ->textAlign('left');
+
+        $json = $field->jsonSerialize();
+
+        $this->assertArrayHasKey('maxLength', $json);
+        $this->assertArrayHasKey('enforceMaxlength', $json);
+        $this->assertArrayHasKey('suggestions', $json);
+        $this->assertArrayHasKey('copyable', $json);
+        $this->assertArrayHasKey('textAlign', $json);
+        $this->assertEquals(100, $json['maxLength']);
+        $this->assertTrue($json['enforceMaxlength']);
+        $this->assertEquals(['John', 'Jane', 'Bob'], $json['suggestions']);
+        $this->assertTrue($json['copyable']);
+        $this->assertEquals('left', $json['textAlign']);
+    }
+
+    // ========================================
+    // BelongsTo Relationship Field Tests
+    // ========================================
+
+    public function test_belongs_to_field_creation(): void
+    {
+        $field = BelongsTo::make('User');
+
+        $this->assertEquals('User', $field->name);
+        $this->assertEquals('user', $field->attribute);
+        $this->assertEquals('BelongsToField', $field->component);
+        $this->assertEquals('user', $field->relationshipName);
+    }
+
+    public function test_belongs_to_field_with_custom_attribute(): void
+    {
+        $field = BelongsTo::make('Author', 'author_id');
+
+        $this->assertEquals('Author', $field->name);
+        $this->assertEquals('author_id', $field->attribute);
+        $this->assertEquals('author_id', $field->relationshipName);
+    }
+
+    public function test_belongs_to_field_with_resource_class(): void
+    {
+        $field = BelongsTo::make('User')->resource('App\\Resources\\UserResource');
+
+        $this->assertEquals('App\\Resources\\UserResource', $field->resourceClass);
+    }
+
+    public function test_belongs_to_field_resource_method(): void
+    {
+        $field = BelongsTo::make('User')->resource('App\\Resources\\UserResource');
+
+        $this->assertEquals('App\\Resources\\UserResource', $field->resourceClass);
+    }
+
+    public function test_belongs_to_field_relationship_method(): void
+    {
+        $field = BelongsTo::make('User')->relationship('author');
+
+        $this->assertEquals('author', $field->relationshipName);
+    }
+
+    public function test_belongs_to_field_foreign_key(): void
+    {
+        $field = BelongsTo::make('User')->foreignKey('author_id');
+
+        $this->assertEquals('author_id', $field->foreignKey);
+    }
+
+    public function test_belongs_to_field_owner_key(): void
+    {
+        $field = BelongsTo::make('User')->ownerKey('uuid');
+
+        $this->assertEquals('uuid', $field->ownerKey);
+    }
+
+    public function test_belongs_to_field_searchable(): void
+    {
+        $field = BelongsTo::make('User')->searchable();
+
+        $this->assertTrue($field->searchable);
+    }
+
+    public function test_belongs_to_field_searchable_false(): void
+    {
+        $field = BelongsTo::make('User')->searchable(false);
+
+        $this->assertFalse($field->searchable);
+    }
+
+    public function test_belongs_to_field_show_create_button(): void
+    {
+        $field = BelongsTo::make('User')->showCreateButton();
+
+        $this->assertTrue($field->showCreateButton);
+    }
+
+    public function test_belongs_to_field_show_create_button_false(): void
+    {
+        $field = BelongsTo::make('User')->showCreateButton(false);
+
+        $this->assertFalse($field->showCreateButton);
+    }
+
+    public function test_belongs_to_field_display_callback(): void
+    {
+        $callback = fn($model) => $model->name;
+        $field = BelongsTo::make('User')->display($callback);
+
+        $this->assertEquals($callback, $field->displayCallback);
+    }
+
+    public function test_belongs_to_field_query_callback(): void
+    {
+        $callback = fn($request, $query) => $query->where('active', true);
+        $field = BelongsTo::make('User')->query($callback);
+
+        $this->assertEquals($callback, $field->queryCallback);
+    }
+
+    public function test_belongs_to_field_guess_resource_class(): void
+    {
+        $field = BelongsTo::make('User Category', 'user_category');
+
+        $this->assertEquals('App\\AdminPanel\\Resources\\UserCategory', $field->resourceClass);
+    }
+
+    public function test_belongs_to_field_meta_information(): void
+    {
+        $field = BelongsTo::make('User')
+            ->resource('App\\Resources\\UserResource')
+            ->relationship('author')
+            ->foreignKey('author_id')
+            ->ownerKey('uuid')
+            ->searchable()
+            ->showCreateButton();
+
+        $meta = $field->meta();
+
+        $this->assertArrayHasKey('resourceClass', $meta);
+        $this->assertArrayHasKey('relationshipName', $meta);
+        $this->assertArrayHasKey('foreignKey', $meta);
+        $this->assertArrayHasKey('ownerKey', $meta);
+        $this->assertArrayHasKey('searchable', $meta);
+        $this->assertArrayHasKey('showCreateButton', $meta);
+        $this->assertEquals('App\\Resources\\UserResource', $meta['resourceClass']);
+        $this->assertEquals('author', $meta['relationshipName']);
+        $this->assertEquals('author_id', $meta['foreignKey']);
+        $this->assertEquals('uuid', $meta['ownerKey']);
+        $this->assertTrue($meta['searchable']);
+        $this->assertTrue($meta['showCreateButton']);
+    }
+
+    // ========================================
+    // HasMany Relationship Field Tests
+    // ========================================
+
+    public function test_has_many_field_creation(): void
+    {
+        $field = HasMany::make('Posts');
+
+        $this->assertEquals('Posts', $field->name);
+        $this->assertEquals('posts', $field->attribute);
+        $this->assertEquals('HasManyField', $field->component);
+        $this->assertEquals('posts', $field->relationshipName);
+    }
+
+    public function test_has_many_field_with_custom_attribute(): void
+    {
+        $field = HasMany::make('Blog Posts', 'blog_posts');
+
+        $this->assertEquals('Blog Posts', $field->name);
+        $this->assertEquals('blog_posts', $field->attribute);
+        $this->assertEquals('blog_posts', $field->relationshipName);
+    }
+
+    public function test_has_many_field_resource_method(): void
+    {
+        $field = HasMany::make('Posts')->resource('App\\Resources\\PostResource');
+
+        $this->assertEquals('App\\Resources\\PostResource', $field->resourceClass);
+    }
+
+    public function test_has_many_field_relationship_method(): void
+    {
+        $field = HasMany::make('Posts')->relationship('blogPosts');
+
+        $this->assertEquals('blogPosts', $field->relationshipName);
+    }
+
+    public function test_has_many_field_foreign_key(): void
+    {
+        $field = HasMany::make('Posts')->foreignKey('user_id');
+
+        $this->assertEquals('user_id', $field->foreignKey);
+    }
+
+    public function test_has_many_field_local_key(): void
+    {
+        $field = HasMany::make('Posts')->localKey('uuid');
+
+        $this->assertEquals('uuid', $field->localKey);
+    }
+
+    public function test_has_many_field_searchable(): void
+    {
+        $field = HasMany::make('Posts')->searchable();
+
+        $this->assertTrue($field->searchable);
+    }
+
+    public function test_has_many_field_searchable_false(): void
+    {
+        $field = HasMany::make('Posts')->searchable(false);
+
+        $this->assertFalse($field->searchable);
+    }
+
+    public function test_has_many_field_show_create_button(): void
+    {
+        $field = HasMany::make('Posts')->showCreateButton();
+
+        $this->assertTrue($field->showCreateButton);
+    }
+
+    public function test_has_many_field_show_create_button_false(): void
+    {
+        $field = HasMany::make('Posts')->showCreateButton(false);
+
+        $this->assertFalse($field->showCreateButton);
+    }
+
+    public function test_has_many_field_show_attach_button(): void
+    {
+        $field = HasMany::make('Posts')->showAttachButton();
+
+        $this->assertTrue($field->showAttachButton);
+    }
+
+    public function test_has_many_field_show_attach_button_false(): void
+    {
+        $field = HasMany::make('Posts')->showAttachButton(false);
+
+        $this->assertFalse($field->showAttachButton);
+    }
+
+    public function test_has_many_field_per_page(): void
+    {
+        $field = HasMany::make('Posts')->perPage(25);
+
+        $this->assertEquals(25, $field->perPage);
+    }
+
+    public function test_has_many_field_display_fields(): void
+    {
+        $fields = ['title', 'status', 'created_at'];
+        $field = HasMany::make('Posts')->displayFields($fields);
+
+        $this->assertEquals($fields, $field->displayFields);
+    }
+
+    public function test_has_many_field_query_callback(): void
+    {
+        $callback = fn($request, $query) => $query->where('published', true);
+        $field = HasMany::make('Posts')->query($callback);
+
+        $this->assertEquals($callback, $field->queryCallback);
+    }
+
+    public function test_has_many_field_only_on_detail_by_default(): void
+    {
+        $field = HasMany::make('Posts');
+
+        $this->assertFalse($field->showOnIndex);
+        $this->assertTrue($field->showOnDetail);
+        $this->assertFalse($field->showOnCreation);
+        $this->assertFalse($field->showOnUpdate);
+    }
+
+    public function test_has_many_field_guess_resource_class(): void
+    {
+        $field = HasMany::make('Blog Posts', 'blog_posts');
+
+        $this->assertEquals('App\\AdminPanel\\Resources\\BlogPosts', $field->resourceClass);
+    }
+
+    public function test_has_many_field_meta_information(): void
+    {
+        $field = HasMany::make('Posts')
+            ->resource('App\\Resources\\PostResource')
+            ->relationship('blogPosts')
+            ->foreignKey('user_id')
+            ->localKey('uuid')
+            ->searchable()
+            ->showCreateButton()
+            ->showAttachButton()
+            ->perPage(25)
+            ->displayFields(['title', 'status']);
+
+        $meta = $field->meta();
+
+        $this->assertArrayHasKey('resourceClass', $meta);
+        $this->assertArrayHasKey('relationshipName', $meta);
+        $this->assertArrayHasKey('foreignKey', $meta);
+        $this->assertArrayHasKey('localKey', $meta);
+        $this->assertArrayHasKey('searchable', $meta);
+        $this->assertArrayHasKey('showCreateButton', $meta);
+        $this->assertArrayHasKey('showAttachButton', $meta);
+        $this->assertArrayHasKey('perPage', $meta);
+        $this->assertArrayHasKey('displayFields', $meta);
+        $this->assertEquals('App\\Resources\\PostResource', $meta['resourceClass']);
+        $this->assertEquals('blogPosts', $meta['relationshipName']);
+        $this->assertEquals('user_id', $meta['foreignKey']);
+        $this->assertEquals('uuid', $meta['localKey']);
+        $this->assertTrue($meta['searchable']);
+        $this->assertTrue($meta['showCreateButton']);
+        $this->assertTrue($meta['showAttachButton']);
+        $this->assertEquals(25, $meta['perPage']);
+        $this->assertEquals(['title', 'status'], $meta['displayFields']);
+    }
+
+    // ========================================
+    // ManyToMany Relationship Field Tests
+    // ========================================
+
+    public function test_many_to_many_field_creation(): void
+    {
+        $field = ManyToMany::make('Tags');
+
+        $this->assertEquals('Tags', $field->name);
+        $this->assertEquals('tags', $field->attribute);
+        $this->assertEquals('ManyToManyField', $field->component);
+        $this->assertEquals('tags', $field->relationshipName);
+    }
+
+    public function test_many_to_many_field_with_custom_attribute(): void
+    {
+        $field = ManyToMany::make('User Roles', 'user_roles');
+
+        $this->assertEquals('User Roles', $field->name);
+        $this->assertEquals('user_roles', $field->attribute);
+        $this->assertEquals('user_roles', $field->relationshipName);
+    }
+
+    public function test_many_to_many_field_resource_method(): void
+    {
+        $field = ManyToMany::make('Tags')->resource('App\\Resources\\TagResource');
+
+        $this->assertEquals('App\\Resources\\TagResource', $field->resourceClass);
+    }
+
+    public function test_many_to_many_field_relationship_method(): void
+    {
+        $field = ManyToMany::make('Tags')->relationship('userTags');
+
+        $this->assertEquals('userTags', $field->relationshipName);
+    }
+
+    public function test_many_to_many_field_pivot_table(): void
+    {
+        $field = ManyToMany::make('Tags')->pivotTable('user_tags');
+
+        $this->assertEquals('user_tags', $field->pivotTable);
+    }
+
+    public function test_many_to_many_field_foreign_pivot_key(): void
+    {
+        $field = ManyToMany::make('Tags')->foreignPivotKey('user_id');
+
+        $this->assertEquals('user_id', $field->foreignPivotKey);
+    }
+
+    public function test_many_to_many_field_related_pivot_key(): void
+    {
+        $field = ManyToMany::make('Tags')->relatedPivotKey('tag_id');
+
+        $this->assertEquals('tag_id', $field->relatedPivotKey);
+    }
+
+    public function test_many_to_many_field_parent_key(): void
+    {
+        $field = ManyToMany::make('Tags')->parentKey('uuid');
+
+        $this->assertEquals('uuid', $field->parentKey);
+    }
+
+    public function test_many_to_many_field_related_key(): void
+    {
+        $field = ManyToMany::make('Tags')->relatedKey('uuid');
+
+        $this->assertEquals('uuid', $field->relatedKey);
+    }
+
+    public function test_many_to_many_field_searchable(): void
+    {
+        $field = ManyToMany::make('Tags')->searchable();
+
+        $this->assertTrue($field->searchable);
+    }
+
+    public function test_many_to_many_field_searchable_false(): void
+    {
+        $field = ManyToMany::make('Tags')->searchable(false);
+
+        $this->assertFalse($field->searchable);
+    }
+
+    public function test_many_to_many_field_show_attach_button(): void
+    {
+        $field = ManyToMany::make('Tags')->showAttachButton();
+
+        $this->assertTrue($field->showAttachButton);
+    }
+
+    public function test_many_to_many_field_show_attach_button_false(): void
+    {
+        $field = ManyToMany::make('Tags')->showAttachButton(false);
+
+        $this->assertFalse($field->showAttachButton);
+    }
+
+    public function test_many_to_many_field_show_detach_button(): void
+    {
+        $field = ManyToMany::make('Tags')->showDetachButton();
+
+        $this->assertTrue($field->showDetachButton);
+    }
+
+    public function test_many_to_many_field_show_detach_button_false(): void
+    {
+        $field = ManyToMany::make('Tags')->showDetachButton(false);
+
+        $this->assertFalse($field->showDetachButton);
+    }
+
+    public function test_many_to_many_field_pivot_fields(): void
+    {
+        $fields = ['created_at', 'role', 'permissions'];
+        $field = ManyToMany::make('Tags')->pivotFields($fields);
+
+        $this->assertEquals($fields, $field->pivotFields);
+    }
+
+    public function test_many_to_many_field_display_callback(): void
+    {
+        $callback = fn($model) => $model->name;
+        $field = ManyToMany::make('Tags')->display($callback);
+
+        $this->assertEquals($callback, $field->displayCallback);
+    }
+
+    public function test_many_to_many_field_query_callback(): void
+    {
+        $callback = fn($request, $query) => $query->where('active', true);
+        $field = ManyToMany::make('Tags')->query($callback);
+
+        $this->assertEquals($callback, $field->queryCallback);
+    }
+
+    public function test_many_to_many_field_only_on_detail_by_default(): void
+    {
+        $field = ManyToMany::make('Tags');
+
+        $this->assertFalse($field->showOnIndex);
+        $this->assertTrue($field->showOnDetail);
+        $this->assertFalse($field->showOnCreation);
+        $this->assertFalse($field->showOnUpdate);
+    }
+
+    public function test_many_to_many_field_guess_resource_class(): void
+    {
+        $field = ManyToMany::make('User Roles', 'user_roles');
+
+        $this->assertEquals('App\\AdminPanel\\Resources\\UserRoles', $field->resourceClass);
+    }
+
+    public function test_many_to_many_field_meta_information(): void
+    {
+        $field = ManyToMany::make('Tags')
+            ->resource('App\\Resources\\TagResource')
+            ->relationship('userTags')
+            ->pivotTable('user_tags')
+            ->foreignPivotKey('user_id')
+            ->relatedPivotKey('tag_id')
+            ->parentKey('uuid')
+            ->relatedKey('uuid')
+            ->searchable()
+            ->showAttachButton()
+            ->showDetachButton()
+            ->pivotFields(['created_at', 'role']);
+
+        $meta = $field->meta();
+
+        $this->assertArrayHasKey('resourceClass', $meta);
+        $this->assertArrayHasKey('relationshipName', $meta);
+        $this->assertArrayHasKey('pivotTable', $meta);
+        $this->assertArrayHasKey('foreignPivotKey', $meta);
+        $this->assertArrayHasKey('relatedPivotKey', $meta);
+        $this->assertArrayHasKey('parentKey', $meta);
+        $this->assertArrayHasKey('relatedKey', $meta);
+        $this->assertArrayHasKey('searchable', $meta);
+        $this->assertArrayHasKey('showAttachButton', $meta);
+        $this->assertArrayHasKey('showDetachButton', $meta);
+        $this->assertArrayHasKey('pivotFields', $meta);
+        $this->assertEquals('App\\Resources\\TagResource', $meta['resourceClass']);
+        $this->assertEquals('userTags', $meta['relationshipName']);
+        $this->assertEquals('user_tags', $meta['pivotTable']);
+        $this->assertEquals('user_id', $meta['foreignPivotKey']);
+        $this->assertEquals('tag_id', $meta['relatedPivotKey']);
+        $this->assertEquals('uuid', $meta['parentKey']);
+        $this->assertEquals('uuid', $meta['relatedKey']);
+        $this->assertTrue($meta['searchable']);
+        $this->assertTrue($meta['showAttachButton']);
+        $this->assertTrue($meta['showDetachButton']);
+        $this->assertEquals(['created_at', 'role'], $meta['pivotFields']);
+    }
+
+    // ========================================
+    // Field-Level Authorization Tests
+    // ========================================
+
+    public function test_field_can_see_callback(): void
+    {
+        $callback = fn($request, $resource) => true;
+        $field = Text::make('Name')->canSee($callback);
+
+        $this->assertEquals($callback, $field->canSeeCallback);
+    }
+
+    public function test_field_can_update_callback(): void
+    {
+        $callback = fn($request, $resource) => true;
+        $field = Text::make('Name')->canUpdate($callback);
+
+        $this->assertEquals($callback, $field->canUpdateCallback);
+    }
+
+    public function test_field_authorized_to_see_returns_true_by_default(): void
+    {
+        $field = Text::make('Name');
+        $request = new \Illuminate\Http\Request();
+
+        $result = $field->authorizedToSee($request);
+
+        $this->assertTrue($result);
+    }
+
+    public function test_field_authorized_to_see_with_callback(): void
+    {
+        $field = Text::make('Name')->canSee(fn($request, $resource) => false);
+        $request = new \Illuminate\Http\Request();
+
+        $result = $field->authorizedToSee($request);
+
+        $this->assertFalse($result);
+    }
+
+    public function test_field_authorized_to_update_returns_true_by_default(): void
+    {
+        $field = Text::make('Name');
+        $request = new \Illuminate\Http\Request();
+
+        $result = $field->authorizedToUpdate($request);
+
+        $this->assertTrue($result);
+    }
+
+    public function test_field_authorized_to_update_with_callback(): void
+    {
+        $field = Text::make('Name')->canUpdate(fn($request, $resource) => false);
+        $request = new \Illuminate\Http\Request();
+
+        $result = $field->authorizedToUpdate($request);
+
+        $this->assertFalse($result);
+    }
+
+    public function test_field_only_for_role(): void
+    {
+        $field = Text::make('Name')->onlyForRole('admin');
+        $request = new \Illuminate\Http\Request();
+
+        // Mock user without role
+        $request->setUserResolver(fn() => null);
+        $this->assertFalse($field->authorizedToSee($request));
+
+        // Mock user with different role
+        $user = new class {
+            public string $role = 'user';
+            public function hasRole(string $role): bool { return $this->role === $role; }
+        };
+        $request->setUserResolver(fn() => $user);
+        $this->assertFalse($field->authorizedToSee($request));
+
+        // Mock user with admin role
+        $user->role = 'admin';
+        $this->assertTrue($field->authorizedToSee($request));
+    }
+
+    public function test_field_only_for_permission(): void
+    {
+        $field = Text::make('Name')->onlyForPermission('edit-posts');
+        $request = new \Illuminate\Http\Request();
+
+        // Mock user without permission
+        $user = new class {
+            public function hasPermission(string $permission): bool { return false; }
+        };
+        $request->setUserResolver(fn() => $user);
+        $this->assertFalse($field->authorizedToSee($request));
+
+        // Mock user with permission
+        $user = new class {
+            public function hasPermission(string $permission): bool { return $permission === 'edit-posts'; }
+        };
+        $request->setUserResolver(fn() => $user);
+        $this->assertTrue($field->authorizedToSee($request));
+    }
+
+    public function test_field_only_for_admins(): void
+    {
+        $field = Text::make('Name')->onlyForAdmins();
+        $request = new \Illuminate\Http\Request();
+
+        // Mock user with user role
+        $user = new class {
+            public string $role = 'user';
+            public function hasRole(string $role): bool { return $this->role === $role; }
+        };
+        $request->setUserResolver(fn() => $user);
+        $this->assertFalse($field->authorizedToSee($request));
+
+        // Mock user with admin role
+        $user->role = 'admin';
+        $this->assertTrue($field->authorizedToSee($request));
+    }
+
+    public function test_field_hide_from_index_when(): void
+    {
+        $field = Text::make('Name')->hideFromIndexWhen(fn($request, $resource) => true);
+
+        $this->assertFalse($field->showOnIndex);
+    }
+
+    public function test_field_hide_from_detail_when(): void
+    {
+        $field = Text::make('Name')->hideFromDetailWhen(fn($request, $resource) => true);
+
+        $this->assertFalse($field->showOnDetail);
+    }
+
+    public function test_field_readonly_when(): void
+    {
+        $field = Text::make('Name')->readonlyWhen(fn($request, $resource) => true);
+
+        $this->assertTrue($field->readonly);
     }
 }

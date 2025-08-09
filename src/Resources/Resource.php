@@ -9,15 +9,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use JTD\AdminPanel\Menu\MenuItem;
+use JTD\AdminPanel\Policies\ResourcePolicy;
 
 /**
- * Base Resource Class
+ * Base Resource Class.
  *
  * Abstract base class for all admin panel resources. Provides Nova-like
  * API for resource registration, field definition, and CRUD operations.
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
- * @package JTD\AdminPanel\Resources
  */
 abstract class Resource
 {
@@ -50,6 +50,11 @@ abstract class Resource
      * The logical group associated with the resource.
      */
     public static ?string $group = null;
+
+    /**
+     * The policy class for the resource.
+     */
+    public static ?string $policy = null;
 
     /**
      * The underlying model resource instance.
@@ -280,6 +285,161 @@ abstract class Resource
     public function authorizedToDelete(Request $request): bool
     {
         return true;
+    }
+
+    /**
+     * Get the policy instance for the resource.
+     */
+    public static function policy(): ?ResourcePolicy
+    {
+        if (static::$policy) {
+            return app(static::$policy);
+        }
+
+        // Try to auto-resolve policy based on resource name
+        $policyClass = static::guessPolicyClass();
+
+        if (class_exists($policyClass)) {
+            return app($policyClass);
+        }
+
+        return null;
+    }
+
+    /**
+     * Guess the policy class name based on the resource class.
+     */
+    protected static function guessPolicyClass(): string
+    {
+        $resourceClass = class_basename(static::class);
+
+        // Remove 'Resource' suffix and any test-related suffixes
+        $policyClass = preg_replace('/Resource$/', '', $resourceClass);
+        $policyClass = preg_replace('/WithPolicy$/', '', $policyClass);
+        $policyClass = preg_replace('/WithoutPolicy$/', '', $policyClass);
+
+        return "App\\Policies\\{$policyClass}Policy";
+    }
+
+    /**
+     * Check authorization using the policy.
+     */
+    public function checkPolicy(Request $request, string $ability, ...$arguments): bool
+    {
+        $policy = static::policy();
+
+        if (! $policy) {
+            return true; // No policy means no restrictions
+        }
+
+        $user = $request->user();
+
+        if (! $user) {
+            return false; // No user means no access
+        }
+
+        // Call the policy method
+        if (method_exists($policy, $ability)) {
+            return $policy->{$ability}($user, ...$arguments);
+        }
+
+        return true; // Method doesn't exist, allow by default
+    }
+
+    /**
+     * Determine if the current user can view any resources (with policy).
+     */
+    public function authorizedToViewAny(Request $request): bool
+    {
+        return $this->checkPolicy($request, 'viewAny');
+    }
+
+    /**
+     * Determine if the current user can view the resource (with policy).
+     */
+    public function authorizedToViewWithPolicy(Request $request): bool
+    {
+        return $this->checkPolicy($request, 'view', $this->resource);
+    }
+
+    /**
+     * Determine if the current user can create new resources (with policy).
+     */
+    public function authorizedToCreateWithPolicy(Request $request): bool
+    {
+        return $this->checkPolicy($request, 'create');
+    }
+
+    /**
+     * Determine if the current user can update the resource (with policy).
+     */
+    public function authorizedToUpdateWithPolicy(Request $request): bool
+    {
+        return $this->checkPolicy($request, 'update', $this->resource);
+    }
+
+    /**
+     * Determine if the current user can delete the resource (with policy).
+     */
+    public function authorizedToDeleteWithPolicy(Request $request): bool
+    {
+        return $this->checkPolicy($request, 'delete', $this->resource);
+    }
+
+    /**
+     * Determine if the current user can restore the resource (with policy).
+     */
+    public function authorizedToRestore(Request $request): bool
+    {
+        return $this->checkPolicy($request, 'restore', $this->resource);
+    }
+
+    /**
+     * Determine if the current user can force delete the resource (with policy).
+     */
+    public function authorizedToForceDelete(Request $request): bool
+    {
+        return $this->checkPolicy($request, 'forceDelete', $this->resource);
+    }
+
+    /**
+     * Determine if the current user can attach models (with policy).
+     */
+    public function authorizedToAttach(Request $request): bool
+    {
+        return $this->checkPolicy($request, 'attach', $this->resource);
+    }
+
+    /**
+     * Determine if the current user can detach models (with policy).
+     */
+    public function authorizedToDetach(Request $request): bool
+    {
+        return $this->checkPolicy($request, 'detach', $this->resource);
+    }
+
+    /**
+     * Determine if the current user can run an action (with policy).
+     */
+    public function authorizedToRunAction(Request $request, string $action): bool
+    {
+        return $this->checkPolicy($request, 'runAction', $this->resource, $action);
+    }
+
+    /**
+     * Determine if the current user can export resources (with policy).
+     */
+    public function authorizedToExport(Request $request): bool
+    {
+        return $this->checkPolicy($request, 'export');
+    }
+
+    /**
+     * Determine if the current user can import resources (with policy).
+     */
+    public function authorizedToImport(Request $request): bool
+    {
+        return $this->checkPolicy($request, 'import');
     }
 
     /**

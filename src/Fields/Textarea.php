@@ -7,12 +7,11 @@ namespace JTD\AdminPanel\Fields;
 use Illuminate\Http\Request;
 
 /**
- * Textarea Field
- * 
+ * Textarea Field.
+ *
  * A textarea input field with support for character limits and auto-resize.
- * 
+ *
  * @author Jeremy Fall <jerthedev@gmail.com>
- * @package JTD\AdminPanel\Fields
  */
 class Textarea extends Field
 {
@@ -40,6 +39,11 @@ class Textarea extends Field
      * Whether to show the character count.
      */
     public bool $showCharacterCount = false;
+
+    /**
+     * Whether the textarea should always be shown (not collapsed).
+     */
+    public bool $alwaysShow = false;
 
     /**
      * Set the number of rows for the textarea.
@@ -83,6 +87,16 @@ class Textarea extends Field
     }
 
     /**
+     * Set whether the textarea should always be shown (not collapsed).
+     */
+    public function alwaysShow(bool $alwaysShow = true): static
+    {
+        $this->alwaysShow = $alwaysShow;
+
+        return $this;
+    }
+
+    /**
      * Hydrate the given attribute on the model based on the incoming request.
      */
     public function fill(Request $request, $model): void
@@ -91,13 +105,13 @@ class Textarea extends Field
             call_user_func($this->fillCallback, $request, $model, $this->attribute);
         } elseif ($request->exists($this->attribute)) {
             $value = $request->input($this->attribute);
-            
+
             // Trim whitespace and normalize line endings
             if (is_string($value)) {
                 $value = trim($value);
                 $value = str_replace(["\r\n", "\r"], "\n", $value);
             }
-            
+
             $model->{$this->attribute} = $value;
         }
     }
@@ -112,6 +126,7 @@ class Textarea extends Field
             'maxLength' => $this->maxLength,
             'autoResize' => $this->autoResize,
             'showCharacterCount' => $this->showCharacterCount,
+            'alwaysShow' => $this->alwaysShow,
         ]);
     }
 }

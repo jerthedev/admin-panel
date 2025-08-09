@@ -40,10 +40,14 @@
         Dashboard
       </SidebarItem>
 
+
+
       <!-- Resources Menu Widget -->
       <div class="pt-4">
         <ResourcesMenu />
       </div>
+
+
 
       <!-- Custom Pages -->
       <div v-if="customPages.length > 0" class="pt-4">
@@ -53,8 +57,8 @@
         <div class="mt-2 space-y-1">
           <SidebarItem
             v-for="page in customPages"
-            :key="page.name"
-            :href="page.href"
+            :key="page.routeName"
+            :href="routeHelper(page.routeName)"
             :active="$page.component === page.component"
             :icon="page.icon"
           >
@@ -113,7 +117,7 @@ const adminStore = useAdminStore()
 const isDarkTheme = computed(() => adminStore.isDarkTheme)
 const sidebarOpen = computed(() => adminStore.sidebarOpen)
 const user = computed(() => page.props.auth?.user)
-const customPages = computed(() => page.props.customPages || [])
+const customPages = computed(() => page.props.pages || [])
 const appName = computed(() => page.props.config?.admin_panel?.name || 'Admin Panel')
 const isMobile = computed(() => window.innerWidth < 768)
 
@@ -143,6 +147,11 @@ const routeHelper = (name, params = {}) => {
       case 'admin-panel.resources.edit':
         return `${adminPath}/resources/${params.resource}/${params.id}/edit`
       default:
+        // Handle custom page routes
+        if (name && name.startsWith('admin-panel.pages.')) {
+          const pageName = name.replace('admin-panel.pages.', '')
+          return `${adminPath}/pages/${pageName}`
+        }
         return '#'
     }
   }

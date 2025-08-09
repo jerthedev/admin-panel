@@ -14,6 +14,7 @@ import vue from '@vitejs/plugin-vue'
 import laravel from 'laravel-vite-plugin'
 import tailwindcss from '@tailwindcss/vite'
 import { resolve } from 'path'
+import adminPanel from './vite/index.js'
 
 export default defineConfig({
     base: '/vendor/admin-panel/',
@@ -35,6 +36,11 @@ export default defineConfig({
                     includeAbsolute: false,
                 },
             },
+        }),
+        adminPanel({
+            adminPagesPath: '../../../resources/js/admin-panel/pages',
+            manifestPath: '../../../public/admin-panel-pages-manifest.json',
+            hotReload: true
         }),
     ],
 
@@ -59,9 +65,15 @@ export default defineConfig({
         alias: {
             '@': resolve(__dirname, 'resources/js'),
             '@components': resolve(__dirname, 'resources/js/components'),
+            '@layouts': resolve(__dirname, 'resources/js/Layouts'),
             '@pages': resolve(__dirname, 'resources/js/pages'),
             '@stores': resolve(__dirname, 'resources/js/stores'),
             '@css': resolve(__dirname, 'resources/css'),
+            // Package-scoped aliases
+            '@jerthedev-admin-panel': resolve(__dirname, 'resources/js'),
+            '@jerthedev-admin-panel/components': resolve(__dirname, 'resources/js/Components'),
+            '@jerthedev-admin-panel/layouts': resolve(__dirname, 'resources/js/Layouts'),
+            '@jerthedev-admin-panel/stores': resolve(__dirname, 'resources/js/stores'),
         },
     },
 

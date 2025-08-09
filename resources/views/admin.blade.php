@@ -36,7 +36,56 @@
                 path: '{{ config('admin-panel.path', 'admin') }}',
                 theme: '{{ config('admin-panel.theme.name', 'default') }}',
                 debug: {{ config('app.debug') ? 'true' : 'false' }},
+                basePath: '{{ base_path() }}',
+                publicPath: '{{ public_path() }}',
+                resourcesPath: '{{ resource_path() }}',
             };
+        </script>
+
+        <!-- Load Custom Pages Manifests (Multi-Package Support) -->
+        <script>
+            window.adminPanelComponentManifests = {};
+
+            @php
+                $adminPanel = app(\JTD\AdminPanel\Support\AdminPanel::class);
+                $aggregatedManifests = $adminPanel->getAggregatedManifest();
+
+                // Also load the main app manifest for backward compatibility
+                $appManifestPath = public_path('admin-panel-pages-manifest.json');
+                $appManifestData = file_exists($appManifestPath) ? json_decode(file_get_contents($appManifestPath), true) : null;
+            @endphp
+
+            @if($appManifestData && isset($appManifestData['Pages']))
+                // Main application manifest (priority 0 - highest)
+                window.adminPanelComponentManifests['app'] = {
+                    @foreach($appManifestData['Pages'] as $componentName => $componentData)
+                        'Pages/{{ $componentName }}': '{{ asset('build/' . $componentData['file']) }}',
+                    @endforeach
+                };
+                console.log('📦 Loaded main app manifest with {{ count($appManifestData['Pages']) }} components');
+            @endif
+
+            @if(!empty($aggregatedManifests))
+                // Package manifests (priority-based)
+                @foreach($aggregatedManifests as $packageName => $packageManifest)
+                    window.adminPanelComponentManifests['{{ $packageName }}'] = {
+                        @if(isset($packageManifest['components']))
+                            @foreach($packageManifest['components'] as $componentName => $componentData)
+                                @if(is_array($componentData) && isset($componentData['useFallback']) && $componentData['useFallback'])
+                                    'Pages/{{ $componentName }}': {!! json_encode($componentData) !!},
+                                @else
+                                    'Pages/{{ $componentName }}': '{{ $packageManifest['base_url'] ?? '' }}/{{ $componentData['file'] ?? $componentData }}',
+                                @endif
+                            @endforeach
+                        @endif
+                    };
+                    console.log('📦 Loaded {{ $packageName }} manifest (priority: {{ $packageManifest['priority'] ?? 100 }})');
+                @endforeach
+            @endif
+
+            @if(empty($appManifestData) && empty($aggregatedManifests))
+                console.log('📦 No custom page manifests found');
+            @endif
         </script>
 
         <!-- Load pre-built JavaScript from published location -->

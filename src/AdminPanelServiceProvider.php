@@ -15,8 +15,11 @@ use JTD\AdminPanel\Console\Commands\DoctorCommand;
 use JTD\AdminPanel\Console\Commands\InstallCommand;
 use JTD\AdminPanel\Console\Commands\ListResourcesCommand;
 use JTD\AdminPanel\Console\Commands\MakeFieldCommand;
+use JTD\AdminPanel\Console\Commands\MakePageCommand;
 use JTD\AdminPanel\Console\Commands\MakeResourceCommand;
 use JTD\AdminPanel\Console\Commands\RebuildAssetsCommand;
+use JTD\AdminPanel\Console\Commands\SetupCustomPagesCommand;
+use JTD\AdminPanel\Console\Commands\SetupHybridAssetsCommand;
 use JTD\AdminPanel\Console\Commands\UninstallCommand;
 use JTD\AdminPanel\Http\Middleware\AdminAuthenticate;
 use JTD\AdminPanel\Http\Middleware\HandleAdminInertiaRequests;
@@ -51,6 +54,11 @@ class AdminPanelServiceProvider extends ServiceProvider
 
         $this->app->alias(AdminPanel::class, 'admin-panel');
 
+        // Register the CustomPageManifestRegistry singleton
+        $this->app->singleton(\JTD\AdminPanel\Support\CustomPageManifestRegistry::class, function ($app) {
+            return new \JTD\AdminPanel\Support\CustomPageManifestRegistry();
+        });
+
         // Ziggy will be auto-discovered if installed
     }
 
@@ -66,6 +74,7 @@ class AdminPanelServiceProvider extends ServiceProvider
         $this->bootInertia();
         $this->bootViews();
         $this->bootPolicies();
+        $this->bootTestPackageManifest();
     }
 
     /**
@@ -133,6 +142,26 @@ class AdminPanelServiceProvider extends ServiceProvider
         ], function () {
             $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
         });
+
+        // Register custom page routes after all service providers have booted
+        $this->app->booted(function () {
+            $this->registerPageRoutes();
+        });
+    }
+
+    /**
+     * Register routes for custom pages.
+     */
+    protected function registerPageRoutes(): void
+    {
+        Route::group([
+            'prefix' => config('admin-panel.path', 'admin'),
+            'as' => 'admin-panel.',
+            'middleware' => ['web', 'admin.inertia', 'admin.auth'],
+        ], function () {
+            $adminPanel = app(AdminPanel::class);
+            $adminPanel->registerPageRoutes();
+        });
     }
 
     /**
@@ -161,8 +190,11 @@ class AdminPanelServiceProvider extends ServiceProvider
                 InstallCommand::class,
                 ListResourcesCommand::class,
                 MakeFieldCommand::class,
+                MakePageCommand::class,
                 MakeResourceCommand::class,
                 RebuildAssetsCommand::class,
+                SetupCustomPagesCommand::class,
+                SetupHybridAssetsCommand::class,
                 UninstallCommand::class,
             ]);
         }
@@ -198,6 +230,20 @@ class AdminPanelServiceProvider extends ServiceProvider
     protected function bootViews(): void
     {
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'admin-panel');
+    }
+
+    /**
+     * Boot test package manifest registration (for testing JTDAP-71).
+     */
+    protected function bootTestPackageManifest(): void
+    {
+        // Register a test package manifest to demonstrate multi-package support
+        AdminPanel::registerCustomPageManifest([
+            'package' => 'jerthedev/test-cms',
+            'manifest_url' => '/vendor/test-cms/admin-pages-manifest.json',
+            'priority' => 100,
+            'base_url' => '/vendor/test-cms',
+        ]);
     }
 
     /**

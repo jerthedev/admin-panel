@@ -109,6 +109,11 @@ abstract class Field
     public ?string $placeholder = null;
 
     /**
+     * The field's suffix text (displayed after the value).
+     */
+    public ?string $suffix = null;
+
+    /**
      * Additional meta information for the field.
      */
     public array $meta = [];
@@ -212,6 +217,16 @@ abstract class Field
     public function placeholder(string $placeholder): static
     {
         $this->placeholder = $placeholder;
+
+        return $this;
+    }
+
+    /**
+     * Set the field's suffix text.
+     */
+    public function suffix(string $suffix): static
+    {
+        $this->suffix = $suffix;
 
         return $this;
     }
@@ -535,6 +550,7 @@ abstract class Field
             'readonly' => $this->readonly,
             'helpText' => $this->helpText,
             'placeholder' => $this->placeholder,
+            'suffix' => $this->suffix,
             'default' => $this->default,
             'rules' => $this->rules,
         ], $this->meta());

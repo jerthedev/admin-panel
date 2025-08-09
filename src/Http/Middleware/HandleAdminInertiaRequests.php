@@ -41,8 +41,11 @@ class HandleAdminInertiaRequests extends Middleware
         $guard = config('admin-panel.auth.guard', 'web');
         $user = auth()->guard($guard)->user();
         $adminPanel = app(AdminPanel::class);
+        $navigationPages = $adminPanel->getNavigationPages($request);
 
-        return array_merge(parent::share($request), [
+
+
+        $sharedData = array_merge(parent::share($request), [
             'auth' => [
                 'user' => $user ? [
                     'id' => $user->id,
@@ -74,6 +77,22 @@ class HandleAdminInertiaRequests extends Middleware
             })->filter(function ($resource) {
                 return $resource['visible'];
             })->values(),
+            'pages' => $navigationPages->map(function ($page) use ($request) {
+                $menuItem = $page->menu($request);
+
+                return [
+                    'component' => $page::component(),
+                    'label' => $page::label(),
+                    'icon' => $page::icon(),
+                    'group' => $page::group() ?? 'Default',
+                    'routeName' => $page::routeName(),
+                    'uriPath' => $page::uriPath(),
+                    'visible' => $menuItem->isVisible($request),
+                ];
+            })->filter(function ($page) {
+                return $page['visible'];
+            })->values(),
+            'customPageManifests' => $adminPanel->getAggregatedManifest(),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
@@ -86,5 +105,9 @@ class HandleAdminInertiaRequests extends Middleware
                     : (object) [];
             },
         ]);
+
+
+
+        return $sharedData;
     }
 }

@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 namespace JTD\AdminPanel\Support;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Route;
+use JTD\AdminPanel\Http\Controllers\PageController;
 use JTD\AdminPanel\Resources\Resource;
 use JTD\AdminPanel\Support\ResourceDiscovery;
+use JTD\AdminPanel\Support\PageDiscovery;
+use JTD\AdminPanel\Support\PageRegistry;
 
 /**
  * AdminPanel Facade
@@ -40,11 +45,23 @@ class AdminPanel
     protected ResourceDiscovery $discovery;
 
     /**
+     * Page discovery service.
+     */
+    protected PageDiscovery $pageDiscovery;
+
+    /**
+     * Page registry service.
+     */
+    protected PageRegistry $pageRegistry;
+
+    /**
      * Create a new AdminPanel instance.
      */
     public function __construct()
     {
         $this->discovery = new ResourceDiscovery();
+        $this->pageDiscovery = new PageDiscovery();
+        $this->pageRegistry = new PageRegistry();
     }
 
     /**
@@ -125,6 +142,7 @@ class AdminPanel
      */
     public function registerPages(array $pages): static
     {
+        $this->pageRegistry->register($pages);
         $this->pages = array_merge($this->pages, $pages);
 
         return $this;
@@ -135,7 +153,31 @@ class AdminPanel
      */
     public function page(string $page): static
     {
+        $this->pageRegistry->page($page);
         $this->pages[] = $page;
+
+        return $this;
+    }
+
+    /**
+     * Automatically discover and register pages from a directory.
+     */
+    public static function pagesIn(string $path): void
+    {
+        $instance = app(static::class);
+        $instance->discoverPagesIn($path);
+    }
+
+    /**
+     * Discover pages in a specific directory (instance version).
+     */
+    public function discoverPagesIn(string $path): static
+    {
+        $discoveredPages = $this->pageDiscovery->discoverIn($path);
+
+        if ($discoveredPages->isNotEmpty()) {
+            $this->registerPages($discoveredPages->toArray());
+        }
 
         return $this;
     }
@@ -145,7 +187,68 @@ class AdminPanel
      */
     public function getPages(): Collection
     {
-        return collect($this->pages);
+        // Combine manually registered pages with discovered pages
+        $manualPages = collect($this->pages);
+        $discoveredPages = $this->pageDiscovery->discover();
+
+        return $manualPages->merge($discoveredPages)->unique();
+    }
+
+    /**
+     * Get the page registry instance.
+     */
+    public function getPageRegistry(): PageRegistry
+    {
+        return $this->pageRegistry;
+    }
+
+    /**
+     * Register routes for all registered pages.
+     */
+    public function registerPageRoutes(): void
+    {
+        $pages = $this->getPages();
+
+        foreach ($pages as $pageClass) {
+            $this->registerPageRoute($pageClass);
+        }
+    }
+
+    /**
+     * Register a route for a specific page.
+     */
+    protected function registerPageRoute(string $pageClass): void
+    {
+        $routeName = $pageClass::routeName();
+        $uriPath = $pageClass::uriPath();
+
+        // Remove the 'admin-panel.' prefix for the route name since it will be added by the route group
+        $shortRouteName = str_replace('admin-panel.', '', $routeName);
+
+        // Register primary route (no component parameter)
+        Route::get($uriPath, [PageController::class, 'show'])
+            ->name($shortRouteName);
+
+        // Register multi-component routes if page has multiple components
+        if ($pageClass::hasMultipleComponents()) {
+            Route::get($uriPath . '/{component}', [PageController::class, 'show'])
+                ->name($shortRouteName . '.component')
+                ->where('component', '[a-zA-Z0-9_-]+');
+        }
+    }
+
+    /**
+     * Get all page routes that should be registered.
+     */
+    public function getPageRoutes(): Collection
+    {
+        return $this->getPages()->map(function (string $pageClass) {
+            return [
+                'name' => $pageClass::routeName(),
+                'uri' => $pageClass::uriPath(),
+                'class' => $pageClass,
+            ];
+        });
     }
 
     /**
@@ -257,6 +360,70 @@ class AdminPanel
         return $this->getResources()->filter(function (Resource $resource) {
             return $resource::availableForNavigation(request());
         });
+    }
+
+    /**
+     * Get pages available for navigation.
+     */
+    public function getNavigationPages(?Request $request = null): Collection
+    {
+        $request = $request ?: request();
+
+        return $this->getPageInstances()->filter(function ($page) use ($request) {
+            return $page::availableForNavigation($request);
+        });
+    }
+
+    /**
+     * Get page instances from all registered pages.
+     */
+    public function getPageInstances(): Collection
+    {
+        return $this->getPages()->map(function (string $pageClass) {
+            return new $pageClass();
+        });
+    }
+
+    /**
+     * Get available app components from the resources/js/admin-pages directory.
+     */
+    public function getAvailableAppComponents(): array
+    {
+        $resolver = new \JTD\AdminPanel\Support\ComponentResolver();
+        return $resolver->getAvailableAppComponents();
+    }
+
+    /**
+     * Register a custom page manifest for multi-package support (static version for service providers).
+     */
+    public static function registerCustomPageManifest(array $config): void
+    {
+        $instance = app(static::class);
+        $instance->getManifestRegistry()->register($config);
+    }
+
+    /**
+     * Register a custom page manifest for multi-package support (instance version).
+     */
+    public function registerCustomPageManifestInstance(array $config): void
+    {
+        $this->getManifestRegistry()->register($config);
+    }
+
+    /**
+     * Get the manifest registry instance.
+     */
+    public function getManifestRegistry(): \JTD\AdminPanel\Support\CustomPageManifestRegistry
+    {
+        return app(\JTD\AdminPanel\Support\CustomPageManifestRegistry::class);
+    }
+
+    /**
+     * Get aggregated manifest for all registered custom pages.
+     */
+    public function getAggregatedManifest(): array
+    {
+        return $this->getManifestRegistry()->getAggregatedManifest();
     }
 
     /**

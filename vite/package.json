@@ -1,0 +1,35 @@
+{
+  "name": "@jerthedev/admin-panel-vite",
+  "version": "1.0.0",
+  "description": "Vite plugin for JTD Admin Panel custom pages",
+  "main": "index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "require": "./index.cjs"
+    }
+  },
+  "files": [
+    "index.js",
+    "index.cjs"
+  ],
+  "keywords": [
+    "vite",
+    "plugin",
+    "admin-panel",
+    "laravel",
+    "vue"
+  ],
+  "author": "Jeremy Fall <jerthedev@gmail.com>",
+  "license": "MIT",
+  "peerDependencies": {
+    "vite": "^4.0.0 || ^5.0.0"
+  },
+  "dependencies": {
+    "glob": "^10.3.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

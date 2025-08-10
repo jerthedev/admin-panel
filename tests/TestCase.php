@@ -61,6 +61,57 @@ abstract class TestCase extends Orchestra
         config()->set('admin-panel.path', 'admin');
         config()->set('admin-panel.middleware', ['web']);
 
+        // Configure media library for testing
+        config()->set('admin-panel.media_library', [
+            'default_disk' => 'public',
+            'auto_cleanup' => true,
+            'file_size_limits' => [
+                'file' => 10240,
+                'image' => 5120,
+                'avatar' => 2048,
+            ],
+            'default_conversions' => [
+                'thumb' => ['width' => 150, 'height' => 150, 'fit' => 'crop', 'quality' => 85],
+                'medium' => ['width' => 500, 'height' => 500, 'fit' => 'contain', 'quality' => 90],
+                'large' => ['width' => 1200, 'height' => 1200, 'fit' => 'contain', 'quality' => 90],
+            ],
+            'avatar_conversions' => [
+                'thumb' => ['width' => 64, 'height' => 64, 'fit' => 'crop', 'quality' => 85],
+                'medium' => ['width' => 150, 'height' => 150, 'fit' => 'crop', 'quality' => 90],
+                'large' => ['width' => 400, 'height' => 400, 'fit' => 'crop', 'quality' => 90],
+            ],
+            'responsive_images' => [
+                'enabled' => true,
+                'breakpoints' => ['sm' => 640, 'md' => 768, 'lg' => 1024, 'xl' => 1280],
+                'quality' => 85,
+            ],
+            'accepted_mime_types' => [
+                'file' => [
+                    'application/pdf',
+                    'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'text/plain',
+                    'text/csv',
+                    'application/zip',
+                    'application/x-zip-compressed',
+                ],
+                'image' => [
+                    'image/jpeg',
+                    'image/jpg',
+                    'image/png',
+                    'image/webp',
+                    'image/gif',
+                    'image/svg+xml',
+                ],
+                'avatar' => [
+                    'image/jpeg',
+                    'image/jpg',
+                    'image/png',
+                    'image/webp',
+                ],
+            ],
+        ]);
+
         // Configure authentication
         config()->set('auth.defaults.guard', 'web');
         config()->set('auth.guards.web', [

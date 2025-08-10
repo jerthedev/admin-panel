@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace JTD\AdminPanel;
 
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Gate;
-use Inertia\Inertia;
 use JTD\AdminPanel\Console\Commands\CheckCommand;
 use JTD\AdminPanel\Console\Commands\ClearCacheCommand;
 use JTD\AdminPanel\Console\Commands\CreateUserCommand;
@@ -22,8 +21,8 @@ use JTD\AdminPanel\Console\Commands\SetupCustomPagesCommand;
 use JTD\AdminPanel\Console\Commands\SetupHybridAssetsCommand;
 use JTD\AdminPanel\Console\Commands\UninstallCommand;
 use JTD\AdminPanel\Http\Middleware\AdminAuthenticate;
-use JTD\AdminPanel\Http\Middleware\HandleAdminInertiaRequests;
 use JTD\AdminPanel\Http\Middleware\AdminAuthorize;
+use JTD\AdminPanel\Http\Middleware\HandleAdminInertiaRequests;
 use JTD\AdminPanel\Support\AdminPanel;
 use Tightenco\Ziggy\ZiggyServiceProvider;
 
@@ -74,7 +73,7 @@ class AdminPanelServiceProvider extends ServiceProvider
         $this->bootInertia();
         $this->bootViews();
         $this->bootPolicies();
-        $this->bootTestPackageManifest();
+        $this->bootMediaLibrary();
     }
 
     /**
@@ -233,17 +232,74 @@ class AdminPanelServiceProvider extends ServiceProvider
     }
 
     /**
-     * Boot test package manifest registration (for testing JTDAP-71).
+     * Boot Media Library configuration.
      */
-    protected function bootTestPackageManifest(): void
+    protected function bootMediaLibrary(): void
     {
-        // Register a test package manifest to demonstrate multi-package support
-        AdminPanel::registerCustomPageManifest([
-            'package' => 'jerthedev/test-cms',
-            'manifest_url' => '/vendor/test-cms/admin-pages-manifest.json',
-            'priority' => 100,
-            'base_url' => '/vendor/test-cms',
+        // Configure default media collections and conversions
+        $this->configureDefaultMediaConversions();
+
+        // Set up automatic media cleanup
+        $this->configureMediaCleanup();
+
+        // Register media library disk configuration
+        $this->configureMediaDisks();
+    }
+
+    /**
+     * Configure default media conversions for admin panel fields.
+     */
+    protected function configureDefaultMediaConversions(): void
+    {
+        // Get default conversions from config
+        $defaultConversions = config('admin-panel.media_library.default_conversions', [
+            'thumb' => ['width' => 150, 'height' => 150, 'fit' => 'crop'],
+            'medium' => ['width' => 500, 'height' => 500, 'fit' => 'contain'],
+            'large' => ['width' => 1200, 'height' => 1200, 'quality' => 90],
         ]);
+
+        // Avatar-specific conversions
+        $avatarConversions = config('admin-panel.media_library.avatar_conversions', [
+            'thumb' => ['width' => 64, 'height' => 64, 'fit' => 'crop'],
+            'medium' => ['width' => 150, 'height' => 150, 'fit' => 'crop'],
+            'large' => ['width' => 400, 'height' => 400, 'fit' => 'crop'],
+        ]);
+
+        // Store conversions in config for field classes to use
+        config([
+            'admin-panel.media_library.conversions.default' => $defaultConversions,
+            'admin-panel.media_library.conversions.avatar' => $avatarConversions,
+        ]);
+    }
+
+    /**
+     * Configure automatic media cleanup.
+     */
+    protected function configureMediaCleanup(): void
+    {
+        // Enable automatic cleanup when models are deleted
+        if (config('admin-panel.media_library.auto_cleanup', true)) {
+            // This would typically be handled by model observers
+            // For now, we'll document this as a feature that needs to be implemented
+            // in the model classes that use HasMedia trait
+        }
+    }
+
+    /**
+     * Configure media library disk settings.
+     */
+    protected function configureMediaDisks(): void
+    {
+        // Set default disk for media library if not configured
+        $defaultDisk = config('admin-panel.media_library.default_disk', 'public');
+
+        // Ensure the disk exists in filesystem config
+        if (!config("filesystems.disks.{$defaultDisk}")) {
+            // Log warning but don't fail - let the application handle this
+            if (app()->hasDebugModeEnabled()) {
+                logger()->warning("Admin Panel: Media Library disk '{$defaultDisk}' not found in filesystem configuration");
+            }
+        }
     }
 
     /**

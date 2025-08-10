@@ -38,6 +38,12 @@ Fields for file uploads and media management:
 - [Avatar Field](./file-media-fields.md#avatar-field) - User avatar extending Image field
 - [Gravatar Field](./file-media-fields.md#gravatar-field) - Email-based avatar generation
 
+### [Media Library Fields](./media-library-fields.md) ✨ NEW
+Professional file and image management with Spatie Media Library integration:
+- [MediaLibraryFile Field](./media-library-fields.md#medialibraryfile-field) - Advanced file management with collections and conversions
+- [MediaLibraryImage Field](./media-library-fields.md#medialibraryimage-field) - Professional image management with responsive images and gallery
+- [MediaLibraryAvatar Field](./media-library-fields.md#medialibraryavatar-field) - Specialized avatar management with cropping and fallbacks
+
 ### [Display & Formatting Fields](./display-formatting-fields.md)
 Fields for enhanced display and formatting:
 - [ID Field](./display-formatting-fields.md#id-field) - Primary key display with special features

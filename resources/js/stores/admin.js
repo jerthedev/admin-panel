@@ -19,6 +19,7 @@ export const useAdminStore = defineStore('admin', () => {
     const notifications = ref([])
     const resources = ref([])
     const currentResource = ref(null)
+    const fullscreenMode = ref(false)
 
     // Getters
     const isAuthenticated = computed(() => !!user.value)
@@ -53,6 +54,14 @@ export const useAdminStore = defineStore('admin', () => {
     function setSidebarOpen(open) {
         sidebarOpen.value = open
         localStorage.setItem('admin-panel-sidebar', open ? 'open' : 'closed')
+    }
+
+    function setFullscreenMode(isFullscreen) {
+        fullscreenMode.value = isFullscreen
+    }
+
+    function toggleFullscreenMode() {
+        fullscreenMode.value = !fullscreenMode.value
     }
 
     function setLoading(isLoading) {
@@ -181,6 +190,7 @@ export const useAdminStore = defineStore('admin', () => {
         notifications,
         resources,
         currentResource,
+        fullscreenMode,
 
         // Getters
         isAuthenticated,
@@ -194,6 +204,8 @@ export const useAdminStore = defineStore('admin', () => {
         toggleSidebar,
         setSidebarOpen,
         setLoading,
+        setFullscreenMode,
+        toggleFullscreenMode,
         addNotification,
         removeNotification,
         markNotificationAsRead,

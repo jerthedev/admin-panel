@@ -30,6 +30,7 @@ use JTD\AdminPanel\Fields\Textarea;
 use JTD\AdminPanel\Fields\Text;
 use JTD\AdminPanel\Fields\Timezone;
 use JTD\AdminPanel\Fields\URL;
+use JTD\AdminPanel\Fields\Markdown;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -3490,5 +3491,119 @@ class FieldTest extends TestCase
         $field = Text::make('Name')->readonlyWhen(fn($request, $resource) => true);
 
         $this->assertTrue($field->readonly);
+    }
+
+    // Markdown Field Tests
+
+    public function test_markdown_field_creation(): void
+    {
+        $field = Markdown::make('Content');
+
+        $this->assertSame('Content', $field->name);
+        $this->assertSame('content', $field->attribute);
+        $this->assertSame('MarkdownField', $field->component);
+    }
+
+    public function test_markdown_field_with_custom_attribute(): void
+    {
+        $field = Markdown::make('Description', 'body');
+
+        $this->assertSame('Description', $field->name);
+        $this->assertSame('body', $field->attribute);
+    }
+
+    public function test_markdown_field_toolbar_configuration(): void
+    {
+        $field = Markdown::make('Content')->withToolbar();
+
+        $meta = $field->meta();
+        $this->assertTrue($meta['showToolbar']);
+    }
+
+    public function test_markdown_field_without_toolbar(): void
+    {
+        $field = Markdown::make('Content')->withoutToolbar();
+
+        $meta = $field->meta();
+        $this->assertFalse($meta['showToolbar']);
+    }
+
+    public function test_markdown_field_slash_commands_configuration(): void
+    {
+        $field = Markdown::make('Content')->withSlashCommands();
+
+        $meta = $field->meta();
+        $this->assertTrue($meta['enableSlashCommands']);
+    }
+
+    public function test_markdown_field_without_slash_commands(): void
+    {
+        $field = Markdown::make('Content')->withoutSlashCommands();
+
+        $meta = $field->meta();
+        $this->assertFalse($meta['enableSlashCommands']);
+    }
+
+    public function test_markdown_field_default_configuration(): void
+    {
+        $field = Markdown::make('Content');
+
+        $meta = $field->meta();
+        $this->assertTrue($meta['showToolbar']); // Default: show toolbar
+        $this->assertTrue($meta['enableSlashCommands']); // Default: enable slash commands
+    }
+
+    public function test_markdown_field_fill_request(): void
+    {
+        $field = Markdown::make('Content');
+        $request = new Request(['content' => '# Hello World\n\nThis is **bold** text.']);
+        $model = new \stdClass();
+
+        $field->fill($request, $model);
+
+        $this->assertSame('# Hello World\n\nThis is **bold** text.', $model->content);
+    }
+
+    public function test_markdown_field_resolve_value(): void
+    {
+        $field = Markdown::make('Content');
+        $resource = (object) ['content' => '# Hello World\n\nThis is **bold** text.'];
+
+        $field->resolve($resource);
+
+        $this->assertSame('# Hello World\n\nThis is **bold** text.', $field->value);
+    }
+
+    public function test_markdown_field_with_custom_resolve_callback(): void
+    {
+        $field = Markdown::make('Content', null, function ($resource) {
+            return strtoupper($resource->content);
+        });
+        $resource = (object) ['content' => '# hello world'];
+
+        $field->resolve($resource);
+
+        $this->assertSame('# HELLO WORLD', $field->value);
+    }
+
+    public function test_markdown_field_json_serialization(): void
+    {
+        $field = Markdown::make('Content')
+            ->withToolbar()
+            ->withSlashCommands()
+            ->rules('required');
+
+        $resource = (object) ['content' => '# Test Content'];
+        $field->resolve($resource);
+
+        $json = $field->jsonSerialize();
+
+        $this->assertSame('Content', $json['name']);
+        $this->assertSame('content', $json['attribute']);
+        $this->assertSame('MarkdownField', $json['component']);
+        $this->assertSame('# Test Content', $json['value']);
+        $this->assertTrue($json['showToolbar']);
+        $this->assertTrue($json['enableSlashCommands']);
+        $this->assertSame(['required'], $json['rules']);
     }
 }

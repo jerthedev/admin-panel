@@ -11,20 +11,33 @@
     <Sidebar />
 
     <!-- Main content area -->
-    <div class="relative z-10 ml-0 md:ml-64" :class="{ 'bg-gray-900': isDarkTheme }">
+    <div
+      class="relative z-10"
+      :class="{
+        'bg-gray-900': isDarkTheme,
+        'ml-0 md:ml-64': !fullscreenMode,
+        'ml-0': fullscreenMode
+      }"
+    >
       <!-- Header -->
-      <Header />
+      <Header v-show="!fullscreenMode" />
 
       <!-- Breadcrumbs -->
-      <Breadcrumbs v-if="showBreadcrumbs" />
+      <Breadcrumbs v-if="showBreadcrumbs && !fullscreenMode" />
 
       <!-- Page content -->
-      <main class="flex-1 p-6">
+      <main
+        class="flex-1"
+        :class="{
+          'p-6': !fullscreenMode,
+          'p-0': fullscreenMode
+        }"
+      >
         <slot />
       </main>
 
       <!-- Footer -->
-      <Footer />
+      <Footer v-show="!fullscreenMode" />
     </div>
 
     <!-- Notifications -->
@@ -68,6 +81,7 @@ const adminStore = useAdminStore()
 // Computed
 const isDarkTheme = computed(() => adminStore.isDarkTheme)
 const sidebarOpen = computed(() => adminStore.sidebarOpen)
+const fullscreenMode = computed(() => adminStore.fullscreenMode)
 const isMobile = computed(() => window.innerWidth < 768)
 
 // Methods

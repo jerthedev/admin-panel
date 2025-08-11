@@ -22,13 +22,19 @@
       </a>
     </div>
 
+    <!-- Markdown field -->
+    <MarkdownDisplay
+      v-else-if="field.component === 'MarkdownField'"
+      :content="value"
+    />
+
     <!-- Boolean field -->
     <div v-else-if="field.component === 'BooleanField'" class="flex items-center space-x-2">
       <div
         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
         :class="[
-          booleanValue 
-            ? 'bg-green-100 text-green-800' 
+          booleanValue
+            ? 'bg-green-100 text-green-800'
             : 'bg-gray-100 text-gray-800',
           {
             'bg-green-900 text-green-200': booleanValue && isDarkTheme,
@@ -113,15 +119,16 @@
 <script setup>
 /**
  * FieldDisplay Component
- * 
+ *
  * Displays field values in different contexts (index, detail) with
  * appropriate formatting and styling for each field type.
- * 
+ *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
 
 import { computed } from 'vue'
 import { useAdminStore } from '@/stores/admin'
+import MarkdownDisplay from './MarkdownDisplay.vue'
 import {
   CheckIcon,
   XMarkIcon,
@@ -155,17 +162,17 @@ const isDarkTheme = computed(() => adminStore.isDarkTheme)
 
 const displayValue = computed(() => {
   if (props.value === null || props.value === undefined) return null
-  
+
   // Handle object values with display property
   if (typeof props.value === 'object' && props.value.display !== undefined) {
     return props.value.display
   }
-  
+
   // Handle object values with label property
   if (typeof props.value === 'object' && props.value.label !== undefined) {
     return props.value.label
   }
-  
+
   return props.value
 })
 
@@ -182,7 +189,7 @@ const isUrlType = computed(() => {
 })
 
 const isJsonType = computed(() => {
-  return typeof props.value === 'object' && props.value !== null && !Array.isArray(props.value) && 
+  return typeof props.value === 'object' && props.value !== null && !Array.isArray(props.value) &&
          !props.value.hasOwnProperty('display') && !props.value.hasOwnProperty('label')
 })
 
@@ -204,38 +211,38 @@ const selectDisplayValue = computed(() => {
   if (typeof props.value === 'object' && props.value.label !== undefined) {
     return props.value.label
   }
-  
+
   // Look up in field options
   if (props.field.options && props.value !== null) {
     return props.field.options[props.value] || props.value
   }
-  
+
   return props.value || 'N/A'
 })
 
 // Methods
 const formatNumber = (value) => {
   if (value === null || value === undefined) return 'N/A'
-  
+
   const num = Number(value)
   if (isNaN(num)) return value
-  
+
   if (props.field.decimals !== null && props.field.decimals !== undefined) {
     return num.toFixed(props.field.decimals)
   }
-  
+
   return num.toLocaleString()
 }
 
 const formatDate = (value) => {
   if (!value) return 'N/A'
-  
+
   try {
     const date = new Date(value)
     if (isNaN(date.getTime())) return value
-    
+
     const format = props.field.displayFormat || 'Y-m-d'
-    
+
     switch (format) {
       case 'Y-m-d':
         return date.toISOString().split('T')[0]
@@ -244,16 +251,16 @@ const formatDate = (value) => {
       case 'm/d/Y':
         return date.toLocaleDateString('en-US')
       case 'M d, Y':
-        return date.toLocaleDateString('en-US', { 
-          month: 'short', 
-          day: 'numeric', 
-          year: 'numeric' 
+        return date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
         })
       case 'F j, Y':
-        return date.toLocaleDateString('en-US', { 
-          month: 'long', 
-          day: 'numeric', 
-          year: 'numeric' 
+        return date.toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
         })
       default:
         return date.toLocaleDateString()
@@ -265,15 +272,15 @@ const formatDate = (value) => {
 
 const relativeDate = (value) => {
   if (!value) return ''
-  
+
   try {
     const date = new Date(value)
     if (isNaN(date.getTime())) return ''
-    
+
     const now = new Date()
     const diffInMs = now.getTime() - date.getTime()
     const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24))
-    
+
     if (diffInDays === 0) {
       return 'Today'
     } else if (diffInDays === 1) {
@@ -292,9 +299,9 @@ const relativeDate = (value) => {
 
 const truncateUrl = (url) => {
   if (!url) return ''
-  
+
   if (url.length <= 50) return url
-  
+
   return url.substring(0, 47) + '...'
 }
 </script>

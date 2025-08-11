@@ -2,6 +2,143 @@
 
 Fields for rich text and content management in JTD Admin Panel.
 
+## Markdown Field
+
+The `Markdown` field provides a rich markdown editor with WYSIWYG toolbar, slash commands, and excellent copy-paste support from Google Docs and Microsoft Word. Built on Tiptap editor with enhanced markdown handling.
+
+### Basic Usage
+
+```php
+use JTD\AdminPanel\Fields\Markdown;
+
+Markdown::make('Content')
+```
+
+### Key Features
+
+- **Rich Text First**: WYSIWYG editing with markdown output
+- **Traditional Toolbar**: Familiar formatting buttons for standard users
+- **Slash Commands**: Notion-style quick commands (optional)
+- **Enhanced Copy-Paste**: Proper handling of content from Google Docs/Word
+- **Dual Mode**: Switch between rich text and markdown code view
+- **Nova Compatible**: Follows Laravel Nova field patterns
+
+### Configuration Options
+
+#### Toolbar Control
+Enable or disable the formatting toolbar:
+
+```php
+Markdown::make('Content')
+    ->withToolbar() // Enable toolbar (default)
+
+Markdown::make('Content')
+    ->withoutToolbar() // Disable toolbar
+```
+
+#### Slash Commands
+Control slash command functionality:
+
+```php
+Markdown::make('Content')
+    ->withSlashCommands() // Enable slash commands (default)
+
+Markdown::make('Content')
+    ->withoutSlashCommands() // Disable slash commands
+```
+
+#### Editor Height
+Set fixed height or enable auto-resize:
+
+```php
+Markdown::make('Content')
+    ->height(400) // Fixed height in pixels
+
+Markdown::make('Content')
+    ->autoResize() // Auto-resize based on content (default)
+```
+
+#### Placeholder Text
+Customize the placeholder text:
+
+```php
+Markdown::make('Content')
+    ->placeholder('Write your article content here...')
+```
+
+### Advanced Examples
+
+```php
+// Complete markdown field with all options
+Markdown::make('Article Content')
+    ->withToolbar()
+    ->withSlashCommands()
+    ->placeholder('Start writing your article...')
+    ->height(500)
+    ->rules('required', 'min:10')
+    ->help('Use the toolbar or type "/" for quick formatting commands')
+
+// Minimal markdown field for simple content
+Markdown::make('Description')
+    ->withoutToolbar()
+    ->withoutSlashCommands()
+    ->placeholder('Enter a brief description...')
+    ->autoResize()
+
+// Code-focused markdown field
+Markdown::make('Documentation')
+    ->withToolbar()
+    ->withSlashCommands()
+    ->placeholder('Write documentation in markdown...')
+    ->rules('required')
+```
+
+### Toolbar Features
+
+The formatting toolbar includes:
+- **Bold** and **Italic** text formatting
+- **Headings** (H1, H2, H3)
+- **Lists** (bullet, numbered, task lists)
+- **Blockquotes** for citations
+- **Code blocks** for syntax highlighting
+- **Horizontal rules** for content separation
+
+### Slash Commands
+
+When enabled, users can type `/` to access quick commands:
+- `/h1`, `/h2`, `/h3` - Insert headings
+- `/ul`, `/bullet` - Create bullet lists
+- `/ol`, `/numbered` - Create numbered lists
+- `/todo`, `/task` - Create task lists with checkboxes
+- `/quote` - Insert blockquotes
+- `/code` - Insert code blocks
+- `/hr`, `/rule` - Insert horizontal rules
+
+### Copy-Paste Enhancement
+
+The Markdown field automatically cleans up content pasted from:
+- **Google Docs** - Removes styling, preserves structure
+- **Microsoft Word** - Cleans formatting, maintains content
+- **Web pages** - Strips unwanted attributes and styling
+- **Other rich text sources** - Converts to clean markdown
+
+### Database Storage
+
+Content is stored as markdown text in the database:
+- **Input**: Rich text editing experience
+- **Storage**: Clean markdown format
+- **Output**: Rendered HTML or markdown as needed
+
+### Validation
+
+Standard Laravel validation rules apply:
+
+```php
+Markdown::make('Content')
+    ->rules('required', 'min:10', 'max:10000')
+    ->nullable() // Allow empty content
+```
+
 ## Textarea Field
 
 The `Textarea` field provides multi-line text input with configurable height, content management, and validation.

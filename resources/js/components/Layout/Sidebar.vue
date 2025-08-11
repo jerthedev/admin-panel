@@ -1,5 +1,6 @@
 <template>
   <aside
+    v-show="!fullscreenMode"
     class="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 shadow-sm z-30 transition-transform duration-300 ease-in-out overflow-y-auto"
     :class="{
       'bg-gray-800 border-gray-700': isDarkTheme,
@@ -116,6 +117,7 @@ const adminStore = useAdminStore()
 // Computed
 const isDarkTheme = computed(() => adminStore.isDarkTheme)
 const sidebarOpen = computed(() => adminStore.sidebarOpen)
+const fullscreenMode = computed(() => adminStore.fullscreenMode)
 const user = computed(() => page.props.auth?.user)
 const customPages = computed(() => page.props.pages || [])
 const appName = computed(() => page.props.config?.admin_panel?.name || 'Admin Panel')

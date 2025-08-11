@@ -5,6 +5,97 @@ All notable changes to `jerthedev/admin-panel` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2025-08-11
+
+### 🎉 Markdown Field Implementation
+
+This release introduces a comprehensive Markdown field with rich text editing capabilities, bringing professional content creation and editing to the admin panel with full Nova Field API compatibility.
+
+### ✨ Added
+
+#### Markdown Field
+- **Markdown Field Class**: Professional markdown field with rich text and raw markdown editing modes
+- **Dual Editor Modes**: Switch between rich text WYSIWYG editor and raw markdown textarea
+- **Rich Text Toolbar**: Complete formatting toolbar with bold, italic, underline, headings, lists, links, and strikethrough
+- **Slash Commands**: Quick formatting via "/" commands with intelligent auto-hide functionality
+- **Fullscreen Mode**: Distraction-free writing experience with maximum viewport utilization
+- **Content Conversion**: Seamless HTML ↔ Markdown conversion between editing modes
+
+#### Vue.js Component
+- **MarkdownField.vue**: Modern Vue 3 component with Composition API and TypeScript support
+- **Rich Text Editor**: ContentEditable-based editor with real-time formatting and toolbar integration
+- **Markdown Editor**: Dedicated textarea for direct markdown editing with syntax highlighting
+- **Mode Toggle**: Smooth switching between rich text and markdown modes with content preservation
+- **Responsive Design**: Mobile-friendly interface with adaptive toolbar and fullscreen support
+
+#### Features & Capabilities
+- **Nova Field API Compatibility**: Complete implementation of all Nova field methods and behaviors
+- **Placeholder Support**: Custom placeholder text defined in resource files
+- **Disabled/Readonly States**: Proper visual and functional disabled states for all components
+- **Content Loading/Saving**: Automatic content loading from model values and real-time saving via events
+- **Validation Integration**: Full Laravel validation support with error display
+- **Help Text Support**: Field help text display via BaseField component integration
+
+#### Developer Experience
+- **Fluent API**: Familiar Nova-style method chaining for configuration
+- **Comprehensive Configuration**: Toolbar visibility, slash commands, height, auto-resize, and placeholder options
+- **Event Handling**: Proper focus, blur, and change event emission for form integration
+- **Error Handling**: Robust error handling with user-friendly fallbacks
+- **Performance Optimized**: Efficient rendering and minimal re-renders for smooth user experience
+
+### 🔧 Enhanced
+
+#### Field Configuration
+- **Method Chaining**: `withToolbar()`, `withSlashCommands()`, `height()`, `autoResize()`, `placeholder()`
+- **Content Management**: Automatic content conversion and preservation between editing modes
+- **State Management**: Proper handling of external content updates and form state synchronization
+
+#### User Interface
+- **Fullscreen Experience**: Clean, distraction-free fullscreen mode with proper escape key handling
+- **Toolbar Integration**: Professional formatting toolbar with keyboard shortcuts and tooltips
+- **Visual Feedback**: Clear mode indicators, button states, and loading indicators
+
+### 🐛 Fixed
+
+#### Field Implementation
+- **Placeholder Handling**: Fixed custom placeholder text from resource file definitions
+- **Content Initialization**: Proper empty state handling and initial content loading
+- **Event Propagation**: Resolved conflicts between slash menu and fullscreen escape key handling
+- **State Synchronization**: Fixed content preservation when switching between editing modes
+
+#### Component Stability
+- **Memory Management**: Proper cleanup of event listeners and component unmounting
+- **Error Recovery**: Graceful handling of content conversion errors and edge cases
+- **Browser Compatibility**: Cross-browser support for contenteditable and markdown features
+
+### 📚 Usage Example
+
+```php
+use JTD\AdminPanel\Fields\Markdown;
+
+// Basic usage
+Markdown::make('Content')
+    ->required()
+    ->help('Enter your content using the rich text editor');
+
+// Advanced configuration
+Markdown::make('Article Content')
+    ->withToolbar()
+    ->withSlashCommands()
+    ->placeholder('Start writing your article...')
+    ->height(500)
+    ->rules('required', 'min:10')
+    ->help('Use the toolbar or type "/" for quick formatting commands');
+
+// Minimal setup
+Markdown::make('Description')
+    ->withoutToolbar()
+    ->withoutSlashCommands()
+    ->placeholder('Enter a brief description...')
+    ->autoResize()
+    ->nullable();
+```
+
 ## [1.3.0] - 2025-08-10
 
 ### 🎉 Media Library Integration

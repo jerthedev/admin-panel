@@ -209,6 +209,50 @@ class TestDataController extends Controller
     }
 
     /**
+     * Create a single test user for E2E testing.
+     */
+    public function createUser(Request $request): JsonResponse
+    {
+        try {
+            $userData = [
+                'name' => $request->input('name', 'Test User'),
+                'email' => $request->input('email', 'test@example.com'),
+                'password' => bcrypt($request->input('password', 'password')),
+                'email_verified_at' => now(),
+            ];
+
+            // Check if user already exists
+            $existingUser = DB::table('users')->where('email', $userData['email'])->first();
+            if ($existingUser) {
+                return response()->json([
+                    'message' => 'User already exists',
+                    'user' => [
+                        'id' => $existingUser->id,
+                        'email' => $existingUser->email,
+                        'name' => $existingUser->name,
+                    ],
+                ]);
+            }
+
+            // Create new user
+            $userId = DB::table('users')->insertGetId($userData);
+
+            return response()->json([
+                'message' => 'User created successfully',
+                'user' => [
+                    'id' => $userId,
+                    'email' => $userData['email'],
+                    'name' => $userData['name'],
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to create user: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Reset auto-increment counter for a table (database-specific).
      */
     protected function resetAutoIncrement(string $table): void

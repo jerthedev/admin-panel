@@ -1,15 +1,15 @@
 {
   "resources/css/admin.css": {
-    "file": "assets/admin-V40wHxTY.js",
+    "file": "assets/admin-gw_Kxjp4.js",
     "name": "admin",
     "src": "resources/css/admin.css",
     "isEntry": true,
     "css": [
-      "assets/admin-BrXFKxkl.css"
+      "assets/admin-CYTXdnCZ.css"
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-CFNjaw1n.js",
+    "file": "assets/app-sQE41UWo.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,

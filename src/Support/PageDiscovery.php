@@ -39,9 +39,15 @@ class PageDiscovery
         $cacheTtl = config('admin-panel.performance.cache_ttl', 3600);
 
         if (config('admin-panel.performance.cache_pages', true)) {
-            return Cache::remember($cacheKey, $cacheTtl, function () {
+            try {
+                return Cache::remember($cacheKey, $cacheTtl, function () {
+                    return $this->performDiscovery();
+                });
+            } catch (\Exception $e) {
+                // If caching fails (e.g., cache table doesn't exist during migration),
+                // fall back to performing discovery without caching
                 return $this->performDiscovery();
-            });
+            }
         }
 
         return $this->performDiscovery();
@@ -149,8 +155,13 @@ class PageDiscovery
      */
     public function clearCache(): void
     {
-        $cacheKey = $this->getCacheKey();
-        Cache::forget($cacheKey);
+        try {
+            $cacheKey = $this->getCacheKey();
+            Cache::forget($cacheKey);
+        } catch (\Exception $e) {
+            // If cache clearing fails (e.g., cache table doesn't exist),
+            // silently continue as there's nothing to clear anyway
+        }
     }
 
     /**

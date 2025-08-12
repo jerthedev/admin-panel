@@ -66,3 +66,19 @@ bootstrap/cache/
 *.backup
 *.bak
 *.orig
+
+# E2E Test Results and Artifacts
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/tests/e2e/fixtures/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.mp4
+*.webm
+*.zip
+
+# Playwright Browser Downloads
+/ms-playwright/

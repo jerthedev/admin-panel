@@ -23,6 +23,7 @@ use JTD\AdminPanel\Console\Commands\UninstallCommand;
 use JTD\AdminPanel\Http\Middleware\AdminAuthenticate;
 use JTD\AdminPanel\Http\Middleware\AdminAuthorize;
 use JTD\AdminPanel\Http\Middleware\HandleAdminInertiaRequests;
+use JTD\AdminPanel\Http\Middleware\TestOnlyMiddleware;
 use JTD\AdminPanel\Support\AdminPanel;
 use Tightenco\Ziggy\ZiggyServiceProvider;
 
@@ -142,10 +143,42 @@ class AdminPanelServiceProvider extends ServiceProvider
             $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
         });
 
+        // Test routes - only loaded in testing environments
+        $this->bootTestRoutes();
+
         // Register custom page routes after all service providers have booted
         $this->app->booted(function () {
             $this->registerPageRoutes();
         });
+    }
+
+    /**
+     * Boot test routes (only in testing environments).
+     */
+    protected function bootTestRoutes(): void
+    {
+        // Only load test routes in testing environments
+        if ($this->isTestingEnvironment()) {
+            Route::group([
+                'prefix' => config('admin-panel.path', 'admin') . '/api',
+                'as' => 'admin-panel.api.',
+                'middleware' => ['api'],
+            ], function () {
+                $this->loadRoutesFrom(__DIR__ . '/../routes/test.php');
+            });
+        }
+    }
+
+    /**
+     * Check if we're in a testing environment.
+     */
+    protected function isTestingEnvironment(): bool
+    {
+        $environment = app()->environment();
+
+        return in_array($environment, ['testing', 'local']) ||
+               config('admin-panel.enable_test_endpoints', false) ||
+               env('ADMIN_PANEL_TEST_ENDPOINTS', false);
     }
 
     /**
@@ -173,6 +206,7 @@ class AdminPanelServiceProvider extends ServiceProvider
         $router->aliasMiddleware('admin.auth', AdminAuthenticate::class);
         $router->aliasMiddleware('admin.authorize', AdminAuthorize::class);
         $router->aliasMiddleware('admin.inertia', HandleAdminInertiaRequests::class);
+        $router->aliasMiddleware('test-only', TestOnlyMiddleware::class);
     }
 
     /**

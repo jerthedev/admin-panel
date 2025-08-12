@@ -45,6 +45,22 @@ class HandleAdminInertiaRequests extends Middleware
 
 
 
+        // Check if custom main menu is defined
+        $customMenu = null;
+        if (AdminPanel::hasCustomMainMenu()) {
+            $customMenuItems = AdminPanel::resolveMainMenu($request);
+            $customMenu = AdminPanel::serializeMainMenu($customMenuItems, $request);
+        }
+
+        // Check if custom user menu is defined
+        $customUserMenu = null;
+        if (AdminPanel::hasCustomUserMenu()) {
+            $userMenuInstance = AdminPanel::resolveUserMenu($request);
+            if ($userMenuInstance) {
+                $customUserMenu = $userMenuInstance->toArray();
+            }
+        }
+
         $sharedData = array_merge(parent::share($request), [
             'auth' => [
                 'user' => $user ? [
@@ -60,6 +76,8 @@ class HandleAdminInertiaRequests extends Middleware
                 'admin_path' => config('admin-panel.path', '/admin'),
                 'timezone' => config('app.timezone', 'UTC'),
             ],
+            'customMainMenu' => $customMenu,
+            'customUserMenu' => $customUserMenu,
             'resources' => $adminPanel->getNavigationResources()->map(function ($resource) use ($request) {
                 $menuItem = $resource->menu($request);
 

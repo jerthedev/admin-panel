@@ -1,5 +1,6 @@
 {
     "name": "jerthedev/admin-panel",
+    "version": "1.4.0",
     "description": "A modern Laravel admin panel package with Nova-like features and Vue.js SPA architecture",
     "type": "library",
     "license": "MIT",

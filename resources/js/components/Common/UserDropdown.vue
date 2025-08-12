@@ -21,27 +21,83 @@
 
     <!-- Menu items -->
     <div class="py-1">
-      <!-- Profile -->
-      <Link
-        :href="route('profile.show')"
-        class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-        :class="{ 'text-gray-300 hover:bg-gray-700 hover:text-white': isDarkTheme }"
-        @click="emit('close')"
-      >
-        <UserIcon class="mr-3 h-5 w-5 text-gray-400" />
-        Your Profile
-      </Link>
+      <!-- Custom user menu items if available -->
+      <template v-if="customUserMenu && customUserMenu.length > 0">
+        <template v-for="item in customUserMenu" :key="item.label">
+          <!-- POST method items (like logout) -->
+          <Link
+            v-if="item.meta?.method === 'post'"
+            :href="item.url"
+            method="post"
+            as="button"
+            class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            :class="{ 'text-gray-300 hover:bg-gray-700 hover:text-white': isDarkTheme }"
+            @click="emit('close')"
+          >
+            <component
+              :is="getIconComponent(item.icon)"
+              class="mr-3 h-5 w-5 text-gray-400"
+              v-if="item.icon"
+            />
+            {{ item.label }}
+            <span
+              v-if="item.badge"
+              :class="getBadgeClasses(item.badgeType)"
+              class="ml-auto text-xs px-1.5 py-0.5 rounded-full"
+            >
+              {{ item.badge }}
+            </span>
+          </Link>
 
-      <!-- Settings -->
-      <Link
-        :href="route('profile.edit')"
-        class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-        :class="{ 'text-gray-300 hover:bg-gray-700 hover:text-white': isDarkTheme }"
-        @click="emit('close')"
-      >
-        <CogIcon class="mr-3 h-5 w-5 text-gray-400" />
-        Settings
-      </Link>
+          <!-- Regular link items -->
+          <Link
+            v-else
+            :href="item.url"
+            class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            :class="{ 'text-gray-300 hover:bg-gray-700 hover:text-white': isDarkTheme }"
+            @click="emit('close')"
+          >
+            <component
+              :is="getIconComponent(item.icon)"
+              class="mr-3 h-5 w-5 text-gray-400"
+              v-if="item.icon"
+            />
+            {{ item.label }}
+            <span
+              v-if="item.badge"
+              :class="getBadgeClasses(item.badgeType)"
+              class="ml-auto text-xs px-1.5 py-0.5 rounded-full"
+            >
+              {{ item.badge }}
+            </span>
+          </Link>
+        </template>
+      </template>
+
+      <!-- Default menu items if no custom menu -->
+      <template v-else>
+        <!-- Profile -->
+        <Link
+          :href="route('profile.show')"
+          class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          :class="{ 'text-gray-300 hover:bg-gray-700 hover:text-white': isDarkTheme }"
+          @click="emit('close')"
+        >
+          <UserIcon class="mr-3 h-5 w-5 text-gray-400" />
+          Your Profile
+        </Link>
+
+        <!-- Settings -->
+        <Link
+          :href="route('profile.edit')"
+          class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          :class="{ 'text-gray-300 hover:bg-gray-700 hover:text-white': isDarkTheme }"
+          @click="emit('close')"
+        >
+          <CogIcon class="mr-3 h-5 w-5 text-gray-400" />
+          Settings
+        </Link>
+      </template>
 
       <!-- Theme toggle -->
       <button
@@ -102,10 +158,10 @@
 <script setup>
 /**
  * UserDropdown Component
- * 
+ *
  * User menu dropdown with profile actions, settings, theme toggle,
  * help links, and sign out functionality.
- * 
+ *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
 
@@ -134,6 +190,7 @@ const adminStore = useAdminStore()
 // Computed
 const isDarkTheme = computed(() => adminStore.isDarkTheme)
 const user = computed(() => page.props.auth?.user)
+const customUserMenu = computed(() => page.props.customUserMenu)
 
 // Methods
 const toggleTheme = () => {
@@ -160,6 +217,34 @@ const route = (name, params = {}) => {
     default:
       return '#'
   }
+}
+
+const getIconComponent = (iconName) => {
+  // Map icon names to components
+  const iconMap = {
+    'user': UserIcon,
+    'cog': CogIcon,
+    'arrow-right-on-rectangle': ArrowRightOnRectangleIcon,
+    'question-mark-circle': QuestionMarkCircleIcon,
+    'command-line': CommandLineIcon,
+    'sun': SunIcon,
+    'moon': MoonIcon,
+    // Add more icon mappings as needed
+  }
+  return iconMap[iconName] || UserIcon
+}
+
+const getBadgeClasses = (badgeType) => {
+  const baseClasses = 'text-xs px-1.5 py-0.5 rounded-full'
+  const typeClasses = {
+    'primary': 'bg-blue-100 text-blue-800',
+    'secondary': 'bg-gray-100 text-gray-800',
+    'success': 'bg-green-100 text-green-800',
+    'warning': 'bg-yellow-100 text-yellow-800',
+    'danger': 'bg-red-100 text-red-800',
+    'info': 'bg-blue-100 text-blue-800',
+  }
+  return `${baseClasses} ${typeClasses[badgeType] || typeClasses.primary}`
 }
 </script>
 

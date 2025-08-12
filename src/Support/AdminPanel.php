@@ -55,6 +55,16 @@ class AdminPanel
     protected PageRegistry $pageRegistry;
 
     /**
+     * The main menu closure.
+     */
+    protected static $mainMenuCallback = null;
+
+    /**
+     * The user menu closure.
+     */
+    protected static $userMenuCallback = null;
+
+    /**
      * Create a new AdminPanel instance.
      */
     public function __construct()
@@ -452,5 +462,155 @@ class AdminPanel
     public function clearResourceCache(): void
     {
         $this->discovery->clearCache();
+    }
+
+    /**
+     * Register a main menu callback.
+     */
+    public static function mainMenu(callable $callback): void
+    {
+        static::$mainMenuCallback = $callback;
+    }
+
+    /**
+     * Check if a custom main menu has been registered.
+     */
+    public static function hasCustomMainMenu(): bool
+    {
+        return static::$mainMenuCallback !== null;
+    }
+
+    /**
+     * Resolve the main menu using the registered callback.
+     */
+    public static function resolveMainMenu(\Illuminate\Http\Request $request): array
+    {
+        if (static::$mainMenuCallback === null) {
+            return [];
+        }
+
+        $result = call_user_func(static::$mainMenuCallback, $request);
+
+        return is_array($result) ? $result : [];
+    }
+
+    /**
+     * Serialize the main menu for frontend consumption.
+     */
+    public static function serializeMainMenu(array $menu, \Illuminate\Http\Request $request): array
+    {
+        $filteredMenu = static::filterAuthorizedMenuItems($menu, $request);
+
+        return array_map(function ($item) use ($request) {
+            return $item->toArray($request);
+        }, $filteredMenu);
+    }
+
+    /**
+     * Filter menu items based on authorization.
+     */
+    protected static function filterAuthorizedMenuItems(array $menu, \Illuminate\Http\Request $request): array
+    {
+        $filtered = [];
+
+        foreach ($menu as $item) {
+            // Check if the item itself is visible
+            if (!$item->isVisible($request)) {
+                continue;
+            }
+
+            // If it's a section or group with items, filter the children
+            if ($item instanceof \JTD\AdminPanel\Menu\MenuSection || $item instanceof \JTD\AdminPanel\Menu\MenuGroup) {
+                $children = $item->items ?? [];
+
+                if (!empty($children)) {
+                    $filteredChildren = static::filterAuthorizedMenuItems($children, $request);
+
+                    // Only include the section/group if it has visible children or is not collapsible
+                    if (!empty($filteredChildren) || !$item->collapsible) {
+                        $item->items = $filteredChildren;
+                        $filtered[] = $item;
+                    }
+                } else {
+                    // Empty section/group - include if not collapsible
+                    if (!$item->collapsible) {
+                        $filtered[] = $item;
+                    }
+                }
+            } else {
+                // Regular menu item - include if visible
+                $filtered[] = $item;
+            }
+        }
+
+        return $filtered;
+    }
+
+    /**
+     * Clear the main menu callback (for testing).
+     */
+    public static function clearMainMenu(): void
+    {
+        static::$mainMenuCallback = null;
+    }
+
+    /**
+     * Register a user menu callback.
+     */
+    public static function userMenu(callable $callback): void
+    {
+        static::$userMenuCallback = $callback;
+    }
+
+    /**
+     * Check if a custom user menu has been registered.
+     */
+    public static function hasCustomUserMenu(): bool
+    {
+        return static::$userMenuCallback !== null;
+    }
+
+    /**
+     * Resolve the user menu using the registered callback.
+     */
+    public static function resolveUserMenu(\Illuminate\Http\Request $request): ?\JTD\AdminPanel\Menu\Menu
+    {
+        if (static::$userMenuCallback === null) {
+            return null;
+        }
+
+        // Create a default menu instance
+        $menu = new \JTD\AdminPanel\Menu\Menu();
+
+        $result = call_user_func(static::$userMenuCallback, $request, $menu);
+        $finalMenu = $result instanceof \JTD\AdminPanel\Menu\Menu ? $result : $menu;
+
+        // Add default logout link at the end (unless one already exists)
+        $hasLogout = false;
+        foreach ($finalMenu->getItems() as $item) {
+            if ($item->url === '/logout' || ($item->meta['default'] ?? false)) {
+                $hasLogout = true;
+                break;
+            }
+        }
+
+        if (!$hasLogout) {
+            $finalMenu->append(
+                \JTD\AdminPanel\Menu\MenuItem::make('Sign out', '/logout')
+                    ->withIcon('arrow-right-on-rectangle')
+                    ->meta('method', 'post')
+                    ->meta('default', true)
+            );
+        }
+
+        return $finalMenu;
+    }
+
+    /**
+     * Clear the user menu callback (for testing).
+     */
+    public static function clearUserMenu(): void
+    {
+        static::$userMenuCallback = null;
     }
 }

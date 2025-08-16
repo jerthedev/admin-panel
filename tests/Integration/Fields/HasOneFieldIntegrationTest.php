@@ -2,18 +2,17 @@
 
 declare(strict_types=1);
 
-namespace JTD\AdminPanel\Tests\Integration;
+namespace Integration\Fields;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use JTD\AdminPanel\Fields\HasOne;
-use JTD\AdminPanel\Tests\TestCase;
-use JTD\AdminPanel\Tests\Fixtures\User;
 use JTD\AdminPanel\Tests\Fixtures\Address;
-use JTD\AdminPanel\Tests\Fixtures\Post;
-use JTD\AdminPanel\Tests\Fixtures\UserResource;
 use JTD\AdminPanel\Tests\Fixtures\AddressResource;
+use JTD\AdminPanel\Tests\Fixtures\Post;
 use JTD\AdminPanel\Tests\Fixtures\PostResource;
+use JTD\AdminPanel\Tests\Fixtures\User;
+use JTD\AdminPanel\Tests\TestCase;
 
 /**
  * HasOne Field Integration Test

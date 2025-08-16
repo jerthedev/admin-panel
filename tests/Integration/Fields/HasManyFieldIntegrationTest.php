@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JTD\AdminPanel\Tests\Integration;
+namespace Integration\Fields;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;

@@ -56,7 +56,6 @@ Fields for enhanced display and formatting:
 Fields for managing model relationships:
 - [BelongsTo Field](./relationship-fields.md#belongsto-field) - Foreign key relationships
 - [HasMany Field](./relationship-fields.md#hasmany-field) - One-to-many relationships
-- [ManyToMany Field](./relationship-fields.md#manytomany-field) - Many-to-many relationships
 
 ## Field Behavior Methods
 

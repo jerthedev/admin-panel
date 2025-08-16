@@ -219,146 +219,7 @@ public function items()
 }
 ```
 
----
 
-## ManyToMany Field
-
-The `ManyToMany` field manages many-to-many relationships with pivot table support, advanced selection interfaces, and bulk operations.
-
-### Basic Usage
-
-```php
-use JTD\AdminPanel\Fields\ManyToMany;
-
-ManyToMany::make('Tags')
-```
-
-### Features
-
-- Many-to-many relationship management
-- Pivot table data support
-- Advanced selection interfaces
-- Bulk attach/detach operations
-- Custom pivot field configuration
-
-### Configuration Options
-
-#### Related Resource
-Specify the related resource:
-
-```php
-ManyToMany::make('Roles', 'roles', RoleResource::class)
-```
-
-#### Pivot Fields
-Include pivot table fields:
-
-```php
-ManyToMany::make('Projects')
-    ->withPivot([
-        Date::make('Started At'),
-        Date::make('Completed At'),
-        Text::make('Role'),
-    ])
-```
-
-#### Selection Interface
-Customize the selection interface:
-
-```php
-ManyToMany::make('Categories')
-    ->searchable()
-    ->displayUsing(function ($category) {
-        return $category->name . ' (' . $category->posts_count . ' posts)';
-    })
-```
-
-### Advanced Examples
-
-```php
-// Complete ManyToMany field with pivot data
-ManyToMany::make('Team Members', 'users', UserResource::class)
-    ->withPivot([
-        Select::make('Role')
-            ->options([
-                'member' => 'Team Member',
-                'lead' => 'Team Lead',
-                'manager' => 'Manager',
-            ])
-            ->required(),
-        Date::make('Joined At')
-            ->default(now()),
-        Boolean::make('Active')
-            ->default(true),
-    ])
-    ->searchable()
-    ->displayUsing(function ($user) {
-        return $user->name . ' - ' . $user->email;
-    })
-    ->help('Assign team members with their roles')
-
-// Product categories with metadata
-ManyToMany::make('Categories')
-    ->withPivot([
-        Boolean::make('Featured')
-            ->default(false),
-        Number::make('Sort Order')
-            ->default(0),
-        Text::make('Custom Label')
-            ->nullable(),
-    ])
-    ->searchable()
-    ->rules('required', 'array', 'min:1')
-
-// Course enrollments
-ManyToMany::make('Students', 'enrolledStudents', UserResource::class)
-    ->withPivot([
-        Date::make('Enrolled At')
-            ->default(now()),
-        Select::make('Status')
-            ->options([
-                'active' => 'Active',
-                'completed' => 'Completed',
-                'dropped' => 'Dropped',
-            ])
-            ->default('active'),
-        Number::make('Grade')
-            ->min(0)
-            ->max(100)
-            ->nullable(),
-    ])
-    ->displayUsing(function ($student) {
-        return $student->name . ' (' . $student->student_id . ')';
-    })
-```
-
-### Model Setup
-
-```php
-// In your model
-public function tags()
-{
-    return $this->belongsToMany(Tag::class);
-}
-
-public function users()
-{
-    return $this->belongsToMany(User::class, 'project_user')
-        ->withPivot(['role', 'joined_at', 'active'])
-        ->withTimestamps();
-}
-
-// Migration for pivot table
-Schema::create('project_user', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('project_id')->constrained()->onDelete('cascade');
-    $table->foreignId('user_id')->constrained()->onDelete('cascade');
-    $table->string('role')->default('member');
-    $table->timestamp('joined_at')->nullable();
-    $table->boolean('active')->default(true);
-    $table->timestamps();
-});
-```
 
 ---
 
@@ -395,18 +256,7 @@ HasMany::make('Items')
     ])
 ```
 
-### ManyToMany Validation
-```php
-ManyToMany::make('Tags')
-    ->rules([
-        'array',
-        'max:5' // Maximum 5 tags
-    ])
-    ->withPivot([
-        Number::make('Weight')
-            ->rules('integer', 'between:1,10'),
-    ])
-```
+
 
 ---
 
@@ -470,14 +320,11 @@ public function fields(): array
         BelongsTo::make('Category')
             ->searchable()
             ->required(),
-            
+
         BelongsTo::make('Author', 'user', UserResource::class)
             ->searchable()
             ->displayUsing(fn($user) => $user->name),
-            
-        ManyToMany::make('Tags')
-            ->searchable(),
-            
+
         HasMany::make('Comments')
             ->allowInlineCreation()
             ->fields([

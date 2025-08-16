@@ -23,7 +23,7 @@ import HiddenField from '@/components/Fields/HiddenField.vue'
 import IDField from '@/components/Fields/IDField.vue'
 import BelongsToField from '@/components/Fields/BelongsToField.vue'
 import HasManyField from '@/components/Fields/HasManyField.vue'
-import ManyToManyField from '@/components/Fields/ManyToManyField.vue'
+// import ManyToManyField from '@/components/Fields/ManyToManyField.vue' // Removed in JTDAP-76
 import MultiSelectField from '@/components/Fields/MultiSelectField.vue'
 import TimezoneField from '@/components/Fields/TimezoneField.vue'
 import AvatarField from '@/components/Fields/AvatarField.vue'
@@ -144,7 +144,7 @@ describe('Test Coverage Report and Validation Matrix', () => {
       })
 
       expect(coverageReport.recommendations.length).toBeGreaterThan(0)
-      
+
       // High priority missing tests (core components)
       const highPriorityMissing = coverageReport.recommendations.filter(r => r.priority === 'high')
       expect(highPriorityMissing.length).toBe(3) // PasswordConfirmationField, TextareaField, MultiSelectField

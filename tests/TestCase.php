@@ -126,6 +126,16 @@ abstract class TestCase extends Orchestra
 
     protected function setUpDatabase(): void
     {
+        // Create countries table first for foreign key reference
+        Schema::create('countries', function ($table) {
+            $table->id();
+            $table->string('name');
+            $table->string('code', 2)->unique();
+            $table->string('continent');
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
         Schema::create('users', function ($table) {
             $table->id();
             $table->string('name');
@@ -134,6 +144,7 @@ abstract class TestCase extends Orchestra
             $table->string('password');
             $table->boolean('is_admin')->default(false);
             $table->boolean('is_active')->default(true);
+            $table->foreignId('country_id')->nullable()->constrained()->onDelete('set null');
             $table->rememberToken();
             $table->timestamps();
         });
@@ -148,6 +159,115 @@ abstract class TestCase extends Orchestra
             $table->foreignId('user_id')->constrained();
             $table->timestamps();
             $table->softDeletes();
+        });
+
+        Schema::create('addresses', function ($table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained();
+            $table->string('street');
+            $table->string('city');
+            $table->string('state')->nullable();
+            $table->string('zip')->nullable();
+            $table->string('country')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        // Create cars table for HasOneThrough relationship testing
+        Schema::create('cars', function ($table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('make');
+            $table->string('model');
+            $table->integer('year');
+            $table->string('vin')->unique();
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        // Create car_owners table for HasOneThrough relationship testing
+        Schema::create('car_owners', function ($table) {
+            $table->id();
+            $table->foreignId('car_id')->constrained()->onDelete('cascade');
+            $table->string('name');
+            $table->string('email');
+            $table->string('phone')->nullable();
+            $table->string('license_number')->unique();
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        // Create roles table for BelongsToMany relationship testing
+        Schema::create('roles', function ($table) {
+            $table->id();
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->text('description')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        // Create role_user pivot table for BelongsToMany relationship testing
+        Schema::create('role_user', function ($table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('role_id')->constrained()->onDelete('cascade');
+            $table->timestamp('assigned_at')->nullable();
+            $table->string('assigned_by')->nullable();
+            $table->boolean('is_primary')->default(false);
+            $table->timestamps();
+
+            $table->unique(['user_id', 'role_id']);
+        });
+
+        // Create images table for MorphOne relationship testing
+        Schema::create('images', function ($table) {
+            $table->id();
+            $table->string('filename');
+            $table->string('path');
+            $table->string('alt_text')->nullable();
+            $table->integer('size')->nullable();
+            $table->string('mime_type')->nullable();
+            $table->morphs('imageable'); // Creates imageable_type and imageable_id
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        // Create comments table for MorphMany relationship testing
+        Schema::create('comments', function ($table) {
+            $table->id();
+            $table->text('content');
+            $table->string('author_name');
+            $table->string('author_email');
+            $table->boolean('is_approved')->default(true);
+            $table->nullableMorphs('commentable'); // Creates nullable commentable_type and commentable_id
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        // Create tags table for MorphToMany relationship testing
+        Schema::create('tags', function ($table) {
+            $table->id();
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->text('description')->nullable();
+            $table->string('color')->default('#3B82F6');
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        // Create taggables pivot table for MorphToMany relationship testing
+        Schema::create('taggables', function ($table) {
+            $table->id();
+            $table->foreignId('tag_id')->constrained()->onDelete('cascade');
+            $table->morphs('taggable'); // Creates taggable_type and taggable_id
+            $table->text('notes')->nullable(); // Example pivot field
+            $table->integer('priority')->default(0); // Example pivot field
+            $table->timestamps();
+
+            $table->unique(['tag_id', 'taggable_id', 'taggable_type']);
         });
 
         Schema::create('categories', function ($table) {

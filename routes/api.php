@@ -23,6 +23,10 @@ Route::get('/search', [ApiController::class, 'search'])->name('search');
 Route::get('/resources/{resource}/fields/{field}/suggestions', [ApiController::class, 'fieldSuggestions'])
     ->name('field-suggestions');
 
+// BelongsTo field options
+Route::post('/fields/belongs-to/options', [ApiController::class, 'belongsToOptions'])
+    ->name('belongs-to-options');
+
 // Resource data for relationships
 Route::get('/resources/{resource}/data', [ApiController::class, 'resourceData'])
     ->name('resource-data');

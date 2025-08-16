@@ -25,7 +25,7 @@ import HiddenField from '@/components/Fields/HiddenField.vue'
 import IDField from '@/components/Fields/IDField.vue'
 import BelongsToField from '@/components/Fields/BelongsToField.vue'
 import HasManyField from '@/components/Fields/HasManyField.vue'
-import ManyToManyField from '@/components/Fields/ManyToManyField.vue'
+// import ManyToManyField from '@/components/Fields/ManyToManyField.vue' // Removed in JTDAP-76
 import MultiSelectField from '@/components/Fields/MultiSelectField.vue'
 import TimezoneField from '@/components/Fields/TimezoneField.vue'
 import AvatarField from '@/components/Fields/AvatarField.vue'
@@ -106,7 +106,7 @@ describe('Field Integration Tests', () => {
       { name: 'IDField', component: IDField },
       { name: 'BelongsToField', component: BelongsToField },
       { name: 'HasManyField', component: HasManyField },
-      { name: 'ManyToManyField', component: ManyToManyField },
+      // { name: 'ManyToManyField', component: ManyToManyField }, // Removed in JTDAP-76
       { name: 'MultiSelectField', component: MultiSelectField },
       { name: 'TimezoneField', component: TimezoneField },
       { name: 'AvatarField', component: AvatarField },
@@ -157,7 +157,7 @@ describe('Field Integration Tests', () => {
       const missingTests = [
         'PasswordConfirmationField.test.js',
         'TextareaField.test.js',
-        'ManyToManyField.test.js',
+        // 'ManyToManyField.test.js', // Removed in JTDAP-76
         'MultiSelectField.test.js',
         'TimezoneField.test.js',
         'AvatarField.test.js',

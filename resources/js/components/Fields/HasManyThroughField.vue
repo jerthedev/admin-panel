@@ -9,37 +9,23 @@
     v-bind="$attrs"
   >
     <div class="space-y-4">
-      <!-- Header with count and actions -->
+      <!-- Header -->
       <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-3">
           <h3 class="text-lg font-medium text-gray-900" :class="{ 'text-gray-100': isDarkTheme }">
             {{ field.name }}
           </h3>
+          
+          <!-- Item Count Badge -->
           <span
-            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
-            :class="{ 'bg-gray-700 text-gray-200': isDarkTheme }"
+            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+            :class="{ 'bg-blue-900 text-blue-200': isDarkTheme }"
           >
-            {{ totalCount }} {{ totalCount === 1 ? 'item' : 'items' }}
+            {{ itemCount }} {{ itemCount === 1 ? 'item' : 'items' }}
           </span>
         </div>
 
         <div class="flex items-center space-x-2">
-          <!-- Search input -->
-          <div
-            v-if="field.searchable"
-            class="relative"
-          >
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search..."
-              class="admin-input w-48 text-sm pl-8"
-              :class="{ 'admin-input-dark': isDarkTheme }"
-              @input="handleSearch"
-            />
-            <MagnifyingGlassIcon class="absolute left-2 top-2 w-4 h-4 text-gray-400" />
-          </div>
-
           <!-- Create Relation button -->
           <button
             v-if="field.showCreateRelationButton && !readonly && !disabled"
@@ -48,7 +34,7 @@
             @click="showCreateModal"
           >
             <PlusIcon class="w-4 h-4 mr-1" />
-            Create
+            Create {{ field.name.slice(0, -1) }}
           </button>
 
           <!-- Collapse/Expand button -->
@@ -64,6 +50,34 @@
             {{ isCollapsed ? 'Expand' : 'Collapse' }}
           </button>
         </div>
+      </div>
+
+      <!-- Through Relationship Info -->
+      <div 
+        v-if="field.through"
+        class="flex items-center space-x-2 text-sm text-gray-600"
+        :class="{ 'text-gray-400': isDarkTheme }"
+      >
+        <InformationCircleIcon class="w-4 h-4" data-testid="info-icon" />
+        <span>This relationship is accessed through {{ field.through }}</span>
+      </div>
+
+      <!-- Search -->
+      <div
+        v-if="field.searchable && !isCollapsed"
+        class="relative"
+      >
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" />
+        </div>
+        <input
+          v-model="searchQuery"
+          type="text"
+          class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          :class="{ 'border-gray-600 bg-gray-800 text-gray-100 placeholder-gray-400': isDarkTheme }"
+          placeholder="Search..."
+          @input="debouncedSearch"
+        />
       </div>
 
       <!-- Collapsible content -->
@@ -87,77 +101,66 @@
             <p class="text-sm">
               {{ field.showCreateRelationButton ? 'Create your first item to get started.' : 'No items to display.' }}
             </p>
+            <p v-if="field.through" class="text-sm mt-2">
+              This relationship is accessed through {{ field.through }}.
+            </p>
           </div>
         </div>
 
-      <!-- Items table -->
-      <div
-        v-else
-        class="bg-white shadow overflow-hidden sm:rounded-md"
-        :class="{ 'bg-gray-800': isDarkTheme }"
-      >
-        <ul class="divide-y divide-gray-200" :class="{ 'divide-gray-700': isDarkTheme }">
-          <li
+        <!-- Items list -->
+        <div
+          v-else
+          class="space-y-3"
+        >
+          <div
             v-for="item in items"
             :key="item.id"
-            class="px-6 py-4 hover:bg-gray-50"
-            :class="{ 'hover:bg-gray-700': isDarkTheme }"
+            class="border rounded-lg p-4 hover:bg-gray-50"
+            :class="{ 
+              'border-gray-200': !isDarkTheme,
+              'border-gray-700 hover:bg-gray-800': isDarkTheme 
+            }"
           >
             <div class="flex items-center justify-between">
-              <div class="flex-1">
-                <div class="flex items-center">
-                  <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-900" :class="{ 'text-gray-100': isDarkTheme }">
-                      {{ getItemTitle(item) }}
-                    </p>
-                    <p
-                      v-if="getItemSubtitle(item)"
-                      class="text-sm text-gray-500"
-                      :class="{ 'text-gray-400': isDarkTheme }"
-                    >
-                      {{ getItemSubtitle(item) }}
-                    </p>
-                  </div>
+              <div class="flex items-center space-x-3">
+                <DocumentIcon class="w-5 h-5 text-gray-400" />
+                <div>
+                  <p class="font-medium text-gray-900" :class="{ 'text-gray-100': isDarkTheme }">
+                    {{ item.title || `${field.name.slice(0, -1)} #${item.id}` }}
+                  </p>
+                  <p class="text-sm text-gray-500" :class="{ 'text-gray-400': isDarkTheme }">
+                    {{ field.resourceClass }}
+                  </p>
                 </div>
               </div>
-
+              
+              <!-- Action Buttons -->
               <div class="flex items-center space-x-2">
-                <!-- View button -->
                 <button
+                  v-if="!readonly && !disabled"
                   type="button"
-                  class="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                  :class="{ 'text-blue-400 hover:text-blue-300': isDarkTheme }"
+                  class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  :class="{ 'border-gray-600 text-gray-300 bg-gray-800 hover:bg-gray-700': isDarkTheme }"
                   @click="viewItem(item)"
                 >
+                  <EyeIcon class="w-4 h-4 mr-1" />
                   View
                 </button>
-
-                <!-- Edit button -->
+                
                 <button
                   v-if="!readonly && !disabled"
                   type="button"
-                  class="text-gray-600 hover:text-gray-700 text-sm font-medium"
-                  :class="{ 'text-gray-400 hover:text-gray-300': isDarkTheme }"
+                  class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  :class="{ 'border-gray-600 text-gray-300 bg-gray-800 hover:bg-gray-700': isDarkTheme }"
                   @click="editItem(item)"
                 >
+                  <PencilIcon class="w-4 h-4 mr-1" />
                   Edit
-                </button>
-
-                <!-- Delete button -->
-                <button
-                  v-if="!readonly && !disabled"
-                  type="button"
-                  class="text-red-600 hover:text-red-700 text-sm font-medium"
-                  :class="{ 'text-red-400 hover:text-red-300': isDarkTheme }"
-                  @click="deleteItem(item)"
-                >
-                  Delete
                 </button>
               </div>
             </div>
-          </li>
-        </ul>
-      </div>
+          </div>
+        </div>
       </div>
 
       <!-- Pagination -->
@@ -166,27 +169,29 @@
         class="flex items-center justify-between"
       >
         <div class="text-sm text-gray-700" :class="{ 'text-gray-300': isDarkTheme }">
-          Showing {{ pagination.from }} to {{ pagination.to }} of {{ pagination.total }} results
+          Showing {{ ((pagination.current_page - 1) * pagination.per_page) + 1 }} to 
+          {{ Math.min(pagination.current_page * pagination.per_page, pagination.total) }} of 
+          {{ pagination.total }} results
         </div>
-
+        
         <div class="flex items-center space-x-2">
           <button
             :disabled="pagination.current_page === 1"
-            class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            :class="{ 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700': isDarkTheme }"
+            class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            :class="{ 'border-gray-600 text-gray-300 bg-gray-800 hover:bg-gray-700': isDarkTheme }"
             @click="goToPage(pagination.current_page - 1)"
           >
             Previous
           </button>
-
+          
           <span class="text-sm text-gray-700" :class="{ 'text-gray-300': isDarkTheme }">
             Page {{ pagination.current_page }} of {{ pagination.last_page }}
           </span>
-
+          
           <button
             :disabled="pagination.current_page === pagination.last_page"
-            class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            :class="{ 'bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700': isDarkTheme }"
+            class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            :class="{ 'border-gray-600 text-gray-300 bg-gray-800 hover:bg-gray-700': isDarkTheme }"
             @click="goToPage(pagination.current_page + 1)"
           >
             Next
@@ -199,22 +204,26 @@
 
 <script setup>
 /**
- * HasManyField Component
- *
- * One-to-many relationship field with table display and management.
- * Supports pagination, search, and CRUD operations on related models.
- *
+ * HasManyThroughField Component
+ * 
+ * One-to-many through relationship field with display, search, and management capabilities.
+ * Displays multiple related models accessed through an intermediate model.
+ * 
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
 
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAdminStore } from '@/stores/admin'
+import { debounce } from 'lodash'
 import {
   MagnifyingGlassIcon,
   PlusIcon,
   DocumentIcon,
   ChevronDownIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  InformationCircleIcon,
+  EyeIcon,
+  PencilIcon
 } from '@heroicons/vue/24/outline'
 import BaseField from './BaseField.vue'
 
@@ -226,7 +235,7 @@ const props = defineProps({
   },
   modelValue: {
     type: Object,
-    default: () => ({ count: 0, resource_id: null })
+    default: () => ({ count: 0, resource_id: null, resource_class: null, through: null })
   },
   errors: {
     type: Object,
@@ -249,6 +258,9 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['update:modelValue', 'focus', 'blur', 'change'])
 
+// Store
+const adminStore = useAdminStore()
+
 // Refs
 const loading = ref(false)
 const items = ref([])
@@ -257,76 +269,41 @@ const searchQuery = ref('')
 const currentPage = ref(1)
 const isCollapsed = ref(false)
 
-// Store
-const adminStore = useAdminStore()
-
 // Computed
 const isDarkTheme = computed(() => adminStore.isDarkTheme)
 
-const totalCount = computed(() => {
+const itemCount = computed(() => {
   return props.modelValue?.count || 0
 })
 
 // Methods
-const loadItems = async (page = 1) => {
-  if (!props.modelValue?.resource_id) return
-
+const loadItems = async () => {
   loading.value = true
-
   try {
-    // In a real implementation, this would make an API call
-    await new Promise(resolve => setTimeout(resolve, 500))
-
-    // Mock data - in real implementation, this would come from the API
-    items.value = [
-      { id: 1, title: 'Item 1', subtitle: 'Description 1' },
-      { id: 2, title: 'Item 2', subtitle: 'Description 2' },
-      { id: 3, title: 'Item 3', subtitle: 'Description 3' },
-    ]
-
+    // Simulate API call - in real implementation, this would call the backend
+    // For now, we'll just show empty state or mock data
+    items.value = []
     pagination.value = {
-      current_page: page,
-      last_page: 3,
-      per_page: 10,
-      total: 25,
-      from: 1,
-      to: 10
+      current_page: 1,
+      last_page: 1,
+      per_page: props.field.perPage || 15,
+      total: props.modelValue?.count || 0
     }
   } catch (error) {
-    console.error('Failed to load items:', error)
+    console.error('Error loading items:', error)
   } finally {
     loading.value = false
   }
 }
 
-const handleSearch = () => {
+const debouncedSearch = debounce(() => {
   currentPage.value = 1
-  loadItems(1)
-}
+  loadItems()
+}, 300)
 
 const goToPage = (page) => {
   currentPage.value = page
-  loadItems(page)
-}
-
-const getItemTitle = (item) => {
-  return item.title || item.name || `Item ${item.id}`
-}
-
-const getItemSubtitle = (item) => {
-  return item.subtitle || item.description || null
-}
-
-const viewItem = (item) => {
-  console.log('View item:', item)
-}
-
-const editItem = (item) => {
-  console.log('Edit item:', item)
-}
-
-const deleteItem = (item) => {
-  console.log('Delete item:', item)
+  loadItems()
 }
 
 const showCreateModal = () => {
@@ -337,39 +314,23 @@ const toggleCollapsed = () => {
   isCollapsed.value = !isCollapsed.value
 }
 
+const viewItem = (item) => {
+  console.log('View item:', item)
+}
+
+const editItem = (item) => {
+  console.log('Edit item:', item)
+}
+
 // Lifecycle
 onMounted(() => {
   // Initialize collapsed state based on field configuration
   isCollapsed.value = props.field.collapsedByDefault || false
-
+  
   loadItems()
-})
-
-// Watch for changes
-watch(() => props.modelValue?.resource_id, (newId) => {
-  if (newId) {
-    loadItems()
-  }
 })
 </script>
 
 <style scoped>
-/* Ensure proper spacing */
-.space-y-4 > * + * {
-  margin-top: 1rem;
-}
-
-/* Loading animation */
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
+/* Component-specific styles */
 </style>

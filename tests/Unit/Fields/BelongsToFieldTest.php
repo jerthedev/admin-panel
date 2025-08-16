@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace JTD\AdminPanel\Tests\Unit\Fields;
 
+use Illuminate\Http\Request;
 use JTD\AdminPanel\Fields\BelongsTo;
 use JTD\AdminPanel\Tests\TestCase;
-use Illuminate\Http\Request;
 
 /**
- * BelongsTo Field Unit Tests
+ * BelongsTo Field Unit Tests.
  *
  * Tests for BelongsTo field class including validation, visibility,
  * and value handling.
@@ -44,9 +44,9 @@ class BelongsToFieldTest extends TestCase
         $this->assertNull($field->foreignKey);
         $this->assertNull($field->ownerKey);
         $this->assertTrue($field->searchable);
-        $this->assertFalse($field->showCreateButton);
+        $this->assertFalse($field->showCreateRelationButton);
         $this->assertNull($field->displayCallback);
-        $this->assertNull($field->queryCallback);
+        $this->assertNull($field->relatableQueryCallback);
     }
 
     public function test_belongs_to_field_resource_configuration(): void
@@ -91,24 +91,24 @@ class BelongsToFieldTest extends TestCase
         $this->assertTrue($field->searchable);
     }
 
-    public function test_belongs_to_field_show_create_button_configuration(): void
+    public function test_belongs_to_field_show_create_relation_button_configuration(): void
     {
-        $field = BelongsTo::make('Category')->showCreateButton();
+        $field = BelongsTo::make('Category')->showCreateRelationButton();
 
-        $this->assertTrue($field->showCreateButton);
+        $this->assertTrue($field->showCreateRelationButton);
     }
 
-    public function test_belongs_to_field_show_create_button_false(): void
+    public function test_belongs_to_field_show_create_relation_button_false(): void
     {
-        $field = BelongsTo::make('Category')->showCreateButton(false);
+        $field = BelongsTo::make('Category')->showCreateRelationButton(false);
 
-        $this->assertFalse($field->showCreateButton);
+        $this->assertFalse($field->showCreateRelationButton);
     }
 
     public function test_belongs_to_field_display_callback_configuration(): void
     {
         $callback = function ($model) {
-            return $model->name . ' (' . $model->id . ')';
+            return $model->name.' ('.$model->id.')';
         };
 
         $field = BelongsTo::make('Category')->display($callback);
@@ -116,35 +116,41 @@ class BelongsToFieldTest extends TestCase
         $this->assertEquals($callback, $field->displayCallback);
     }
 
-    public function test_belongs_to_field_query_callback_configuration(): void
+    public function test_belongs_to_field_relatable_query_using_configuration(): void
     {
         $callback = function ($request, $query) {
             return $query->where('active', true);
         };
 
-        $field = BelongsTo::make('Category')->query($callback);
+        $field = BelongsTo::make('Category')->relatableQueryUsing($callback);
 
-        $this->assertEquals($callback, $field->queryCallback);
+        $this->assertEquals($callback, $field->relatableQueryCallback);
     }
 
     public function test_belongs_to_field_resolve_with_related_model(): void
     {
         // Mock related model
-        $relatedModel = new class {
-            public function title() {
+        $relatedModel = new class
+        {
+            public function title()
+            {
                 return 'Test Category';
             }
         };
 
         // Mock resource
-        $resource = new class($relatedModel) {
+        $resource = new class($relatedModel)
+        {
             public function __construct(public $category) {}
         };
 
         // Mock resource class
-        $resourceClass = new class($relatedModel) {
+        $resourceClass = new class($relatedModel)
+        {
             public function __construct(public $model) {}
-            public function title() {
+
+            public function title()
+            {
                 return $this->model->title();
             }
         };
@@ -160,18 +166,21 @@ class BelongsToFieldTest extends TestCase
     public function test_belongs_to_field_resolve_with_display_callback(): void
     {
         // Mock related model
-        $relatedModel = new class {
+        $relatedModel = new class
+        {
             public $name = 'Test Category';
+
             public $id = 123;
         };
 
         // Mock resource
-        $resource = new class($relatedModel) {
+        $resource = new class($relatedModel)
+        {
             public function __construct(public $category) {}
         };
 
         $callback = function ($model) {
-            return $model->name . ' (' . $model->id . ')';
+            return $model->name.' ('.$model->id.')';
         };
 
         $field = BelongsTo::make('Category')->display($callback);
@@ -184,7 +193,8 @@ class BelongsToFieldTest extends TestCase
     public function test_belongs_to_field_resolve_with_null_related_model(): void
     {
         // Mock resource with null relationship
-        $resource = new class {
+        $resource = new class
+        {
             public $category = null;
         };
 
@@ -210,7 +220,7 @@ class BelongsToFieldTest extends TestCase
             ->foreignKey('category_id')
             ->ownerKey('uuid')
             ->searchable(false)
-            ->showCreateButton();
+            ->showCreateRelationButton();
 
         $meta = $field->meta();
 
@@ -219,13 +229,13 @@ class BelongsToFieldTest extends TestCase
         $this->assertArrayHasKey('foreignKey', $meta);
         $this->assertArrayHasKey('ownerKey', $meta);
         $this->assertArrayHasKey('searchable', $meta);
-        $this->assertArrayHasKey('showCreateButton', $meta);
+        $this->assertArrayHasKey('showCreateRelationButton', $meta);
         $this->assertEquals('App\\Models\\CategoryResource', $meta['resourceClass']);
         $this->assertEquals('parent_category', $meta['relationshipName']);
         $this->assertEquals('category_id', $meta['foreignKey']);
         $this->assertEquals('uuid', $meta['ownerKey']);
         $this->assertFalse($meta['searchable']);
-        $this->assertTrue($meta['showCreateButton']);
+        $this->assertTrue($meta['showCreateRelationButton']);
     }
 
     public function test_belongs_to_field_json_serialization(): void
@@ -233,7 +243,7 @@ class BelongsToFieldTest extends TestCase
         $field = BelongsTo::make('Post Category')
             ->resource('App\\Resources\\CategoryResource')
             ->searchable()
-            ->showCreateButton()
+            ->showCreateRelationButton()
             ->required()
             ->help('Select post category');
 
@@ -244,7 +254,7 @@ class BelongsToFieldTest extends TestCase
         $this->assertEquals('BelongsToField', $json['component']);
         $this->assertEquals('App\\Resources\\CategoryResource', $json['resourceClass']);
         $this->assertTrue($json['searchable']);
-        $this->assertTrue($json['showCreateButton']);
+        $this->assertTrue($json['showCreateRelationButton']);
         $this->assertContains('required', $json['rules']);
         $this->assertEquals('Select post category', $json['helpText']);
     }
@@ -272,7 +282,7 @@ class BelongsToFieldTest extends TestCase
     public function test_belongs_to_field_fill_method(): void
     {
         $field = BelongsTo::make('Category');
-        $model = new \stdClass();
+        $model = new \stdClass;
         $request = new \Illuminate\Http\Request(['category' => '123']);
 
         // Test that fill method exists and can be called
@@ -288,7 +298,7 @@ class BelongsToFieldTest extends TestCase
     public function test_belongs_to_field_fill_with_custom_foreign_key(): void
     {
         $field = BelongsTo::make('Category')->foreignKey('cat_id');
-        $model = new \stdClass();
+        $model = new \stdClass;
         $request = new \Illuminate\Http\Request(['category' => '456']);
 
         $field->fill($request, $model);
@@ -307,7 +317,7 @@ class BelongsToFieldTest extends TestCase
         $field = BelongsTo::make('Category');
         $field->fillCallback = $fillCallback;
 
-        $model = new \stdClass();
+        $model = new \stdClass;
         $request = new \Illuminate\Http\Request(['category' => '789']);
 
         $field->fill($request, $model);
@@ -326,7 +336,7 @@ class BelongsToFieldTest extends TestCase
     public function test_belongs_to_field_get_options_error_handling(): void
     {
         $field = BelongsTo::make('Category');
-        $request = new \Illuminate\Http\Request();
+        $request = new \Illuminate\Http\Request;
 
         // Test that the method handles errors gracefully when resource class doesn't exist
         $this->expectException(\Error::class);
@@ -341,10 +351,10 @@ class BelongsToFieldTest extends TestCase
             return $query->where('active', true);
         };
 
-        $field = BelongsTo::make('Category')->query($queryCallback);
+        $field = BelongsTo::make('Category')->relatableQueryUsing($queryCallback);
 
         // Verify the query callback is set
-        $this->assertEquals($queryCallback, $field->queryCallback);
+        $this->assertEquals($queryCallback, $field->relatableQueryCallback);
 
         // Test that getOptions method exists and can handle query callbacks
         $this->assertTrue(method_exists($field, 'getOptions'));
@@ -353,7 +363,7 @@ class BelongsToFieldTest extends TestCase
     public function test_belongs_to_field_get_options_with_display_callback(): void
     {
         $displayCallback = function ($model) {
-            return 'Custom: ' . $model->name;
+            return 'Custom: '.$model->name;
         };
 
         $field = BelongsTo::make('Category')->display($displayCallback);
@@ -371,7 +381,7 @@ class BelongsToFieldTest extends TestCase
         $request = new \Illuminate\Http\Request([
             'search' => 'test search',
             'orderBy' => 'name',
-            'orderByDirection' => 'asc'
+            'orderByDirection' => 'asc',
         ]);
 
         // Test that the method can handle search parameters
@@ -384,7 +394,7 @@ class BelongsToFieldTest extends TestCase
     public function test_belongs_to_field_complex_configuration(): void
     {
         $displayCallback = function ($model) {
-            return $model->name . ' - ' . $model->description;
+            return $model->name.' - '.$model->description;
         };
 
         $queryCallback = function ($request, $query) {
@@ -397,9 +407,9 @@ class BelongsToFieldTest extends TestCase
             ->foreignKey('category_id')
             ->ownerKey('id')
             ->searchable()
-            ->showCreateButton()
+            ->showCreateRelationButton()
             ->display($displayCallback)
-            ->query($queryCallback);
+            ->relatableQueryUsing($queryCallback);
 
         // Test all configurations are set
         $this->assertEquals('App\\Resources\\ProductCategoryResource', $field->resourceClass);
@@ -407,8 +417,8 @@ class BelongsToFieldTest extends TestCase
         $this->assertEquals('category_id', $field->foreignKey);
         $this->assertEquals('id', $field->ownerKey);
         $this->assertTrue($field->searchable);
-        $this->assertTrue($field->showCreateButton);
+        $this->assertTrue($field->showCreateRelationButton);
         $this->assertEquals($displayCallback, $field->displayCallback);
-        $this->assertEquals($queryCallback, $field->queryCallback);
+        $this->assertEquals($queryCallback, $field->relatableQueryCallback);
     }
 }

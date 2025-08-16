@@ -48,9 +48,59 @@ class BelongsTo extends Field
     public bool $searchable = true;
 
     /**
-     * Whether to show the create button.
+     * Conditional searchable callback.
      */
-    public bool $showCreateButton = false;
+    public $searchableCallback = null;
+
+    /**
+     * Whether to show subtitles in search results.
+     */
+    public bool $withSubtitles = false;
+
+    /**
+     * Whether to show the create relation button.
+     */
+    public bool $showCreateRelationButton = false;
+
+    /**
+     * Conditional create relation button callback.
+     */
+    public $showCreateRelationButtonCallback = null;
+
+    /**
+     * Whether to hide the create relation button.
+     */
+    public bool $hideCreateRelationButton = false;
+
+    /**
+     * The modal size for inline creation.
+     */
+    public string $modalSize = 'md';
+
+    /**
+     * Whether peeking is enabled.
+     */
+    public bool $peekable = true;
+
+    /**
+     * Conditional peeking callback.
+     */
+    public $peekableCallback = null;
+
+    /**
+     * Whether the relationship is nullable.
+     */
+    public bool $nullable = false;
+
+    /**
+     * Whether to reorder associatables by title.
+     */
+    public bool $reorderAssociatables = true;
+
+    /**
+     * Whether to include trashed models.
+     */
+    public bool $withTrashed = true;
 
     /**
      * The display callback for the related model.
@@ -58,9 +108,14 @@ class BelongsTo extends Field
     public $displayCallback = null;
 
     /**
-     * The query callback for filtering related models.
+     * The relatable query callback for filtering related models.
      */
-    public $queryCallback = null;
+    public $relatableQueryCallback = null;
+
+    /**
+     * Dependent field configurations.
+     */
+    public array $dependentFields = [];
 
     /**
      * Create a new BelongsTo field.
@@ -71,6 +126,29 @@ class BelongsTo extends Field
 
         $this->relationshipName = $this->attribute;
         $this->resourceClass = $this->guessResourceClass();
+    }
+
+    /**
+     * Create a new BelongsTo field with Nova-style syntax.
+     *
+     * Supports both parent signature and Nova's BelongsTo signature:
+     * - BelongsTo::make('User')
+     * - BelongsTo::make('Author', 'user', UserResource::class)
+     */
+    public static function make(string $name, ?string $attribute = null, $resourceOrCallback = null): static
+    {
+        // If third parameter is a string (resource class), use Nova syntax
+        if (is_string($resourceOrCallback)) {
+            $field = new static($name, $attribute);
+            $field->resourceClass = $resourceOrCallback;
+
+            return $field;
+        }
+
+        // Otherwise, use parent signature (callable resolveCallback)
+        $field = new static($name, $attribute, $resourceOrCallback);
+
+        return $field;
     }
 
     /**
@@ -116,19 +194,115 @@ class BelongsTo extends Field
     /**
      * Make the relationship searchable.
      */
-    public function searchable(bool $searchable = true): static
+    public function searchable($searchable = true): static
     {
-        $this->searchable = $searchable;
+        if (is_callable($searchable)) {
+            $this->searchableCallback = $searchable;
+            $this->searchable = true;
+        } else {
+            $this->searchable = (bool) $searchable;
+        }
 
         return $this;
     }
 
     /**
-     * Show the create button for creating new related models.
+     * Show subtitles in search results.
      */
-    public function showCreateButton(bool $showCreateButton = true): static
+    public function withSubtitles(bool $withSubtitles = true): static
     {
-        $this->showCreateButton = $showCreateButton;
+        $this->withSubtitles = $withSubtitles;
+
+        return $this;
+    }
+
+    /**
+     * Disable peeking at the relationship.
+     */
+    public function noPeeking(): static
+    {
+        $this->peekable = false;
+
+        return $this;
+    }
+
+    /**
+     * Set whether peeking is allowed.
+     */
+    public function peekable($peekable = true): static
+    {
+        if (is_callable($peekable)) {
+            $this->peekableCallback = $peekable;
+            $this->peekable = true;
+        } else {
+            $this->peekable = (bool) $peekable;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Make the relationship nullable.
+     */
+    public function nullable(bool $nullable = true): static
+    {
+        $this->nullable = $nullable;
+
+        return $this;
+    }
+
+    /**
+     * Disable reordering associatables by title.
+     */
+    public function dontReorderAssociatables(): static
+    {
+        $this->reorderAssociatables = false;
+
+        return $this;
+    }
+
+    /**
+     * Filter out trashed models.
+     */
+    public function withoutTrashed(): static
+    {
+        $this->withTrashed = false;
+
+        return $this;
+    }
+
+    /**
+     * Show the create relation button for creating new related models (Nova-style).
+     */
+    public function showCreateRelationButton($showCreateRelationButton = true): static
+    {
+        if (is_callable($showCreateRelationButton)) {
+            $this->showCreateRelationButtonCallback = $showCreateRelationButton;
+            $this->showCreateRelationButton = true;
+        } else {
+            $this->showCreateRelationButton = (bool) $showCreateRelationButton;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Hide the create relation button.
+     */
+    public function hideCreateRelationButton(): static
+    {
+        $this->hideCreateRelationButton = true;
+        $this->showCreateRelationButton = false;
+
+        return $this;
+    }
+
+    /**
+     * Set the modal size for inline creation.
+     */
+    public function modalSize(string $size): static
+    {
+        $this->modalSize = $size;
 
         return $this;
     }
@@ -144,11 +318,28 @@ class BelongsTo extends Field
     }
 
     /**
-     * Set a query callback for filtering related models.
+     * Set a relatable query callback for filtering related models (Nova-style).
      */
-    public function query(callable $callback): static
+    public function relatableQueryUsing(callable $callback): static
     {
-        $this->queryCallback = $callback;
+        $this->relatableQueryCallback = $callback;
+
+        return $this;
+    }
+
+    /**
+     * Make this field dependent on other fields.
+     */
+    public function dependsOn($fields, callable $callback): static
+    {
+        if (! is_array($fields)) {
+            $fields = [$fields];
+        }
+
+        $this->dependentFields[] = [
+            'fields' => $fields,
+            'callback' => $callback,
+        ];
 
         return $this;
     }
@@ -200,13 +391,24 @@ class BelongsTo extends Field
     {
         $query = $this->resourceClass::newModel()->newQuery();
 
-        // Apply custom query callback if provided
-        if ($this->queryCallback) {
-            $query = call_user_func($this->queryCallback, $request, $query);
+        // Filter trashed models if specified
+        if (! $this->withTrashed) {
+            $query->whereNull('deleted_at');
+        }
+
+        // Apply custom relatable query callback if provided
+        if ($this->relatableQueryCallback) {
+            $query = call_user_func($this->relatableQueryCallback, $request, $query);
         }
 
         // Apply resource's relatable query
         $query = $this->resourceClass::relatableQuery($request, $query);
+
+        // Order by title if reordering is enabled
+        if ($this->reorderAssociatables) {
+            $titleColumn = $this->resourceClass::$title ?? 'name';
+            $query->orderBy($titleColumn);
+        }
 
         $models = $query->get();
         $options = [];
@@ -220,10 +422,17 @@ class BelongsTo extends Field
                 $label = $resourceInstance->title();
             }
 
-            $options[] = [
+            $option = [
                 'value' => $model->getKey(),
                 'label' => $label,
             ];
+
+            // Add subtitle if enabled
+            if ($this->withSubtitles && method_exists($resourceInstance, 'subtitle')) {
+                $option['subtitle'] = $resourceInstance->subtitle();
+            }
+
+            $options[] = $option;
         }
 
         return $options;
@@ -249,8 +458,56 @@ class BelongsTo extends Field
             'relationshipName' => $this->relationshipName,
             'foreignKey' => $this->foreignKey,
             'ownerKey' => $this->ownerKey,
-            'searchable' => $this->searchable,
-            'showCreateButton' => $this->showCreateButton,
+            'searchable' => $this->resolveSearchable(),
+            'withSubtitles' => $this->withSubtitles,
+            'showCreateRelationButton' => $this->resolveShowCreateRelationButton(),
+            'hideCreateRelationButton' => $this->hideCreateRelationButton,
+            'modalSize' => $this->modalSize,
+            'peekable' => $this->resolvePeekable(),
+            'nullable' => $this->nullable,
+            'reorderAssociatables' => $this->reorderAssociatables,
+            'withTrashed' => $this->withTrashed,
+            'dependentFields' => $this->dependentFields,
         ]);
+    }
+
+    /**
+     * Resolve the searchable value.
+     */
+    protected function resolveSearchable(): bool
+    {
+        if ($this->searchableCallback) {
+            return call_user_func($this->searchableCallback, request());
+        }
+
+        return $this->searchable;
+    }
+
+    /**
+     * Resolve the show create relation button value.
+     */
+    protected function resolveShowCreateRelationButton(): bool
+    {
+        if ($this->hideCreateRelationButton) {
+            return false;
+        }
+
+        if ($this->showCreateRelationButtonCallback) {
+            return call_user_func($this->showCreateRelationButtonCallback, request());
+        }
+
+        return $this->showCreateRelationButton;
+    }
+
+    /**
+     * Resolve the peekable value.
+     */
+    protected function resolvePeekable(): bool
+    {
+        if ($this->peekableCallback) {
+            return call_user_func($this->peekableCallback, request());
+        }
+
+        return $this->peekable;
     }
 }

@@ -140,10 +140,10 @@
 <script setup>
 /**
  * BelongsToField Component
- * 
+ *
  * Many-to-one relationship field with dropdown selection and search capabilities.
  * Supports creating new related models and custom display options.
- * 
+ *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
 
@@ -203,7 +203,7 @@ const hasError = computed(() => {
 
 const selectedLabel = computed(() => {
   if (!props.modelValue) return null
-  
+
   const option = options.value.find(opt => opt.value == props.modelValue)
   return option ? option.label : null
 })
@@ -212,9 +212,9 @@ const filteredOptions = computed(() => {
   if (!props.field.searchable || !searchQuery.value) {
     return options.value
   }
-  
+
   const query = searchQuery.value.toLowerCase()
-  return options.value.filter(option => 
+  return options.value.filter(option =>
     option.label.toLowerCase().includes(query)
   )
 })
@@ -226,12 +226,12 @@ const isSelected = (value) => {
 
 const toggleDropdown = async () => {
   if (props.disabled || props.readonly) return
-  
+
   isOpen.value = !isOpen.value
-  
+
   if (isOpen.value) {
     await loadOptions()
-    
+
     if (props.field.searchable) {
       nextTick(() => {
         searchInputRef.value?.focus()
@@ -242,17 +242,17 @@ const toggleDropdown = async () => {
 
 const selectOption = (option) => {
   if (props.disabled || props.readonly) return
-  
+
   emit('update:modelValue', option.value)
   emit('change', option.value)
-  
+
   isOpen.value = false
   searchQuery.value = ''
 }
 
 const clearSelection = () => {
   if (props.disabled || props.readonly) return
-  
+
   emit('update:modelValue', null)
   emit('change', null)
 }
@@ -273,30 +273,54 @@ const handleClickOutside = (event) => {
 
 const loadOptions = async () => {
   if (options.value.length > 0) return // Already loaded
-  
+
   loading.value = true
-  
+
   try {
-    // In a real implementation, this would make an API call
-    // For now, we'll simulate loading
-    await new Promise(resolve => setTimeout(resolve, 300))
-    
-    // Mock options - in real implementation, this would come from the API
-    options.value = [
-      { value: 1, label: 'Option 1' },
-      { value: 2, label: 'Option 2' },
-      { value: 3, label: 'Option 3' },
-    ]
+    // Make real API call to get options
+    const response = await fetch(`/admin-panel/api/fields/belongs-to/options`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+      },
+      body: JSON.stringify({
+        field: props.field,
+        search: searchQuery.value,
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const data = await response.json()
+    options.value = data.options || []
   } catch (error) {
     console.error('Failed to load options:', error)
+    options.value = []
   } finally {
     loading.value = false
   }
 }
 
 const showCreateModal = () => {
-  // In a real implementation, this would open a modal to create a new related model
-  console.log('Show create modal for', props.field.resourceClass)
+  // Emit event to parent component to handle modal creation
+  // This allows the parent to manage the modal state and creation process
+  emit('show-create-modal', {
+    resourceClass: props.field.resourceClass,
+    modalSize: props.field.modalSize || 'md',
+    onCreated: (newResource) => {
+      // Add the newly created resource to options and select it
+      const newOption = {
+        value: newResource.id,
+        label: newResource.title || newResource.name,
+      }
+      options.value.push(newOption)
+      selectedValue.value = newResource.id
+      emit('update:modelValue', newResource.id)
+    }
+  })
 }
 
 // Lifecycle

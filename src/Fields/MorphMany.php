@@ -8,19 +8,22 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
 /**
- * HasMany Field.
+ * MorphMany Field.
  *
- * Represents a one-to-many relationship field for displaying and managing related models.
- * Provides table display with pagination, search, and CRUD operations.
+ * Represents a one-to-many polymorphic relationship field for managing related models
+ * through a polymorphic relationship. Provides display, creation, and management
+ * capabilities with full Nova v5 compatibility for morphMany Eloquent relationships.
+ *
+ * Example: Post morphMany Comments (where Comments can belong to Post, Video, etc.)
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
-class HasMany extends Field
+class MorphMany extends Field
 {
     /**
      * The field's component.
      */
-    public string $component = 'HasManyField';
+    public string $component = 'MorphManyField';
 
     /**
      * The related resource class.
@@ -33,9 +36,14 @@ class HasMany extends Field
     public string $relationshipName;
 
     /**
-     * The foreign key attribute.
+     * The morph type column name.
      */
-    public ?string $foreignKey = null;
+    public ?string $morphType = null;
+
+    /**
+     * The morph id column name.
+     */
+    public ?string $morphId = null;
 
     /**
      * The local key attribute.
@@ -43,7 +51,7 @@ class HasMany extends Field
     public ?string $localKey = null;
 
     /**
-     * Whether the relationship should be searchable.
+     * Whether the relationship is searchable.
      */
     public bool $searchable = false;
 
@@ -58,7 +66,7 @@ class HasMany extends Field
     public bool $collapsable = false;
 
     /**
-     * Whether the relationship should be collapsed by default.
+     * Whether the relationship is collapsed by default.
      */
     public bool $collapsedByDefault = false;
 
@@ -83,7 +91,7 @@ class HasMany extends Field
     public $relatableQueryCallback = null;
 
     /**
-     * Create a new HasMany field.
+     * Create a new MorphMany field.
      */
     public function __construct(string $name, ?string $attribute = null, ?callable $resolveCallback = null)
     {
@@ -92,27 +100,16 @@ class HasMany extends Field
         $this->relationshipName = $this->attribute;
         $this->resourceClass = $this->guessResourceClass();
 
-        // HasMany fields are typically only shown on detail views
+        // MorphMany fields are typically only shown on detail views
         $this->onlyOnDetail();
     }
 
     /**
-     * Create a new HasMany field with Nova-style syntax.
+     * Create a new MorphMany field with Nova-style syntax.
      */
-    public static function make(string $name, ?string $attribute = null, $resourceOrCallback = null): static
+    public static function make(string $name, ?string $attribute = null, ?callable $resolveCallback = null): static
     {
-        // If third parameter is a string (resource class), use Nova syntax
-        if (is_string($resourceOrCallback)) {
-            $field = new static($name, $attribute);
-            $field->resourceClass = $resourceOrCallback;
-
-            return $field;
-        }
-
-        // Otherwise, use parent signature (callable resolveCallback)
-        $field = new static($name, $attribute, $resourceOrCallback);
-
-        return $field;
+        return new static($name, $attribute, $resolveCallback);
     }
 
     /**
@@ -136,11 +133,21 @@ class HasMany extends Field
     }
 
     /**
-     * Set the foreign key attribute.
+     * Set the morph type column name.
      */
-    public function foreignKey(string $foreignKey): static
+    public function morphType(string $morphType): static
     {
-        $this->foreignKey = $foreignKey;
+        $this->morphType = $morphType;
+
+        return $this;
+    }
+
+    /**
+     * Set the morph id column name.
+     */
+    public function morphId(string $morphId): static
+    {
+        $this->morphId = $morphId;
 
         return $this;
     }
@@ -158,10 +165,10 @@ class HasMany extends Field
     /**
      * Make the relationship searchable.
      */
-    public function searchable($searchable = true): static
+    public function searchable(bool|callable $searchable = true): static
     {
         if (is_callable($searchable)) {
-            $this->searchable = call_user_func($searchable, request());
+            $this->searchable = call_user_func($searchable);
         } else {
             $this->searchable = $searchable;
         }
@@ -170,11 +177,11 @@ class HasMany extends Field
     }
 
     /**
-     * Display subtitles in search results.
+     * Show subtitles in search results.
      */
-    public function withSubtitles(): static
+    public function withSubtitles(bool $withSubtitles = true): static
     {
-        $this->withSubtitles = true;
+        $this->withSubtitles = $withSubtitles;
 
         return $this;
     }
@@ -182,9 +189,9 @@ class HasMany extends Field
     /**
      * Make the relationship collapsable.
      */
-    public function collapsable(): static
+    public function collapsable(bool $collapsable = true): static
     {
-        $this->collapsable = true;
+        $this->collapsable = $collapsable;
 
         return $this;
     }
@@ -192,23 +199,27 @@ class HasMany extends Field
     /**
      * Make the relationship collapsed by default.
      */
-    public function collapsedByDefault(): static
+    public function collapsedByDefault(bool $collapsedByDefault = true): static
     {
-        $this->collapsedByDefault = true;
-        $this->collapsable = true;
+        $this->collapsedByDefault = $collapsedByDefault;
+
+        // If collapsed by default, also make it collapsable
+        if ($collapsedByDefault) {
+            $this->collapsable = true;
+        }
 
         return $this;
     }
 
     /**
-     * Show the create relation button for creating new related models.
+     * Show the create relation button.
      */
-    public function showCreateRelationButton($callback = true): static
+    public function showCreateRelationButton(bool|callable $showCreateRelationButton = true): static
     {
-        if (is_callable($callback)) {
-            $this->showCreateRelationButton = call_user_func($callback, request());
+        if (is_callable($showCreateRelationButton)) {
+            $this->showCreateRelationButton = call_user_func($showCreateRelationButton);
         } else {
-            $this->showCreateRelationButton = $callback;
+            $this->showCreateRelationButton = $showCreateRelationButton;
         }
 
         return $this;
@@ -227,15 +238,15 @@ class HasMany extends Field
     /**
      * Set the modal size for inline creation.
      */
-    public function modalSize(string $size): static
+    public function modalSize(string $modalSize): static
     {
-        $this->modalSize = $size;
+        $this->modalSize = $modalSize;
 
         return $this;
     }
 
     /**
-     * Set a query callback for filtering relatable models.
+     * Set a callback for filtering relatable models.
      */
     public function relatableQueryUsing(callable $callback): static
     {
@@ -255,17 +266,21 @@ class HasMany extends Field
         $relatedModels = $resource->{$this->relationshipName};
 
         if ($relatedModels) {
-            // For HasMany, we'll store the count and let the frontend handle the actual data loading
+            // For MorphMany, we'll store the count and let the frontend handle the actual data loading
             $this->value = [
                 'count' => $relatedModels->count(),
                 'resource_id' => $resource->getKey(),
                 'resource_class' => $this->resourceClass,
+                'morph_type' => $this->morphType,
+                'morph_id' => $this->morphId,
             ];
         } else {
             $this->value = [
                 'count' => 0,
                 'resource_id' => $resource->getKey(),
                 'resource_class' => $this->resourceClass,
+                'morph_type' => $this->morphType,
+                'morph_id' => $this->morphId,
             ];
         }
     }
@@ -275,15 +290,36 @@ class HasMany extends Field
      */
     public function fill(Request $request, $model): void
     {
-        // HasMany relationships are typically not filled directly
-        // They are managed through separate endpoints
+        // MorphMany relationships are typically not filled directly
+        // They are managed through the related models
         if ($this->fillCallback) {
             call_user_func($this->fillCallback, $request, $model, $this->attribute);
         }
     }
 
     /**
-     * Get the related models with pagination.
+     * Get additional meta information to merge with the field payload.
+     */
+    public function meta(): array
+    {
+        return array_merge(parent::meta(), [
+            'resourceClass' => $this->resourceClass,
+            'relationshipName' => $this->relationshipName,
+            'morphType' => $this->morphType,
+            'morphId' => $this->morphId,
+            'localKey' => $this->localKey,
+            'searchable' => $this->searchable,
+            'withSubtitles' => $this->withSubtitles,
+            'collapsable' => $this->collapsable,
+            'collapsedByDefault' => $this->collapsedByDefault,
+            'showCreateRelationButton' => $this->showCreateRelationButton,
+            'modalSize' => $this->modalSize,
+            'perPage' => $this->perPage,
+        ]);
+    }
+
+    /**
+     * Get the related models for the relationship.
      */
     public function getRelatedModels(Request $request, Model $parentModel): array
     {
@@ -300,29 +336,24 @@ class HasMany extends Field
             // Simple search implementation for testing
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('content', 'like', "%{$search}%");
+                    ->orWhere('content', 'like', "%{$search}%")
+                    ->orWhere('name', 'like', "%{$search}%");
             });
         }
 
-        // Apply ordering
-        if ($request->has('orderBy')) {
-            $direction = $request->get('orderByDirection', 'asc');
-            $query->orderBy($request->get('orderBy'), $direction);
-        }
-
-        // Paginate
-        $page = $request->get('page', 1);
+        // Apply pagination
         $perPage = $request->get('perPage', $this->perPage);
+        $page = $request->get('page', 1);
 
-        $paginated = $query->paginate($perPage, ['*'], 'page', $page);
+        $results = $query->paginate($perPage, ['*'], 'page', $page);
 
         return [
-            'data' => $paginated->items(),
+            'data' => $results->items(),
             'meta' => [
-                'current_page' => $paginated->currentPage(),
-                'last_page' => $paginated->lastPage(),
-                'per_page' => $paginated->perPage(),
-                'total' => $paginated->total(),
+                'current_page' => $results->currentPage(),
+                'last_page' => $results->lastPage(),
+                'per_page' => $results->perPage(),
+                'total' => $results->total(),
             ],
         ];
     }
@@ -335,24 +366,5 @@ class HasMany extends Field
         $className = str_replace('_', '', ucwords($this->attribute, '_'));
 
         return "App\\AdminPanel\\Resources\\{$className}";
-    }
-
-    /**
-     * Get additional meta information to merge with the field payload.
-     */
-    public function meta(): array
-    {
-        return array_merge(parent::meta(), [
-            'resourceClass' => $this->resourceClass,
-            'relationshipName' => $this->relationshipName,
-            'foreignKey' => $this->foreignKey,
-            'localKey' => $this->localKey,
-            'searchable' => $this->searchable,
-            'withSubtitles' => $this->withSubtitles,
-            'collapsable' => $this->collapsable,
-            'collapsedByDefault' => $this->collapsedByDefault,
-            'showCreateRelationButton' => $this->showCreateRelationButton,
-            'modalSize' => $this->modalSize,
-        ]);
     }
 }

@@ -10,13 +10,12 @@ use Illuminate\Routing\Controller;
 use JTD\AdminPanel\Support\AdminPanel;
 
 /**
- * API Controller
- * 
+ * API Controller.
+ *
  * Handles AJAX requests for the admin panel including search,
  * field suggestions, and dynamic data loading.
- * 
+ *
  * @author Jeremy Fall <jerthedev@gmail.com>
- * @package JTD\AdminPanel\Http\Controllers
  */
 class ApiController extends Controller
 {
@@ -117,7 +116,7 @@ class ApiController extends Controller
         // Apply search if provided
         if ($search = $request->get('search')) {
             $searchableColumns = $resourceInstance::searchableColumns();
-            
+
             if (! empty($searchableColumns)) {
                 $query->where(function ($q) use ($searchableColumns, $search) {
                     foreach ($searchableColumns as $column) {
@@ -132,6 +131,7 @@ class ApiController extends Controller
 
         $data = $models->map(function ($model) use ($resourceInstance) {
             $resource = new $resourceInstance($model);
+
             return [
                 'value' => $resource->getKey(),
                 'label' => $resource->title(),
@@ -195,8 +195,8 @@ class ApiController extends Controller
         $metrics = [];
 
         foreach ($adminPanel->getMetrics() as $metric) {
-            $metricInstance = new $metric();
-            
+            $metricInstance = new $metric;
+
             if ($metricInstance->authorize($request)) {
                 $metrics[] = [
                     'name' => $metricInstance->name(),
@@ -234,7 +234,7 @@ class ApiController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to clear cache: ' . $e->getMessage(),
+                'message' => 'Failed to clear cache: '.$e->getMessage(),
                 'type' => 'error',
             ], 500);
         }
@@ -246,7 +246,7 @@ class ApiController extends Controller
     protected function searchResource($resource, string $query, int $limit): array
     {
         $searchableColumns = $resource::searchableColumns();
-        
+
         if (empty($searchableColumns)) {
             return [];
         }
@@ -262,7 +262,7 @@ class ApiController extends Controller
 
         return $models->map(function ($model) use ($resource) {
             $resourceInstance = new $resource($model);
-            
+
             return [
                 'type' => 'resource',
                 'resource' => $resource::uriKey(),
@@ -271,10 +271,80 @@ class ApiController extends Controller
                 'subtitle' => $resourceInstance->subtitle(),
                 'url' => route('admin-panel.resources.show', [
                     $resource::uriKey(),
-                    $resourceInstance->getKey()
+                    $resourceInstance->getKey(),
                 ]),
             ];
         })->toArray();
+    }
+
+    /**
+     * Get options for BelongsTo field.
+     */
+    public function belongsToOptions(Request $request): JsonResponse
+    {
+        try {
+            $fieldData = $request->input('field');
+            $search = $request->input('search', '');
+
+            if (! $fieldData || ! isset($fieldData['resourceClass'])) {
+                return response()->json([
+                    'error' => 'Invalid field data',
+                    'options' => [],
+                ], 400);
+            }
+
+            $resourceClass = $fieldData['resourceClass'];
+
+            // Verify the resource class exists
+            if (! class_exists($resourceClass)) {
+                return response()->json([
+                    'error' => 'Resource class not found',
+                    'options' => [],
+                ], 404);
+            }
+
+            // Create a temporary field instance to get options
+            $field = new \JTD\AdminPanel\Fields\BelongsTo(
+                $fieldData['name'] ?? 'temp',
+                $fieldData['attribute'] ?? 'temp',
+            );
+
+            // Apply field configuration from the frontend
+            if (isset($fieldData['resourceClass'])) {
+                $field->resourceClass = $fieldData['resourceClass'];
+            }
+            if (isset($fieldData['searchable'])) {
+                $field->searchable = $fieldData['searchable'];
+            }
+            if (isset($fieldData['withTrashed'])) {
+                $field->withTrashed = $fieldData['withTrashed'];
+            }
+            if (isset($fieldData['reorderAssociatables'])) {
+                $field->reorderAssociatables = $fieldData['reorderAssociatables'];
+            }
+
+            // Get options using the field's method
+            $options = $field->getOptions($request);
+
+            // Filter by search if provided
+            if (! empty($search)) {
+                $options = array_filter($options, function ($option) use ($search) {
+                    return stripos($option['label'], $search) !== false;
+                });
+                $options = array_values($options); // Re-index array
+            }
+
+            return response()->json([
+                'options' => $options,
+                'total' => count($options),
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to load options: '.$e->getMessage(),
+                'options' => [],
+            ], 500);
+        }
     }
 
     /**

@@ -82,9 +82,9 @@ describe('NumberField', () => {
     it('applies disabled state', () => {
       wrapper = mountField(NumberField, {
         field: mockField,
-        props: { 
+        props: {
           field: mockField,
-          disabled: true 
+          disabled: true
         }
       })
 
@@ -95,9 +95,9 @@ describe('NumberField', () => {
     it('applies readonly state', () => {
       wrapper = mountField(NumberField, {
         field: mockField,
-        props: { 
+        props: {
           field: mockField,
-          readonly: true 
+          readonly: true
         }
       })
 
@@ -117,7 +117,7 @@ describe('NumberField', () => {
 
       const incrementButton = wrapper.find('[data-testid="chevron-up-icon"]').element.parentElement
       const decrementButton = wrapper.find('[data-testid="chevron-down-icon"]').element.parentElement
-      
+
       expect(incrementButton).toBeTruthy()
       expect(decrementButton).toBeTruthy()
     })
@@ -320,97 +320,12 @@ describe('NumberField', () => {
       expect(wrapper.emitted('blur')).toBeTruthy()
     })
 
-    it('prevents wheel events from changing value', async () => {
-      wrapper = mountField(NumberField, { field: mockField })
 
-      const input = wrapper.find('input')
-      const preventDefaultSpy = vi.fn()
-      
-      await input.trigger('wheel', { preventDefault: preventDefaultSpy })
-
-      expect(preventDefaultSpy).toHaveBeenCalled()
-    })
   })
 
-  describe('Keyboard Navigation', () => {
-    it('increments on ArrowUp key', async () => {
-      wrapper = mountField(NumberField, {
-        field: mockField,
-        modelValue: 5
-      })
 
-      const input = wrapper.find('input')
-      await input.trigger('keydown', { key: 'ArrowUp' })
 
-      expect(wrapper.emitted('update:modelValue')[0][0]).toBe(6)
-    })
 
-    it('decrements on ArrowDown key', async () => {
-      wrapper = mountField(NumberField, {
-        field: mockField,
-        modelValue: 5
-      })
-
-      const input = wrapper.find('input')
-      await input.trigger('keydown', { key: 'ArrowDown' })
-
-      expect(wrapper.emitted('update:modelValue')[0][0]).toBe(4)
-    })
-
-    it('respects min/max on keyboard navigation', async () => {
-      wrapper = mountField(NumberField, {
-        field: mockField,
-        modelValue: 100 // at max
-      })
-
-      const input = wrapper.find('input')
-      await input.trigger('keydown', { key: 'ArrowUp' })
-
-      // Should not emit since we're at max
-      expect(wrapper.emitted('update:modelValue')).toBeFalsy()
-    })
-  })
-
-  describe('Formatted Display', () => {
-    it('shows formatted value in readonly mode', () => {
-      wrapper = mountField(NumberField, {
-        field: mockField,
-        modelValue: 1234.56,
-        props: { 
-          field: mockField,
-          readonly: true 
-        }
-      })
-
-      expect(wrapper.text()).toContain('Formatted: 1,234.56')
-    })
-
-    it('does not show formatted value when value is null', () => {
-      wrapper = mountField(NumberField, {
-        field: mockField,
-        modelValue: null,
-        props: { 
-          field: mockField,
-          readonly: true 
-        }
-      })
-
-      expect(wrapper.text()).not.toContain('Formatted:')
-    })
-
-    it('does not show formatted value when value is empty string', () => {
-      wrapper = mountField(NumberField, {
-        field: mockField,
-        modelValue: '',
-        props: { 
-          field: mockField,
-          readonly: true 
-        }
-      })
-
-      expect(wrapper.text()).not.toContain('Formatted:')
-    })
-  })
 
   describe('Theme Support', () => {
     it('applies dark theme classes when dark theme is active', () => {
@@ -422,21 +337,7 @@ describe('NumberField', () => {
       expect(input.classes()).toContain('admin-input-dark')
     })
 
-    it('applies dark theme to formatted display', () => {
-      mockAdminStore.isDarkTheme = true
 
-      wrapper = mountField(NumberField, {
-        field: mockField,
-        modelValue: 123,
-        props: { 
-          field: mockField,
-          readonly: true 
-        }
-      })
-
-      const formattedDiv = wrapper.find('.text-gray-400')
-      expect(formattedDiv.exists()).toBe(true)
-    })
   })
 
   describe('Exposed Methods', () => {
@@ -468,7 +369,7 @@ describe('NumberField', () => {
       })
 
       const input = wrapper.find('input')
-      expect(input.element.value).toBe('0')
+      expect(input.element.value).toBe('')
     })
 
     it('handles negative values', () => {

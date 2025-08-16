@@ -11,17 +11,26 @@
     <div class="space-y-4">
       <!-- Password input -->
       <div class="relative">
+        <!-- Lock icon -->
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <LockClosedIcon class="h-5 w-5 text-gray-400" />
+        </div>
+
         <input
           :id="fieldId"
           ref="inputRef"
           :type="showPassword ? 'text' : 'password'"
-          :value="modelValue"
+          :value="truncatedValue"
           :placeholder="field.placeholder || 'Enter password'"
           :minlength="field.minLength"
+          :maxlength="field.maxLength"
           :disabled="disabled"
           :readonly="readonly"
-          class="admin-input w-full pr-10"
-          :class="{ 'admin-input-dark': isDarkTheme }"
+          class="admin-input w-full pl-10"
+          :class="{
+            'admin-input-dark': isDarkTheme,
+            'pr-10': field.showToggle !== false
+          }"
           @input="handleInput"
           @focus="handleFocus"
           @blur="handleBlur"
@@ -29,6 +38,7 @@
 
         <!-- Toggle password visibility -->
         <button
+          v-if="field.showToggle !== false"
           type="button"
           class="absolute inset-y-0 right-0 pr-3 flex items-center"
           @click="togglePasswordVisibility"
@@ -67,7 +77,7 @@
       </div>
 
       <!-- Password strength indicator -->
-      <div v-if="field.showStrengthIndicator && modelValue" class="space-y-2">
+      <div v-if="field.showStrengthMeter && modelValue" class="strength-meter space-y-2">
         <div class="flex items-center space-x-2">
           <span class="text-sm text-gray-600" :class="{ 'text-gray-400': isDarkTheme }">
             Strength:
@@ -84,50 +94,60 @@
           </span>
         </div>
 
-        <!-- Password requirements -->
-        <div class="text-xs space-y-1">
-          <div
-            v-if="field.minLength"
-            class="flex items-center space-x-2"
-            :class="hasMinLength ? 'text-green-600' : 'text-gray-500'"
-          >
-            <CheckIcon v-if="hasMinLength" class="h-3 w-3" />
-            <XMarkIcon v-else class="h-3 w-3" />
-            <span>At least {{ field.minLength }} characters</span>
-          </div>
-          <div
-            class="flex items-center space-x-2"
-            :class="hasUppercase ? 'text-green-600' : 'text-gray-500'"
-          >
-            <CheckIcon v-if="hasUppercase" class="h-3 w-3" />
-            <XMarkIcon v-else class="h-3 w-3" />
-            <span>One uppercase letter</span>
-          </div>
-          <div
-            class="flex items-center space-x-2"
-            :class="hasLowercase ? 'text-green-600' : 'text-gray-500'"
-          >
-            <CheckIcon v-if="hasLowercase" class="h-3 w-3" />
-            <XMarkIcon v-else class="h-3 w-3" />
-            <span>One lowercase letter</span>
-          </div>
-          <div
-            class="flex items-center space-x-2"
-            :class="hasNumber ? 'text-green-600' : 'text-gray-500'"
-          >
-            <CheckIcon v-if="hasNumber" class="h-3 w-3" />
-            <XMarkIcon v-else class="h-3 w-3" />
-            <span>One number</span>
-          </div>
-          <div
-            class="flex items-center space-x-2"
-            :class="hasSpecialChar ? 'text-green-600' : 'text-gray-500'"
-          >
-            <CheckIcon v-if="hasSpecialChar" class="h-3 w-3" />
-            <XMarkIcon v-else class="h-3 w-3" />
-            <span>One special character</span>
-          </div>
+      </div>
+
+      <!-- Password requirements -->
+      <div v-if="field.requirements || field.showRequirements" class="text-xs space-y-1 mt-2">
+        <div
+          v-if="field.minLength"
+          class="flex items-center space-x-2"
+          :class="hasMinLength ? 'text-green-600' : 'text-gray-500'"
+        >
+          <CheckIcon v-if="hasMinLength" class="h-3 w-3" />
+          <XMarkIcon v-else class="h-3 w-3" />
+          <span>At least {{ field.minLength }} characters</span>
         </div>
+        <div
+          class="flex items-center space-x-2"
+          :class="hasUppercase ? 'text-green-600' : 'text-gray-500'"
+        >
+          <CheckIcon v-if="hasUppercase" class="h-3 w-3" />
+          <XMarkIcon v-else class="h-3 w-3" />
+          <span>One uppercase letter</span>
+        </div>
+        <div
+          class="flex items-center space-x-2"
+          :class="hasLowercase ? 'text-green-600' : 'text-gray-500'"
+        >
+          <CheckIcon v-if="hasLowercase" class="h-3 w-3" />
+          <XMarkIcon v-else class="h-3 w-3" />
+          <span>One lowercase letter</span>
+        </div>
+        <div
+          class="flex items-center space-x-2"
+          :class="hasNumber ? 'text-green-600' : 'text-gray-500'"
+        >
+          <CheckIcon v-if="hasNumber" class="h-3 w-3" />
+          <XMarkIcon v-else class="h-3 w-3" />
+          <span>One number</span>
+        </div>
+        <div
+          class="flex items-center space-x-2"
+          :class="hasSpecialChar ? 'text-green-600' : 'text-gray-500'"
+        >
+          <CheckIcon v-if="hasSpecialChar" class="h-3 w-3" />
+          <XMarkIcon v-else class="h-3 w-3" />
+          <span>One special character</span>
+        </div>
+      </div>
+
+      <!-- Character count -->
+      <div
+        v-if="field.maxLength && modelValue"
+        class="text-xs text-right"
+        :class="characterCountClasses"
+      >
+        {{ characterCount }}/{{ field.maxLength }}
       </div>
 
       <!-- Confirmation mismatch error -->
@@ -145,10 +165,10 @@
 <script setup>
 /**
  * PasswordField Component
- * 
+ *
  * Password input field with visibility toggle, confirmation,
  * strength indicator, and requirement validation.
- * 
+ *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
 
@@ -158,7 +178,8 @@ import {
   EyeIcon,
   EyeSlashIcon,
   CheckIcon,
-  XMarkIcon
+  XMarkIcon,
+  LockClosedIcon
 } from '@heroicons/vue/24/outline'
 import BaseField from './BaseField.vue'
 
@@ -208,6 +229,13 @@ const isDarkTheme = computed(() => adminStore.isDarkTheme)
 
 const fieldId = computed(() => {
   return `password-field-${props.field.attribute}-${Math.random().toString(36).substr(2, 9)}`
+})
+
+// Truncated value for display
+const truncatedValue = computed(() => {
+  if (!props.modelValue) return props.modelValue
+  if (!props.field.maxLength) return props.modelValue
+  return props.modelValue.substring(0, props.field.maxLength)
 })
 
 // Password strength calculations
@@ -269,7 +297,7 @@ const strengthBarClasses = computed(() => {
       return 'bg-red-500'
     case 2:
     case 3:
-      return 'bg-amber-500'
+      return 'bg-yellow-500'
     case 4:
       return 'bg-blue-500'
     case 5:
@@ -298,6 +326,23 @@ const strengthTextClasses = computed(() => {
 
 const passwordsMatch = computed(() => {
   return props.modelValue === confirmationValue.value
+})
+
+// Character count
+const characterCount = computed(() => {
+  return props.modelValue?.length || 0
+})
+
+const characterCountClasses = computed(() => {
+  if (!props.field.maxLength) return 'text-gray-500'
+
+  const count = characterCount.value
+  const max = props.field.maxLength
+  const percentage = count / max
+
+  if (percentage >= 0.9) return 'text-red-500'
+  if (percentage >= 0.8) return 'text-yellow-500'
+  return 'text-gray-500'
 })
 
 // Methods

@@ -61,7 +61,7 @@
               >
                 {{ linkText }}
               </a>
-              
+
               <!-- Non-clickable Display -->
               <span
                 v-else
@@ -131,10 +131,10 @@
 <script setup>
 /**
  * URLField Component
- * 
+ *
  * A URL input field with validation, clickable display, favicon support,
  * and protocol handling.
- * 
+ *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
 
@@ -199,12 +199,12 @@ const fieldId = computed(() => {
 
 const normalizedUrl = computed(() => {
   if (!props.modelValue) return ''
-  
+
   // Add protocol if missing and normalizeProtocol is enabled
   if (props.field.normalizeProtocol && !props.modelValue.match(/^https?:\/\//)) {
     return `${props.field.protocol || 'https'}://${props.modelValue}`
   }
-  
+
   return props.modelValue
 })
 
@@ -230,7 +230,7 @@ const linkText = computed(() => {
   if (props.field.linkText) {
     return props.field.linkText
   }
-  
+
   // Default to showing the hostname
   return displayHost.value || props.modelValue || ''
 })
@@ -240,14 +240,43 @@ const faviconUrl = computed(() => {
   return `${parsedUrl.value.protocol}//${parsedUrl.value.hostname}/favicon.ico`
 })
 
+// Methods
+const validateUrl = (url) => {
+  if (!url) {
+    validationStatus.value = null
+    validationMessage.value = ''
+    return
+  }
+
+  try {
+    const parsed = new URL(url.match(/^https?:\/\//) ? url : `https://${url}`)
+
+    if (!parsed.hostname) {
+      validationStatus.value = 'invalid'
+      validationMessage.value = 'Invalid hostname'
+      return
+    }
+
+    if (!url.match(/^https?:\/\//) && props.field.normalizeProtocol) {
+      validationStatus.value = 'warning'
+      validationMessage.value = `Protocol will be added (${props.field.protocol || 'https'}://)`
+      return
+    }
+
+    validationStatus.value = 'valid'
+    validationMessage.value = 'Valid URL'
+  } catch (error) {
+    validationStatus.value = 'invalid'
+    validationMessage.value = 'Invalid URL format'
+  }
+}
+
 // Watch for URL changes to validate
 watch(() => props.modelValue, (newValue) => {
   if (props.field.validateUrl) {
     validateUrl(newValue)
   }
 }, { immediate: true })
-
-// Methods
 const handleInput = (event) => {
   const value = event.target.value
   emit('update:modelValue', value || null)
@@ -279,7 +308,7 @@ const handleFaviconError = (event) => {
 
 const copyUrl = async () => {
   if (!normalizedUrl.value) return
-  
+
   try {
     await navigator.clipboard.writeText(normalizedUrl.value)
     // Could show a toast notification here
@@ -294,35 +323,7 @@ const copyUrl = async () => {
   }
 }
 
-const validateUrl = (url) => {
-  if (!url) {
-    validationStatus.value = null
-    validationMessage.value = ''
-    return
-  }
-  
-  try {
-    const parsed = new URL(url.match(/^https?:\/\//) ? url : `https://${url}`)
-    
-    if (!parsed.hostname) {
-      validationStatus.value = 'invalid'
-      validationMessage.value = 'Invalid hostname'
-      return
-    }
-    
-    if (!url.match(/^https?:\/\//) && props.field.normalizeProtocol) {
-      validationStatus.value = 'warning'
-      validationMessage.value = `Protocol will be added (${props.field.protocol || 'https'}://)`
-      return
-    }
-    
-    validationStatus.value = 'valid'
-    validationMessage.value = 'Valid URL'
-  } catch (error) {
-    validationStatus.value = 'invalid'
-    validationMessage.value = 'Invalid URL format'
-  }
-}
+
 
 // Focus method for external use
 const focus = () => {

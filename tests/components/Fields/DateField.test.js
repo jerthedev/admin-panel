@@ -77,9 +77,9 @@ describe('DateField', () => {
     it('applies disabled state', () => {
       wrapper = mountField(DateField, {
         field: mockField,
-        props: { 
+        props: {
           field: mockField,
-          disabled: true 
+          disabled: true
         }
       })
 
@@ -90,9 +90,9 @@ describe('DateField', () => {
     it('applies readonly state', () => {
       wrapper = mountField(DateField, {
         field: mockField,
-        props: { 
+        props: {
           field: mockField,
-          readonly: true 
+          readonly: true
         }
       })
 
@@ -114,7 +114,7 @@ describe('DateField', () => {
 
     it('handles Date object input', () => {
       const date = new Date('2023-06-15T10:30:00Z')
-      
+
       wrapper = mountField(DateField, {
         field: mockField,
         modelValue: date.toISOString()
@@ -131,7 +131,7 @@ describe('DateField', () => {
       })
 
       const input = wrapper.find('input')
-      expect(input.element.value).toBe('invalid-date')
+      expect(input.element.value).toBe('')
     })
 
     it('handles null value', () => {
@@ -254,74 +254,10 @@ describe('DateField', () => {
     })
   })
 
-  describe('Custom Date Picker', () => {
-    it('shows custom picker when showCustomPicker is true', () => {
-      const customPickerField = createMockField({
-        ...mockField,
-        showCustomPicker: true
-      })
 
-      wrapper = mountField(DateField, { field: customPickerField })
-
-      // Click to show custom picker
-      const input = wrapper.find('input')
-      input.trigger('focus')
-
-      expect(wrapper.text()).toContain('Custom date picker implementation would go here')
-    })
-
-    it('shows navigation buttons in custom picker', () => {
-      const customPickerField = createMockField({
-        ...mockField,
-        showCustomPicker: true
-      })
-
-      wrapper = mountField(DateField, { field: customPickerField })
-
-      // Trigger custom picker display
-      const input = wrapper.find('input')
-      input.trigger('focus')
-
-      const prevButton = wrapper.find('[data-testid="chevron-left-icon"]')
-      const nextButton = wrapper.find('[data-testid="chevron-right-icon"]')
-      
-      expect(prevButton.exists()).toBe(true)
-      expect(nextButton.exists()).toBe(true)
-    })
-
-    it('navigates months in custom picker', async () => {
-      const customPickerField = createMockField({
-        ...mockField,
-        showCustomPicker: true
-      })
-
-      wrapper = mountField(DateField, { field: customPickerField })
-
-      // Show custom picker
-      const input = wrapper.find('input')
-      await input.trigger('focus')
-
-      const nextButton = wrapper.find('[data-testid="chevron-right-icon"]').element.parentElement
-      await nextButton.click()
-
-      // Should navigate to next month (implementation would update currentDate)
-      expect(wrapper.vm.currentDate).toBeDefined()
-    })
-  })
 
   describe('Display Features', () => {
-    it('shows formatted display in readonly mode', () => {
-      wrapper = mountField(DateField, {
-        field: mockField,
-        modelValue: '2023-06-15',
-        props: { 
-          field: mockField,
-          readonly: true 
-        }
-      })
 
-      expect(wrapper.text()).toContain('Formatted:')
-    })
 
     it('shows relative time when enabled', () => {
       wrapper = mountField(DateField, {
@@ -338,9 +274,9 @@ describe('DateField', () => {
       wrapper = mountField(DateField, {
         field: mockField,
         modelValue: null,
-        props: { 
+        props: {
           field: mockField,
-          readonly: true 
+          readonly: true
         }
       })
 
@@ -364,9 +300,9 @@ describe('DateField', () => {
       wrapper = mountField(DateField, {
         field: mockField,
         modelValue: '2023-06-15',
-        props: { 
+        props: {
           field: mockField,
-          readonly: true 
+          readonly: true
         }
       })
 

@@ -27,22 +27,11 @@ vi.mock('@heroicons/vue/24/outline', () => ({
   ListBulletIcon: { template: '<div data-testid="list-bullet-icon"></div>' },
   NumberedListIcon: { template: '<div data-testid="numbered-list-icon"></div>' },
   LinkIcon: { template: '<div data-testid="link-icon"></div>' },
-  PhotoIcon: { template: '<div data-testid="photo-icon"></div>' }
+  PhotoIcon: { template: '<div data-testid="photo-icon"></div>' },
+  MinusIcon: { template: '<div data-testid="minus-icon"></div>' }
 }))
 
-// Mock BlockNote editor
-vi.mock('@blocknote/core', () => ({
-  BlockNoteEditor: {
-    create: vi.fn(() => ({
-      mount: vi.fn(),
-      destroy: vi.fn(),
-      blocksToMarkdownLossy: vi.fn(() => 'mocked markdown'),
-      tryParseMarkdownToBlocks: vi.fn(() => []),
-      replaceBlocks: vi.fn(),
-      onEditorContentChange: vi.fn()
-    }))
-  }
-}))
+// Note: Component now uses vanilla contenteditable div instead of BlockNote editor
 
 describe('MarkdownField', () => {
   let wrapper
@@ -75,30 +64,36 @@ describe('MarkdownField', () => {
       expect(editorContainer.exists()).toBe(true)
     })
 
-    it('shows toolbar when showToolbar is true', () => {
+    it('shows toolbar when in rich text mode', () => {
       wrapper = mountField(MarkdownField, { field: mockField })
 
-      const toolbar = wrapper.find('.toolbar')
+      // Toolbar is shown by default in rich text mode
+      const toolbar = wrapper.find('.flex.items-center.justify-between.p-2.bg-gray-50')
       expect(toolbar.exists()).toBe(true)
     })
 
-    it('hides toolbar when showToolbar is false', () => {
-      const fieldWithoutToolbar = createMockField({
-        ...mockField,
-        showToolbar: false
-      })
+    it('hides toolbar when in markdown mode', async () => {
+      wrapper = mountField(MarkdownField, { field: mockField })
 
-      wrapper = mountField(MarkdownField, { field: fieldWithoutToolbar })
+      // Switch to markdown mode
+      const buttons = wrapper.findAll('button')
+      const markdownButton = buttons.find(btn => btn.text().includes('Markdown'))
+      await markdownButton.trigger('click')
+      await nextTick()
 
-      expect(wrapper.find('.toolbar').exists()).toBe(false)
+      // Toolbar should be hidden in markdown mode
+      const toolbar = wrapper.find('.flex.items-center.justify-between.p-2.bg-gray-50')
+      expect(toolbar.exists()).toBe(false)
     })
 
     it('shows mode toggle buttons', () => {
       wrapper = mountField(MarkdownField, { field: mockField })
 
-      const richModeButton = wrapper.find('[data-testid="eye-icon"]')
-      const markdownModeButton = wrapper.find('[data-testid="code-bracket-icon"]')
-      
+      // Find mode toggle buttons by their text content
+      const buttons = wrapper.findAll('button')
+      const richModeButton = buttons.find(btn => btn.text().includes('Rich Text'))
+      const markdownModeButton = buttons.find(btn => btn.text().includes('Markdown'))
+
       expect(richModeButton.exists()).toBe(true)
       expect(markdownModeButton.exists()).toBe(true)
     })
@@ -106,34 +101,31 @@ describe('MarkdownField', () => {
     it('shows fullscreen toggle button', () => {
       wrapper = mountField(MarkdownField, { field: mockField })
 
-      const fullscreenButton = wrapper.find('[data-testid="arrows-pointing-out-icon"]')
+      // Fullscreen button is in the toolbar (only visible in rich mode)
+      const fullscreenButton = wrapper.find('button[title*="Fullscreen"]')
       expect(fullscreenButton.exists()).toBe(true)
     })
 
     it('applies disabled state', () => {
       wrapper = mountField(MarkdownField, {
         field: mockField,
-        props: { 
-          field: mockField,
-          disabled: true 
-        }
+        disabled: true
       })
 
-      const editorContainer = wrapper.find('.relative.border')
-      expect(editorContainer.classes()).toContain('opacity-50')
+      // Check that toolbar buttons are disabled
+      const boldButton = wrapper.find('button[title*="Bold"]')
+      expect(boldButton.attributes('disabled')).toBeDefined()
     })
 
     it('applies readonly state', () => {
       wrapper = mountField(MarkdownField, {
         field: mockField,
-        props: { 
-          field: mockField,
-          readonly: true 
-        }
+        readonly: true
       })
 
-      const editorContainer = wrapper.find('.relative.border')
-      expect(editorContainer.classes()).toContain('cursor-not-allowed')
+      // Check that toolbar buttons are disabled in readonly mode
+      const boldButton = wrapper.find('button[title*="Bold"]')
+      expect(boldButton.attributes('disabled')).toBeDefined()
     })
   })
 
@@ -147,8 +139,9 @@ describe('MarkdownField', () => {
     it('switches to markdown mode when markdown button clicked', async () => {
       wrapper = mountField(MarkdownField, { field: mockField })
 
-      const markdownButton = wrapper.find('[data-testid="code-bracket-icon"]')
-      await markdownButton.element.parentElement.click()
+      const buttons = wrapper.findAll('button')
+      const markdownButton = buttons.find(btn => btn.text().includes('Markdown'))
+      await markdownButton.trigger('click')
 
       expect(wrapper.vm.mode).toBe('markdown')
     })
@@ -157,11 +150,13 @@ describe('MarkdownField', () => {
       wrapper = mountField(MarkdownField, { field: mockField })
 
       // Switch to markdown mode first
-      wrapper.vm.mode = 'markdown'
+      const buttons = wrapper.findAll('button')
+      const markdownButton = buttons.find(btn => btn.text().includes('Markdown'))
+      await markdownButton.trigger('click')
       await nextTick()
 
-      const richButton = wrapper.find('[data-testid="eye-icon"]')
-      await richButton.element.parentElement.click()
+      const richButton = buttons.find(btn => btn.text().includes('Rich Text'))
+      await richButton.trigger('click')
 
       expect(wrapper.vm.mode).toBe('rich')
     })
@@ -169,10 +164,8 @@ describe('MarkdownField', () => {
     it('shows rich editor in rich mode', async () => {
       wrapper = mountField(MarkdownField, { field: mockField })
 
-      wrapper.vm.mode = 'rich'
-      await nextTick()
-
-      const richEditor = wrapper.find('#rich-editor')
+      // Rich mode is default, check for contenteditable div
+      const richEditor = wrapper.find('[contenteditable="true"]')
       expect(richEditor.exists()).toBe(true)
     })
 
@@ -191,10 +184,10 @@ describe('MarkdownField', () => {
     it('shows formatting buttons in toolbar', () => {
       wrapper = mountField(MarkdownField, { field: mockField })
 
-      const boldButton = wrapper.find('[data-testid="bold-icon"]')
-      const italicButton = wrapper.find('[data-testid="italic-icon"]')
-      const underlineButton = wrapper.find('[data-testid="underline-icon"]')
-      const strikethroughButton = wrapper.find('[data-testid="strikethrough-icon"]')
+      const boldButton = wrapper.find('button[title*="Bold"]')
+      const italicButton = wrapper.find('button[title*="Italic"]')
+      const underlineButton = wrapper.find('button[title*="Underline"]')
+      const strikethroughButton = wrapper.find('button[title*="Strikethrough"]')
 
       expect(boldButton.exists()).toBe(true)
       expect(italicButton.exists()).toBe(true)
@@ -205,39 +198,38 @@ describe('MarkdownField', () => {
     it('shows list buttons in toolbar', () => {
       wrapper = mountField(MarkdownField, { field: mockField })
 
-      const bulletListButton = wrapper.find('[data-testid="list-bullet-icon"]')
-      const numberedListButton = wrapper.find('[data-testid="numbered-list-icon"]')
+      const bulletListButton = wrapper.find('button[title*="Bullet List"]')
+      const numberedListButton = wrapper.find('button[title*="Numbered List"]')
 
       expect(bulletListButton.exists()).toBe(true)
       expect(numberedListButton.exists()).toBe(true)
     })
 
-    it('shows link and image buttons in toolbar', () => {
+    it('shows link button in toolbar', () => {
       wrapper = mountField(MarkdownField, { field: mockField })
 
-      const linkButton = wrapper.find('[data-testid="link-icon"]')
-      const imageButton = wrapper.find('[data-testid="photo-icon"]')
+      const linkButton = wrapper.find('button[title*="Insert Link"]')
 
       expect(linkButton.exists()).toBe(true)
-      expect(imageButton.exists()).toBe(true)
+      // Note: Image button is not implemented in current component
     })
 
     it('executes formatting commands when toolbar buttons clicked', async () => {
       wrapper = mountField(MarkdownField, { field: mockField })
 
-      const executeCommandSpy = vi.spyOn(wrapper.vm, 'executeCommand')
-      const boldButton = wrapper.find('[data-testid="bold-icon"]')
-      
-      await boldButton.element.parentElement.click()
-      expect(executeCommandSpy).toHaveBeenCalledWith('bold')
+      const execCommandSpy = vi.spyOn(wrapper.vm, 'execCommand')
+      const boldButton = wrapper.find('button[title*="Bold"]')
+
+      await boldButton.trigger('click')
+      expect(execCommandSpy).toHaveBeenCalledWith('bold')
     })
 
     it('disables toolbar buttons when readonly', () => {
       wrapper = mountField(MarkdownField, {
         field: mockField,
-        props: { 
+        props: {
           field: mockField,
-          readonly: true 
+          readonly: true
         }
       })
 
@@ -289,7 +281,7 @@ describe('MarkdownField', () => {
 
       const executeSlashCommandSpy = vi.spyOn(wrapper.vm, 'executeSlashCommand')
       wrapper.vm.executeSlashCommand('heading1')
-      
+
       expect(executeSlashCommandSpy).toHaveBeenCalledWith('heading1')
     })
 
@@ -536,7 +528,7 @@ describe('MarkdownField', () => {
 
     it('handles very large content', () => {
       const largeContent = 'A'.repeat(100000)
-      
+
       wrapper = mountField(MarkdownField, {
         field: mockField,
         modelValue: largeContent
@@ -547,7 +539,7 @@ describe('MarkdownField', () => {
 
     it('handles malformed markdown gracefully', () => {
       const malformedMarkdown = '# Heading\n\n[broken link]('
-      
+
       wrapper = mountField(MarkdownField, {
         field: mockField,
         modelValue: malformedMarkdown
@@ -559,10 +551,8 @@ describe('MarkdownField', () => {
     it('cleans up editor on unmount', () => {
       wrapper = mountField(MarkdownField, { field: mockField })
 
-      const destroySpy = vi.spyOn(wrapper.vm, 'destroyEditor')
-      wrapper.unmount()
-
-      expect(destroySpy).toHaveBeenCalled()
+      // Component now uses simple contenteditable div, so just verify it unmounts cleanly
+      expect(() => wrapper.unmount()).not.toThrow()
     })
   })
 })

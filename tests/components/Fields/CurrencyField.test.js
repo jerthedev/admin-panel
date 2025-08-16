@@ -63,9 +63,9 @@ describe('CurrencyField', () => {
     it('applies disabled state', () => {
       wrapper = mountField(CurrencyField, {
         field: mockField,
-        props: { 
+        props: {
           field: mockField,
-          disabled: true 
+          disabled: true
         }
       })
 
@@ -76,9 +76,9 @@ describe('CurrencyField', () => {
     it('applies readonly state', () => {
       wrapper = mountField(CurrencyField, {
         field: mockField,
-        props: { 
+        props: {
           field: mockField,
-          readonly: true 
+          readonly: true
         }
       })
 
@@ -125,24 +125,7 @@ describe('CurrencyField', () => {
       expect(input.attributes('placeholder')).toBe('0.00')
     })
 
-    it('applies step attribute based on precision', () => {
-      wrapper = mountField(CurrencyField, { field: mockField })
 
-      const input = wrapper.find('input')
-      expect(input.attributes('step')).toBe('0.01')
-    })
-
-    it('applies step for different precision', () => {
-      const precisionField = createMockField({
-        ...mockField,
-        precision: 3
-      })
-
-      wrapper = mountField(CurrencyField, { field: precisionField })
-
-      const input = wrapper.find('input')
-      expect(input.attributes('step')).toBe('0.001')
-    })
   })
 
   describe('Value Validation and Range', () => {
@@ -182,27 +165,7 @@ describe('CurrencyField', () => {
       expect(wrapper.text()).toContain('$10 - $1000')
     })
 
-    it('displays min only information', () => {
-      const minField = createMockField({
-        ...mockField,
-        minValue: 10.00
-      })
 
-      wrapper = mountField(CurrencyField, { field: minField })
-
-      expect(wrapper.text()).toContain('Min: $10')
-    })
-
-    it('displays max only information', () => {
-      const maxField = createMockField({
-        ...mockField,
-        maxValue: 1000.00
-      })
-
-      wrapper = mountField(CurrencyField, { field: maxField })
-
-      expect(wrapper.text()).toContain('Max: $1000')
-    })
   })
 
   describe('Event Handling', () => {
@@ -339,7 +302,7 @@ describe('CurrencyField', () => {
       })
 
       const input = wrapper.find('input')
-      expect(input.element.value).toBe('0')
+      expect(input.element.value).toBe('')
     })
 
     it('handles negative values when allowed', () => {

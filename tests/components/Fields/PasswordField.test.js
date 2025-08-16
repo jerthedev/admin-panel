@@ -17,6 +17,8 @@ vi.mock('@/stores/admin', () => ({
 vi.mock('@heroicons/vue/24/outline', () => ({
   EyeIcon: { template: '<div data-testid="eye-icon"></div>' },
   EyeSlashIcon: { template: '<div data-testid="eye-slash-icon"></div>' },
+  CheckIcon: { template: '<div data-testid="check-icon"></div>' },
+  XMarkIcon: { template: '<div data-testid="x-mark-icon"></div>' },
   LockClosedIcon: { template: '<div data-testid="lock-closed-icon"></div>' }
 }))
 
@@ -78,9 +80,9 @@ describe('PasswordField', () => {
     it('applies disabled state', () => {
       wrapper = mountField(PasswordField, {
         field: mockField,
-        props: { 
+        props: {
           field: mockField,
-          disabled: true 
+          disabled: true
         }
       })
 
@@ -91,9 +93,9 @@ describe('PasswordField', () => {
     it('applies readonly state', () => {
       wrapper = mountField(PasswordField, {
         field: mockField,
-        props: { 
+        props: {
           field: mockField,
-          readonly: true 
+          readonly: true
         }
       })
 
@@ -139,7 +141,7 @@ describe('PasswordField', () => {
       wrapper = mountField(PasswordField, { field: mockField })
 
       const toggleButton = wrapper.find('[data-testid="eye-icon"]').element.parentElement
-      
+
       // Toggle to text
       await toggleButton.click()
       expect(wrapper.find('input').attributes('type')).toBe('text')
@@ -147,7 +149,7 @@ describe('PasswordField', () => {
       // Toggle back to password
       const hideButton = wrapper.find('[data-testid="eye-slash-icon"]').element.parentElement
       await hideButton.click()
-      
+
       expect(wrapper.find('input').attributes('type')).toBe('password')
     })
   })
@@ -260,6 +262,7 @@ describe('PasswordField', () => {
     it('shows requirements when specified', () => {
       const fieldWithRequirements = createMockField({
         ...mockField,
+        minLength: 8,
         requirements: [
           'At least 8 characters',
           'One uppercase letter',
@@ -414,7 +417,7 @@ describe('PasswordField', () => {
 
     it('handles very long passwords', () => {
       const longPassword = 'a'.repeat(200)
-      
+
       wrapper = mountField(PasswordField, {
         field: mockField,
         modelValue: longPassword
@@ -426,7 +429,7 @@ describe('PasswordField', () => {
 
     it('handles special characters in passwords', () => {
       const specialPassword = '!@#$%^&*()_+-=[]{}|;:,.<>?'
-      
+
       wrapper = mountField(PasswordField, {
         field: mockField,
         modelValue: specialPassword
@@ -438,7 +441,7 @@ describe('PasswordField', () => {
 
     it('handles unicode characters in passwords', () => {
       const unicodePassword = 'pássw0rd🔒'
-      
+
       wrapper = mountField(PasswordField, {
         field: mockField,
         modelValue: unicodePassword

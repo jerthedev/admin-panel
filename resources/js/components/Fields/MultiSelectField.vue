@@ -94,23 +94,11 @@
           >
             <!-- No options message -->
             <div
-              v-if="filteredOptions.length === 0 && !field.taggable"
+              v-if="filteredOptions.length === 0"
               class="px-3 py-2 text-sm text-gray-500"
               :class="{ 'text-gray-400': isDarkTheme }"
             >
               No options available
-            </div>
-
-            <!-- Create new tag option -->
-            <div
-              v-else-if="field.taggable && searchQuery && !optionExists(searchQuery)"
-              class="px-3 py-2 text-sm cursor-pointer hover:bg-gray-100"
-              :class="{ 'hover:bg-gray-700': isDarkTheme }"
-              @click="createTag(searchQuery)"
-            >
-              <span class="text-blue-600" :class="{ 'text-blue-400': isDarkTheme }">
-                Create "{{ searchQuery }}"
-              </span>
             </div>
 
             <!-- Options list -->
@@ -136,14 +124,7 @@
         </Transition>
       </div>
 
-      <!-- Max selections warning -->
-      <div
-        v-if="field.maxSelections && selectedItems.length >= field.maxSelections"
-        class="mt-1 text-xs text-amber-600"
-        :class="{ 'text-amber-400': isDarkTheme }"
-      >
-        Maximum {{ field.maxSelections }} selections allowed
-      </div>
+
     </div>
   </BaseField>
 </template>
@@ -151,10 +132,10 @@
 <script setup>
 /**
  * MultiSelectField Component
- * 
- * Multi-select dropdown field with tagging interface and searchable options.
- * Supports creating new tags and enforcing maximum selection limits.
- * 
+ *
+ * Multi-select dropdown field with searchable options.
+ * 100% compatible with Nova's MultiSelect field API.
+ *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
 
@@ -241,12 +222,7 @@ const isSelected = (value) => {
   return selectedItems.value.includes(value)
 }
 
-const optionExists = (value) => {
-  return options.value.some(opt => 
-    opt.value.toLowerCase() === value.toLowerCase() ||
-    opt.label.toLowerCase() === value.toLowerCase()
-  )
-}
+
 
 const toggleDropdown = () => {
   if (props.disabled || props.readonly) return
@@ -262,23 +238,19 @@ const toggleDropdown = () => {
 
 const toggleOption = (value) => {
   if (props.disabled || props.readonly) return
-  
+
   const newValue = [...selectedItems.value]
   const index = newValue.indexOf(value)
-  
+
   if (index > -1) {
     newValue.splice(index, 1)
   } else {
-    // Check max selections limit
-    if (props.field.maxSelections && newValue.length >= props.field.maxSelections) {
-      return
-    }
     newValue.push(value)
   }
-  
+
   emit('update:modelValue', newValue)
   emit('change', newValue)
-  
+
   // Clear search after selection
   searchQuery.value = ''
 }
@@ -291,29 +263,8 @@ const removeItem = (value) => {
   emit('change', newValue)
 }
 
-const createTag = (value) => {
-  if (props.disabled || props.readonly || !props.field.taggable) return
-  
-  const trimmedValue = value.trim()
-  if (!trimmedValue || isSelected(trimmedValue)) return
-  
-  // Check max selections limit
-  if (props.field.maxSelections && selectedItems.value.length >= props.field.maxSelections) {
-    return
-  }
-  
-  const newValue = [...selectedItems.value, trimmedValue]
-  emit('update:modelValue', newValue)
-  emit('change', newValue)
-  
-  searchQuery.value = ''
-}
-
 const handleKeydown = (event) => {
-  if (event.key === 'Enter' && props.field.taggable && searchQuery.value) {
-    event.preventDefault()
-    createTag(searchQuery.value)
-  } else if (event.key === 'Escape') {
+  if (event.key === 'Escape') {
     isOpen.value = false
   }
 }

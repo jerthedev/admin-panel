@@ -153,6 +153,8 @@ abstract class TestCase extends Orchestra
             $table->text('code')->nullable(); // For Code field E2E tests
             $table->json('config')->nullable(); // For Code field E2E tests (JSON)
             $table->string('color')->nullable(); // For Color field tests
+            $table->json('skills')->nullable(); // For MultiSelect field tests
+            $table->json('tags')->nullable(); // For MultiSelect field tests
             $table->rememberToken();
             $table->timestamps();
         });

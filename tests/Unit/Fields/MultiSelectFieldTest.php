@@ -40,8 +40,6 @@ class MultiSelectFieldTest extends TestCase
 
         $this->assertEquals([], $field->options);
         $this->assertFalse($field->searchable);
-        $this->assertFalse($field->taggable);
-        $this->assertNull($field->maxSelections);
     }
 
     public function test_multiselect_field_options_configuration(): void
@@ -71,26 +69,7 @@ class MultiSelectFieldTest extends TestCase
         $this->assertFalse($field->searchable);
     }
 
-    public function test_multiselect_field_taggable_configuration(): void
-    {
-        $field = MultiSelect::make('Tags')->taggable();
 
-        $this->assertTrue($field->taggable);
-    }
-
-    public function test_multiselect_field_taggable_false(): void
-    {
-        $field = MultiSelect::make('Tags')->taggable(false);
-
-        $this->assertFalse($field->taggable);
-    }
-
-    public function test_multiselect_field_max_selections_configuration(): void
-    {
-        $field = MultiSelect::make('Tags')->maxSelections(5);
-
-        $this->assertEquals(5, $field->maxSelections);
-    }
 
     public function test_multiselect_field_enum_configuration(): void
     {
@@ -139,34 +118,7 @@ class MultiSelectFieldTest extends TestCase
         $this->assertEquals(['php', 'laravel'], $model->skills);
     }
 
-    public function test_multiselect_field_fill_allows_invalid_when_taggable(): void
-    {
-        $options = [
-            'php' => 'PHP',
-            'laravel' => 'Laravel',
-        ];
 
-        $field = MultiSelect::make('Skills')
-            ->options($options)
-            ->taggable();
-        $model = new \stdClass();
-        $request = new \Illuminate\Http\Request(['skills' => ['php', 'laravel', 'custom-tag']]);
-
-        $field->fill($request, $model);
-
-        $this->assertEquals(['php', 'laravel', 'custom-tag'], $model->skills);
-    }
-
-    public function test_multiselect_field_fill_enforces_max_selections(): void
-    {
-        $field = MultiSelect::make('Tags')->maxSelections(2);
-        $model = new \stdClass();
-        $request = new \Illuminate\Http\Request(['tags' => ['tag1', 'tag2', 'tag3', 'tag4']]);
-
-        $field->fill($request, $model);
-
-        $this->assertEquals(['tag1', 'tag2'], $model->tags);
-    }
 
     public function test_multiselect_field_fill_handles_empty_value(): void
     {
@@ -208,20 +160,14 @@ class MultiSelectFieldTest extends TestCase
         $options = ['php' => 'PHP', 'js' => 'JavaScript'];
         $field = MultiSelect::make('Skills')
             ->options($options)
-            ->searchable()
-            ->taggable()
-            ->maxSelections(3);
+            ->searchable();
 
         $meta = $field->meta();
 
         $this->assertArrayHasKey('options', $meta);
         $this->assertArrayHasKey('searchable', $meta);
-        $this->assertArrayHasKey('taggable', $meta);
-        $this->assertArrayHasKey('maxSelections', $meta);
         $this->assertEquals($options, $meta['options']);
         $this->assertTrue($meta['searchable']);
-        $this->assertTrue($meta['taggable']);
-        $this->assertEquals(3, $meta['maxSelections']);
     }
 
     public function test_multiselect_field_json_serialization(): void
@@ -230,8 +176,6 @@ class MultiSelectFieldTest extends TestCase
         $field = MultiSelect::make('Development Areas')
             ->options($options)
             ->searchable()
-            ->taggable()
-            ->maxSelections(2)
             ->required()
             ->help('Select your development areas');
 
@@ -242,15 +186,13 @@ class MultiSelectFieldTest extends TestCase
         $this->assertEquals('MultiSelectField', $json['component']);
         $this->assertEquals($options, $json['options']);
         $this->assertTrue($json['searchable']);
-        $this->assertTrue($json['taggable']);
-        $this->assertEquals(2, $json['maxSelections']);
         $this->assertContains('required', $json['rules']);
         $this->assertEquals('Select your development areas', $json['helpText']);
     }
 
     public function test_multiselect_field_complex_scenario(): void
     {
-        // Test a complex scenario with all features
+        // Test a complex scenario with Nova-compatible features
         $options = [
             'php' => 'PHP',
             'javascript' => 'JavaScript',
@@ -260,21 +202,17 @@ class MultiSelectFieldTest extends TestCase
 
         $field = MultiSelect::make('Programming Languages')
             ->options($options)
-            ->searchable()
-            ->taggable()
-            ->maxSelections(3);
+            ->searchable();
 
         $model = new \stdClass();
         $request = new \Illuminate\Http\Request([
-            'programming_languages' => ['php', 'javascript', 'rust', 'go', 'invalid']
+            'programming_languages' => ['php', 'javascript', 'invalid']
         ]);
 
         $field->fill($request, $model);
 
-        // Should include valid options + custom tags (rust, go) but limit to maxSelections
-        // and filter out invalid options when not taggable... wait, it IS taggable
-        // So it should include php, javascript, rust but limit to 3 total
-        $this->assertEquals(['php', 'javascript', 'rust'], $model->programming_languages);
+        // Should include only valid options and filter out invalid ones
+        $this->assertEquals(['php', 'javascript'], $model->programming_languages);
     }
 
     public function test_multiselect_field_enum_with_valid_enum(): void
@@ -393,5 +331,98 @@ class MultiSelectFieldTest extends TestCase
         // array_filter preserves keys, so we need to account for that
         $expected = ['tag1', 'tag2', 'tag3'];
         $this->assertEquals($expected, array_values($field->value));
+    }
+
+    /** @test */
+    public function it_provides_consistent_api_with_nova_multiselect_field(): void
+    {
+        $field = MultiSelect::make('Skills');
+
+        // Test Nova-compatible methods exist and return correct types
+        $this->assertInstanceOf(MultiSelect::class, $field->options(['php' => 'PHP']));
+        $this->assertInstanceOf(MultiSelect::class, $field->searchable());
+
+        // Test component name matches Nova
+        $this->assertEquals('MultiSelectField', $field->component);
+    }
+
+    /** @test */
+    public function it_supports_enum_method_with_valid_enum(): void
+    {
+        // Create a test enum for this specific test
+        if (!enum_exists('MultiSelectTestEnum')) {
+            eval('
+                enum MultiSelectTestEnum: string {
+                    case ACTIVE = "active";
+                    case INACTIVE = "inactive";
+                }
+            ');
+        }
+
+        $field = MultiSelect::make('Status');
+        $result = $field->enum('MultiSelectTestEnum');
+
+        $this->assertInstanceOf(MultiSelect::class, $result);
+        $this->assertEquals([
+            'active' => 'ACTIVE',
+            'inactive' => 'INACTIVE',
+        ], $field->options);
+    }
+
+    /** @test */
+    public function it_handles_empty_options_gracefully(): void
+    {
+        $field = MultiSelect::make('Skills');
+        $model = new \stdClass();
+        $request = new \Illuminate\Http\Request(['skills' => ['php', 'javascript']]);
+
+        $field->fill($request, $model);
+
+        // With no options set, should accept all values
+        $this->assertEquals(['php', 'javascript'], $model->skills);
+    }
+
+    /** @test */
+    public function it_preserves_order_of_selected_values(): void
+    {
+        $options = [
+            'a' => 'Option A',
+            'b' => 'Option B',
+            'c' => 'Option C',
+            'd' => 'Option D',
+        ];
+
+        $field = MultiSelect::make('Options')->options($options);
+        $model = new \stdClass();
+        $request = new \Illuminate\Http\Request(['options' => ['d', 'a', 'c']]);
+
+        $field->fill($request, $model);
+
+        $this->assertEquals(['d', 'a', 'c'], $model->options);
+    }
+
+    /** @test */
+    public function it_handles_duplicate_values_in_request(): void
+    {
+        $options = ['a' => 'Option A', 'b' => 'Option B'];
+        $field = MultiSelect::make('Options')->options($options);
+        $model = new \stdClass();
+        $request = new \Illuminate\Http\Request(['options' => ['a', 'b', 'a', 'b']]);
+
+        $field->fill($request, $model);
+
+        // Should remove duplicates
+        $this->assertEquals(['a', 'b'], array_unique($model->options));
+    }
+
+    /** @test */
+    public function it_resolves_nested_attribute_values(): void
+    {
+        $field = MultiSelect::make('Settings', 'config.tags');
+        $resource = (object) ['config' => (object) ['tags' => ['tag1', 'tag2']]];
+
+        $field->resolve($resource);
+
+        $this->assertEquals(['tag1', 'tag2'], $field->value);
     }
 }

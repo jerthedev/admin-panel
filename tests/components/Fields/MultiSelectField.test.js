@@ -313,141 +313,9 @@ describe('MultiSelectField', () => {
     })
   })
 
-  describe('Taggable Functionality', () => {
-    beforeEach(async () => {
-      const taggableField = createMockField({
-        ...mockField,
-        searchable: true,
-        taggable: true
-      })
 
-      wrapper = mountField(MultiSelectField, { field: taggableField })
 
-      // Open dropdown
-      const dropdown = wrapper.find('.admin-input')
-      await dropdown.trigger('click')
-    })
 
-    it('shows create tag option when search query does not match existing options', async () => {
-      const searchInput = wrapper.find('input[type="text"]')
-      await searchInput.setValue('New Tag')
-
-      expect(wrapper.text()).toContain('Create "New Tag"')
-    })
-
-    it('creates new tag when create option is clicked', async () => {
-      const searchInput = wrapper.find('input[type="text"]')
-      await searchInput.setValue('New Tag')
-
-      const createOption = wrapper.find('.text-blue-600')
-      await createOption.trigger('click')
-
-      expect(wrapper.emitted('update:modelValue')[0][0]).toEqual(['New Tag'])
-      expect(wrapper.emitted('change')[0][0]).toEqual(['New Tag'])
-    })
-
-    it('creates new tag when Enter is pressed', async () => {
-      const searchInput = wrapper.find('input[type="text"]')
-      await searchInput.setValue('New Tag')
-      await searchInput.trigger('keydown', { key: 'Enter' })
-
-      expect(wrapper.emitted('update:modelValue')[0][0]).toEqual(['New Tag'])
-    })
-
-    it('does not create duplicate tags', async () => {
-      await wrapper.setProps({ modelValue: ['existing'] })
-
-      const searchInput = wrapper.find('input[type="text"]')
-      await searchInput.setValue('existing')
-      await searchInput.trigger('keydown', { key: 'Enter' })
-
-      // Should not emit any new values
-      expect(wrapper.emitted('update:modelValue')).toBeFalsy()
-    })
-
-    it('trims whitespace from new tags', async () => {
-      const searchInput = wrapper.find('input[type="text"]')
-      await searchInput.setValue('  New Tag  ')
-      await searchInput.trigger('keydown', { key: 'Enter' })
-
-      expect(wrapper.emitted('update:modelValue')[0][0]).toEqual(['New Tag'])
-    })
-  })
-
-  describe('Maximum Selections', () => {
-    beforeEach(async () => {
-      const limitedField = createMockField({
-        ...mockField,
-        maxSelections: 2
-      })
-
-      wrapper = mountField(MultiSelectField, { field: limitedField })
-
-      // Open dropdown
-      const dropdown = wrapper.find('.admin-input')
-      await dropdown.trigger('click')
-    })
-
-    it('shows maximum selections warning when limit is reached', async () => {
-      await wrapper.setProps({ modelValue: ['option1', 'option2'] })
-
-      expect(wrapper.text()).toContain('Maximum 2 selections allowed')
-    })
-
-    it('prevents selection when maximum limit is reached', async () => {
-      await wrapper.setProps({ modelValue: ['option1', 'option2'] })
-      await nextTick()
-
-      const options = wrapper.findAll('.px-3.py-2.text-sm.cursor-pointer')
-      await options[2].trigger('click') // Try to select option3
-
-      // Should not emit any new values since limit is reached
-      expect(wrapper.emitted('update:modelValue')).toBeFalsy()
-    })
-
-    it('prevents creating new tags when maximum limit is reached', async () => {
-      const taggableField = createMockField({
-        ...mockField,
-        maxSelections: 2,
-        searchable: true,
-        taggable: true
-      })
-
-      // Create a new wrapper with the correct field and modelValue
-      wrapper.unmount()
-      wrapper = mountField(MultiSelectField, {
-        field: taggableField,
-        modelValue: ['option1', 'option2']
-      })
-
-      // Open dropdown and try to create a tag
-      const dropdown = wrapper.find('.admin-input')
-      await dropdown.trigger('click')
-
-      // Check if search input exists (it should when searchable is true)
-      const searchInput = wrapper.find('input[type="text"]')
-      if (searchInput.exists()) {
-        await searchInput.setValue('New Tag')
-        await searchInput.trigger('keydown', { key: 'Enter' })
-
-        // Should not emit any new values since limit is reached
-        expect(wrapper.emitted('update:modelValue')).toBeFalsy()
-      } else {
-        // If no search input, the test passes as the functionality is not available
-        expect(true).toBe(true)
-      }
-    })
-
-    it('allows deselection even when at maximum limit', async () => {
-      await wrapper.setProps({ modelValue: ['option1', 'option2'] })
-      await nextTick()
-
-      const options = wrapper.findAll('.px-3.py-2.text-sm.cursor-pointer')
-      await options[0].trigger('click') // Deselect option1
-
-      expect(wrapper.emitted('update:modelValue')[0][0]).toEqual(['option2'])
-    })
-  })
 
   describe('Keyboard Navigation', () => {
     beforeEach(async () => {
@@ -602,21 +470,7 @@ describe('MultiSelectField', () => {
       expect(wrapper.text()).toContain('No options available')
     })
 
-    it('does not show no options message when field is taggable', async () => {
-      const emptyTaggableField = createMockField({
-        ...mockField,
-        options: {},
-        taggable: true,
-        searchable: true
-      })
 
-      wrapper = mountField(MultiSelectField, { field: emptyTaggableField })
-
-      const dropdown = wrapper.find('.admin-input')
-      await dropdown.trigger('click')
-
-      expect(wrapper.text()).not.toContain('No options available')
-    })
   })
 
   describe('Utility Methods', () => {
@@ -642,11 +496,7 @@ describe('MultiSelectField', () => {
       expect(wrapper.vm.isSelected('option2')).toBe(false)
     })
 
-    it('optionExists correctly identifies existing options', () => {
-      expect(wrapper.vm.optionExists('option1')).toBe(true)
-      expect(wrapper.vm.optionExists('Option 1')).toBe(true) // Case insensitive
-      expect(wrapper.vm.optionExists('nonexistent')).toBe(false)
-    })
+
   })
 
   describe('Edge Cases', () => {
@@ -672,31 +522,79 @@ describe('MultiSelectField', () => {
 
       expect(wrapper.vm.options).toEqual([])
     })
+  })
 
-    it('prevents empty tag creation', async () => {
-      const taggableField = createMockField({
-        ...mockField,
-        searchable: true,
-        taggable: true
+  describe('Nova API Compatibility', () => {
+    it('supports Nova-style field configuration', () => {
+      const novaStyleField = createMockField({
+        attribute: 'skills',
+        name: 'Skills',
+        component: 'MultiSelectField',
+        options: {
+          'php': 'PHP',
+          'javascript': 'JavaScript'
+        },
+        searchable: true
       })
 
       wrapper = mountField(MultiSelectField, {
-        field: taggableField,
+        field: novaStyleField,
         modelValue: []
       })
 
-      const dropdown = wrapper.find('.admin-input')
-      await dropdown.trigger('click')
+      expect(wrapper.vm.options).toEqual([
+        { value: 'php', label: 'PHP' },
+        { value: 'javascript', label: 'JavaScript' }
+      ])
+      expect(wrapper.vm.field.searchable).toBe(true)
+    })
 
-      const searchInput = wrapper.find('input[type="text"]')
-      if (searchInput.exists()) {
-        await searchInput.setValue('   ')
-        await searchInput.trigger('keydown', { key: 'Enter' })
+    it('correctly processes Nova API options() method output', () => {
+      const phpFieldConfig = createMockField({
+        options: {
+          'backend': 'Backend Development',
+          'frontend': 'Frontend Development',
+          'fullstack': 'Full Stack Development'
+        }
+      })
 
-        expect(wrapper.emitted('update:modelValue')).toBeFalsy()
-      } else {
-        expect(true).toBe(true)
-      }
+      wrapper = mountField(MultiSelectField, {
+        field: phpFieldConfig,
+        modelValue: ['backend', 'frontend']
+      })
+
+      expect(wrapper.vm.options).toEqual([
+        { value: 'backend', label: 'Backend Development' },
+        { value: 'frontend', label: 'Frontend Development' },
+        { value: 'fullstack', label: 'Full Stack Development' }
+      ])
+    })
+
+    it('integrates all Nova API methods correctly', () => {
+      const phpFieldConfig = createMockField({
+        options: {
+          'laravel': 'Laravel',
+          'vue': 'Vue.js',
+          'react': 'React'
+        },
+        searchable: true,
+        rules: ['required'],
+        nullable: false
+      })
+
+      wrapper = mountField(MultiSelectField, {
+        field: phpFieldConfig,
+        modelValue: ['laravel', 'vue']
+      })
+
+      // Test complete integration
+      expect(wrapper.vm.options).toEqual([
+        { value: 'laravel', label: 'Laravel' },
+        { value: 'vue', label: 'Vue.js' },
+        { value: 'react', label: 'React' }
+      ])
+      expect(wrapper.vm.field.searchable).toBe(true)
+      expect(wrapper.vm.selectedItems).toEqual(['laravel', 'vue'])
     })
   })
 })

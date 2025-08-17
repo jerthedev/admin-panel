@@ -47,7 +47,7 @@
       </div>
 
       <!-- Email input for Gravatar generation -->
-      <div v-if="!field.emailAttribute && !readonly">
+      <div v-if="!field.emailColumn && !readonly">
         <label
           :for="emailFieldId"
           class="block text-sm font-medium text-gray-700 mb-2"
@@ -73,94 +73,7 @@
         />
       </div>
 
-      <!-- Gravatar options -->
-      <div
-        v-if="showOptions"
-        class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg"
-        :class="{ 'bg-gray-800': isDarkTheme }"
-      >
-        <!-- Size selector -->
-        <div>
-          <label class="block text-xs font-medium text-gray-700 mb-1" :class="{ 'text-gray-300': isDarkTheme }">
-            Size
-          </label>
-          <select
-            v-model="localSize"
-            class="admin-input w-full text-sm"
-            :class="{ 'admin-input-dark': isDarkTheme }"
-            @change="updateGravatar"
-          >
-            <option value="40">40px</option>
-            <option value="80">80px</option>
-            <option value="120">120px</option>
-            <option value="200">200px</option>
-          </select>
-        </div>
 
-        <!-- Default fallback -->
-        <div>
-          <label class="block text-xs font-medium text-gray-700 mb-1" :class="{ 'text-gray-300': isDarkTheme }">
-            Default
-          </label>
-          <select
-            v-model="localDefault"
-            class="admin-input w-full text-sm"
-            :class="{ 'admin-input-dark': isDarkTheme }"
-            @change="updateGravatar"
-          >
-            <option value="mp">Mystery Person</option>
-            <option value="identicon">Identicon</option>
-            <option value="monsterid">Monster ID</option>
-            <option value="wavatar">Wavatar</option>
-            <option value="retro">Retro</option>
-            <option value="robohash">RoboHash</option>
-            <option value="blank">Blank</option>
-          </select>
-        </div>
-
-        <!-- Rating -->
-        <div>
-          <label class="block text-xs font-medium text-gray-700 mb-1" :class="{ 'text-gray-300': isDarkTheme }">
-            Rating
-          </label>
-          <select
-            v-model="localRating"
-            class="admin-input w-full text-sm"
-            :class="{ 'admin-input-dark': isDarkTheme }"
-            @change="updateGravatar"
-          >
-            <option value="g">G (General)</option>
-            <option value="pg">PG (Parental Guidance)</option>
-            <option value="r">R (Restricted)</option>
-            <option value="x">X (Adult)</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Toggle options -->
-      <div class="flex items-center justify-between">
-        <button
-          v-if="!readonly"
-          type="button"
-          class="text-sm text-blue-600 hover:text-blue-700"
-          :class="{ 'text-blue-400 hover:text-blue-300': isDarkTheme }"
-          @click="showOptions = !showOptions"
-        >
-          {{ showOptions ? 'Hide Options' : 'Show Options' }}
-        </button>
-
-        <div class="flex items-center space-x-2">
-          <button
-            v-if="!readonly"
-            type="button"
-            class="text-sm text-gray-600 hover:text-gray-700"
-            :class="{ 'text-gray-400 hover:text-gray-300': isDarkTheme }"
-            @click="refreshGravatar"
-          >
-            Refresh
-          </button>
-        </div>
-      </div>
 
       <!-- Gravatar info -->
       <div
@@ -190,10 +103,11 @@
 <script setup>
 /**
  * GravatarField Component
- * 
- * Gravatar integration field for email-based avatars.
- * Supports various Gravatar options like size, default fallback, and rating.
- * 
+ *
+ * Nova-compatible Gravatar field for displaying email-based avatars.
+ * The Gravatar field does not correspond to any column in your application's database.
+ * Instead, it will display the "Gravatar" image of the model it is associated with.
+ *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
 
@@ -239,10 +153,6 @@ const emit = defineEmits(['update:modelValue', 'focus', 'blur', 'change'])
 // Refs
 const emailInputRef = ref(null)
 const emailInput = ref('')
-const showOptions = ref(false)
-const localSize = ref(props.field.size || 80)
-const localDefault = ref(props.field.defaultFallback || 'mp')
-const localRating = ref(props.field.rating || 'g')
 
 // Store
 const adminStore = useAdminStore()
@@ -259,8 +169,8 @@ const hasError = computed(() => {
 })
 
 const emailForGravatar = computed(() => {
-  if (props.field.emailAttribute && props.formData) {
-    return props.formData[props.field.emailAttribute]
+  if (props.field.emailColumn && props.formData) {
+    return props.formData[props.field.emailColumn]
   }
   return emailInput.value
 })
@@ -281,9 +191,8 @@ const gravatarProfileUrl = computed(() => {
 })
 
 const avatarSizeClass = computed(() => {
-  const size = localSize.value
-  const sizeClass = Math.min(Math.floor(size / 4), 32)
-  return `w-${sizeClass} h-${sizeClass}`
+  // Use a standard size for Nova compatibility
+  return 'w-16 h-16'
 })
 
 const avatarShapeClass = computed(() => {
@@ -302,13 +211,7 @@ const generateEmailHash = (email) => {
 
 const generateGravatarUrl = (email) => {
   const hash = generateEmailHash(email)
-  const params = new URLSearchParams({
-    s: localSize.value.toString(),
-    d: localDefault.value,
-    r: localRating.value
-  })
-  
-  return `https://www.gravatar.com/avatar/${hash}?${params.toString()}`
+  return `https://www.gravatar.com/avatar/${hash}`
 }
 
 const handleEmailInput = (event) => {
@@ -330,15 +233,7 @@ const updateGravatar = () => {
   emit('change', url)
 }
 
-const refreshGravatar = () => {
-  // Force refresh by adding a timestamp
-  const url = gravatarUrl.value
-  if (url) {
-    const refreshUrl = url + '&_t=' + Date.now()
-    emit('update:modelValue', refreshUrl)
-    emit('change', refreshUrl)
-  }
-}
+
 
 const handleImageError = (event) => {
   // Handle broken Gravatar URLs
@@ -347,9 +242,9 @@ const handleImageError = (event) => {
 
 // Watch for changes in email from form data
 watch(
-  () => props.formData?.[props.field.emailAttribute],
+  () => props.formData?.[props.field.emailColumn],
   (newEmail) => {
-    if (newEmail && props.field.emailAttribute) {
+    if (newEmail && props.field.emailColumn) {
       updateGravatar()
     }
   },

@@ -9,8 +9,12 @@ use Illuminate\Http\Request;
 /**
  * Gravatar Field.
  *
- * A field for displaying Gravatar avatars based on email addresses.
- * Supports various Gravatar options like size, default fallback, and rating.
+ * The Gravatar field does not correspond to any column in your application's database.
+ * Instead, it will display the "Gravatar" image of the model it is associated with.
+ *
+ * By default, the Gravatar URL will be generated based on the value of the model's
+ * email column. However, if your user's email addresses are not stored in the email
+ * column, you may pass a custom column name to the field's make method.
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
@@ -22,24 +26,10 @@ class Gravatar extends Field
     public string $component = 'GravatarField';
 
     /**
-     * The email attribute to use for Gravatar generation.
+     * The email column to use for Gravatar generation.
+     * Defaults to 'email' if not specified.
      */
-    public ?string $emailAttribute = null;
-
-    /**
-     * The size of the Gravatar image.
-     */
-    public int $size = 80;
-
-    /**
-     * The default fallback for Gravatar.
-     */
-    public string $defaultFallback = 'mp';
-
-    /**
-     * The rating for Gravatar images.
-     */
-    public string $rating = 'g';
+    public string $emailColumn = 'email';
 
     /**
      * Whether the Gravatar should be displayed as squared.
@@ -53,117 +43,70 @@ class Gravatar extends Field
 
     /**
      * Create a new Gravatar field instance.
+     *
+     * @param string $name The display name of the field
+     * @param string|null $emailColumn The email column name (defaults to 'email')
+     * @param callable|null $resolveCallback Optional resolve callback
      */
-    public function __construct(string $name, ?string $attribute = null, ?callable $resolveCallback = null)
+    public function __construct(string $name, ?string $emailColumn = null, ?callable $resolveCallback = null)
     {
-        parent::__construct($name, $attribute, $resolveCallback);
+        // Gravatar fields don't have a database attribute - they're computed
+        // Use a special attribute name to indicate this is not a database column
+        parent::__construct($name, '__gravatar_computed__', $resolveCallback);
 
-        // Gravatars are rounded by default
+        // Set email column (defaults to 'email' like Nova)
+        $this->emailColumn = $emailColumn ?? 'email';
+
+        // Gravatars are rounded by default (like Nova)
         $this->rounded = true;
     }
 
-    /**
-     * Set the email attribute to use for Gravatar generation.
-     */
-    public function fromEmail(string $emailAttribute): static
-    {
-        $this->emailAttribute = $emailAttribute;
 
-        return $this;
-    }
-
-    /**
-     * Set the size of the Gravatar image.
-     */
-    public function size(int $size): static
-    {
-        $this->size = max(1, min(2048, $size)); // Gravatar supports 1-2048px
-
-        return $this;
-    }
-
-    /**
-     * Set the default fallback for Gravatar.
-     *
-     * Options: 404, mp, identicon, monsterid, wavatar, retro, robohash, blank
-     */
-    public function defaultImage(string $defaultFallback): static
-    {
-        $this->defaultFallback = $defaultFallback;
-
-        return $this;
-    }
-
-    /**
-     * Set the rating for Gravatar images.
-     *
-     * Options: g, pg, r, x
-     */
-    public function rating(string $rating): static
-    {
-        $this->rating = $rating;
-
-        return $this;
-    }
 
     /**
      * Set the Gravatar to be displayed as squared.
+     * You may use the squared method to display the image's thumbnail with squared edges.
      */
-    public function squared(bool $squared = true): static
+    public function squared(): static
     {
-        $this->squared = $squared;
-
-        // If squared, disable rounded
-        if ($squared) {
-            $this->rounded = false;
-        }
+        $this->squared = true;
+        $this->rounded = false;
 
         return $this;
     }
 
     /**
      * Set the Gravatar to be displayed as rounded.
+     * You may use the rounded method to display the images with fully-rounded edges.
      */
-    public function rounded(bool $rounded = true): static
+    public function rounded(): static
     {
-        $this->rounded = $rounded;
-
-        // If rounded, disable squared
-        if ($rounded) {
-            $this->squared = false;
-        }
+        $this->rounded = true;
+        $this->squared = false;
 
         return $this;
     }
 
     /**
      * Generate a Gravatar URL for the given email.
+     * Uses basic Gravatar defaults to match Nova behavior.
      */
-    public function generateGravatarUrl(string $email): string
+    protected function generateGravatarUrl(string $email): string
     {
         $hash = md5(strtolower(trim($email)));
 
-        $params = [
-            's' => $this->size,
-            'd' => $this->defaultFallback,
-            'r' => $this->rating,
-        ];
-
-        $queryString = http_build_query($params);
-
-        return "https://www.gravatar.com/avatar/{$hash}?{$queryString}";
+        return "https://www.gravatar.com/avatar/{$hash}";
     }
 
     /**
      * Resolve the field's value for display.
+     * Generate the Gravatar URL based on the email column value.
      */
     public function resolve($resource, ?string $attribute = null): void
     {
-        parent::resolve($resource, $attribute);
-
-        // If we have an email attribute, generate the Gravatar URL
-        if ($this->emailAttribute && isset($resource->{$this->emailAttribute})) {
-            $email = $resource->{$this->emailAttribute};
+        // Generate Gravatar URL from the email column
+        if (isset($resource->{$this->emailColumn})) {
+            $email = $resource->{$this->emailColumn};
             if ($email) {
                 $this->value = $this->generateGravatarUrl($email);
             }
@@ -172,14 +115,12 @@ class Gravatar extends Field
 
     /**
      * Hydrate the given attribute on the model based on the incoming request.
+     * Gravatar fields don't correspond to any database column, so this is a no-op.
      */
     public function fill(Request $request, $model): void
     {
-        // Gravatar fields don't fill the model directly
-        // They are computed from the email field
-        if ($this->fillCallback) {
-            call_user_func($this->fillCallback, $request, $model, $this->attribute);
-        }
+        // Gravatar fields don't fill the model - they are computed from email
+        // This matches Nova's behavior where Gravatar fields don't correspond to database columns
     }
 
     /**
@@ -188,10 +129,7 @@ class Gravatar extends Field
     public function meta(): array
     {
         return array_merge(parent::meta(), [
-            'emailAttribute' => $this->emailAttribute,
-            'size' => $this->size,
-            'defaultFallback' => $this->defaultFallback,
-            'rating' => $this->rating,
+            'emailColumn' => $this->emailColumn,
             'squared' => $this->squared,
             'rounded' => $this->rounded,
         ]);

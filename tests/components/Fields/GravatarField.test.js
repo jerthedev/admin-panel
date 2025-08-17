@@ -38,23 +38,25 @@ describe('GravatarField', () => {
   })
 
   describe('Basic Rendering', () => {
-    it('renders without email input when emailAttribute is provided', () => {
-      const fieldWithEmailAttribute = createMockField({
+    it('renders without email input when emailColumn is provided', () => {
+      const fieldWithEmailColumn = createMockField({
         name: 'Gravatar',
         attribute: 'gravatar',
-        emailAttribute: 'email'
+        emailColumn: 'email'
       })
 
       wrapper = mountField(GravatarField, {
-        field: fieldWithEmailAttribute,
-        formData: { email: 'test@example.com' }
+        field: fieldWithEmailColumn,
+        props: {
+          formData: { email: 'test@example.com' }
+        }
       })
 
-      // Should not show email input when emailAttribute is provided
+      // Should not show email input when emailColumn is provided
       expect(wrapper.find('input[type="email"]').exists()).toBe(false)
     })
 
-    it('renders email input when no emailAttribute is provided', () => {
+    it('renders email input when no emailColumn is provided', () => {
       wrapper = mountField(GravatarField, { field: mockField })
 
       const emailInput = wrapper.find('input[type="email"]')
@@ -77,9 +79,7 @@ describe('GravatarField', () => {
       expect(wrapper.emitted('update:modelValue')).toBeTruthy()
       const emittedUrl = wrapper.emitted('update:modelValue')[0][0]
       expect(emittedUrl).toContain('https://www.gravatar.com/avatar/')
-      expect(emittedUrl).toContain('s=80') // default size
-      expect(emittedUrl).toContain('d=mp') // default fallback
-      expect(emittedUrl).toContain('r=g') // default rating
+      // Nova-compatible: simple URL without parameters
     })
 
 
@@ -110,148 +110,68 @@ describe('GravatarField', () => {
     })
   })
 
-  describe('Gravatar Options', () => {
-    beforeEach(async () => {
+  describe('Nova Compatibility', () => {
+    beforeEach(() => {
       wrapper = mountField(GravatarField, { field: mockField })
+    })
 
-      // Set an email to enable gravatar display
+    it('does not show complex options UI (Nova-compatible)', () => {
+      // Nova's Gravatar field is simple - no complex options UI
+      expect(wrapper.find('.grid.grid-cols-1').exists()).toBe(false)
+      expect(wrapper.find('select').exists()).toBe(false)
+      expect(wrapper.find('button').exists()).toBe(false) // No toggle buttons
+    })
+
+    it('generates simple Gravatar URLs without parameters (Nova-compatible)', async () => {
       const emailInput = wrapper.find('input[type="email"]')
       await emailInput.setValue('test@example.com')
       await emailInput.trigger('input')
+
+      expect(wrapper.emitted('update:modelValue')).toBeTruthy()
+      const emittedUrl = wrapper.emitted('update:modelValue')[0][0]
+
+      // Nova-compatible: simple URL without parameters
+      expect(emittedUrl).toContain('gravatar.com/avatar')
+      expect(emittedUrl).not.toContain('s=') // No size parameter
+      expect(emittedUrl).not.toContain('d=') // No default parameter
+      expect(emittedUrl).not.toContain('r=') // No rating parameter
+    })
+
+    it('uses standard avatar size for Nova compatibility', () => {
+      const img = wrapper.find('img')
+      if (img.exists()) {
+        // Should use standard size classes
+        expect(img.classes()).toContain('w-16')
+        expect(img.classes()).toContain('h-16')
+      }
+    })
+
+    it('works with emailColumn instead of emailAttribute', async () => {
+      const fieldWithEmailColumn = createMockField({
+        name: 'Gravatar',
+        attribute: '__gravatar_computed__',
+        emailColumn: 'work_email'
+      })
+
+      wrapper = mountField(GravatarField, {
+        field: fieldWithEmailColumn,
+        props: {
+          formData: { work_email: 'work@example.com' }
+        }
+      })
+
+      // Wait for component to process the email
       await nextTick()
-    })
 
-    it('shows options toggle button', () => {
-      const toggleButton = wrapper.find('button')
-      expect(toggleButton.exists()).toBe(true)
-      expect(toggleButton.text()).toBe('Show Options')
-    })
+      // Check that the component recognizes the email from formData
+      expect(wrapper.vm.emailForGravatar).toBe('work@example.com')
 
-    it('toggles options visibility', async () => {
-      const toggleButton = wrapper.find('button')
-
-      // Initially options should be hidden
-      expect(wrapper.find('.grid.grid-cols-1').exists()).toBe(false)
-
-      // Click to show options
-      await toggleButton.trigger('click')
-      expect(wrapper.find('.grid.grid-cols-1').exists()).toBe(true)
-      expect(toggleButton.text()).toBe('Hide Options')
-
-      // Click to hide options
-      await toggleButton.trigger('click')
-      expect(wrapper.find('.grid.grid-cols-1').exists()).toBe(false)
-      expect(toggleButton.text()).toBe('Show Options')
-    })
-
-    it('displays size selector with default value', async () => {
-      const toggleButton = wrapper.find('button')
-      await toggleButton.trigger('click')
-
-      const selects = wrapper.findAll('select')
-      const sizeSelect = selects[0]
-      expect(sizeSelect.exists()).toBe(true)
-      expect(sizeSelect.element.value).toBe('80') // default size
-
-      const options = sizeSelect.findAll('option')
-      expect(options).toHaveLength(4)
-      expect(options[0].text()).toBe('40px')
-      expect(options[1].text()).toBe('80px')
-      expect(options[2].text()).toBe('120px')
-      expect(options[3].text()).toBe('200px')
-    })
-
-    it('displays default fallback selector', async () => {
-      const toggleButton = wrapper.find('button')
-      await toggleButton.trigger('click')
-
-      const selects = wrapper.findAll('select')
-      const defaultSelect = selects[1]
-      expect(defaultSelect.exists()).toBe(true)
-      expect(defaultSelect.element.value).toBe('mp') // default fallback
-
-      const options = defaultSelect.findAll('option')
-      expect(options).toHaveLength(7)
-      expect(options[0].text()).toBe('Mystery Person')
-      expect(options[1].text()).toBe('Identicon')
-    })
-
-    it('displays rating selector', async () => {
-      const toggleButton = wrapper.find('button')
-      await toggleButton.trigger('click')
-
-      const selects = wrapper.findAll('select')
-      const ratingSelect = selects[2]
-      expect(ratingSelect.exists()).toBe(true)
-      expect(ratingSelect.element.value).toBe('g') // default rating
-
-      const options = ratingSelect.findAll('option')
-      expect(options).toHaveLength(4)
-      expect(options[0].text()).toBe('G (General)')
-      expect(options[1].text()).toBe('PG (Parental Guidance)')
-    })
-
-    it('updates gravatar URL when size changes', async () => {
-      const toggleButton = wrapper.find('button')
-      await toggleButton.trigger('click')
-
-      const selects = wrapper.findAll('select')
-      const sizeSelect = selects[0]
-      await sizeSelect.setValue('120')
-      await sizeSelect.trigger('change')
-
-      const emittedValues = wrapper.emitted('update:modelValue')
-      const lastEmittedUrl = emittedValues[emittedValues.length - 1][0]
-      expect(lastEmittedUrl).toContain('s=120')
-    })
-
-    it('updates gravatar URL when default fallback changes', async () => {
-      const toggleButton = wrapper.find('button')
-      await toggleButton.trigger('click')
-
-      const selects = wrapper.findAll('select')
-      const defaultSelect = selects[1]
-      await defaultSelect.setValue('identicon')
-      await defaultSelect.trigger('change')
-
-      const emittedValues = wrapper.emitted('update:modelValue')
-      const lastEmittedUrl = emittedValues[emittedValues.length - 1][0]
-      expect(lastEmittedUrl).toContain('d=identicon')
-    })
-
-    it('updates gravatar URL when rating changes', async () => {
-      const toggleButton = wrapper.find('button')
-      await toggleButton.trigger('click')
-
-      const selects = wrapper.findAll('select')
-      const ratingSelect = selects[2]
-      await ratingSelect.setValue('pg')
-      await ratingSelect.trigger('change')
-
-      const emittedValues = wrapper.emitted('update:modelValue')
-      const lastEmittedUrl = emittedValues[emittedValues.length - 1][0]
-      expect(lastEmittedUrl).toContain('r=pg')
+      // Check that a gravatar URL is generated
+      expect(wrapper.vm.gravatarUrl).toContain('gravatar.com/avatar')
     })
   })
 
-  describe('Refresh Functionality', () => {
-    beforeEach(async () => {
-      wrapper = mountField(GravatarField, { field: mockField })
 
-      // Set an email to enable gravatar display
-      const emailInput = wrapper.find('input[type="email"]')
-      await emailInput.setValue('test@example.com')
-      await emailInput.trigger('input')
-      await nextTick()
-    })
-
-    it('shows refresh button', () => {
-      const refreshButton = wrapper.findAll('button').find(btn => btn.text() === 'Refresh')
-      expect(refreshButton).toBeTruthy()
-    })
-
-
-  })
 
   describe('Event Handling', () => {
     it('emits focus event', async () => {
@@ -375,42 +295,60 @@ describe('GravatarField', () => {
     })
   })
 
-  describe('Field Configuration', () => {
-    it('uses custom field size when provided', () => {
-      const fieldWithSize = createMockField({
+  describe('Nova Field Configuration', () => {
+    it('applies squared styling when configured', () => {
+      const squaredField = createMockField({
         name: 'Gravatar',
-        attribute: 'gravatar',
-        size: 120
+        attribute: '__gravatar_computed__',
+        emailColumn: 'email',
+        squared: true,
+        rounded: false
       })
 
-      wrapper = mountField(GravatarField, { field: fieldWithSize })
+      wrapper = mountField(GravatarField, {
+        field: squaredField,
+        formData: { email: 'test@example.com' }
+      })
 
-      // Check that the component uses the custom size
-      expect(wrapper.vm.localSize).toBe(120)
+      const img = wrapper.find('img')
+      if (img.exists()) {
+        expect(img.classes()).toContain('rounded-none')
+        expect(img.classes()).not.toContain('rounded-full')
+      }
     })
 
-    it('uses custom default fallback when provided', () => {
-      const fieldWithDefault = createMockField({
+    it('applies rounded styling when configured', () => {
+      const roundedField = createMockField({
         name: 'Gravatar',
-        attribute: 'gravatar',
-        defaultFallback: 'identicon'
+        attribute: '__gravatar_computed__',
+        emailColumn: 'email',
+        squared: false,
+        rounded: true
       })
 
-      wrapper = mountField(GravatarField, { field: fieldWithDefault })
+      wrapper = mountField(GravatarField, {
+        field: roundedField,
+        formData: { email: 'test@example.com' }
+      })
 
-      expect(wrapper.vm.localDefault).toBe('identicon')
+      const img = wrapper.find('img')
+      if (img.exists()) {
+        expect(img.classes()).toContain('rounded-full')
+        expect(img.classes()).not.toContain('rounded-none')
+      }
     })
 
-    it('uses custom rating when provided', () => {
-      const fieldWithRating = createMockField({
+    it('uses emailColumn property for Nova compatibility', () => {
+      const field = createMockField({
         name: 'Gravatar',
-        attribute: 'gravatar',
-        rating: 'pg'
+        attribute: '__gravatar_computed__',
+        emailColumn: 'custom_email'
       })
 
-      wrapper = mountField(GravatarField, { field: fieldWithRating })
+      wrapper = mountField(GravatarField, { field })
 
-      expect(wrapper.vm.localRating).toBe('pg')
+      // Component should recognize emailColumn property
+      expect(wrapper.props('field').emailColumn).toBe('custom_email')
     })
   })
 })

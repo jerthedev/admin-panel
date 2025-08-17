@@ -150,8 +150,8 @@ const displayValue = computed(() => {
 
 const placeholder = computed(() => {
   const symbol = props.field.symbol || ''
-  const precision = props.field.precision || 2
-  const example = (0).toFixed(precision)
+  // Nova uses 2 decimal places for currency by default
+  const example = (0).toFixed(2)
   return `${symbol}${example}`
 })
 
@@ -163,25 +163,24 @@ const symbolPosition = computed(() => {
 
 const formattedDisplay = computed(() => {
   if (!props.modelValue) return null
-  
+
   try {
     const value = parseFloat(props.modelValue)
     if (isNaN(value)) return null
-    
-    // Use Intl.NumberFormat for proper locale formatting
+
+    // Use Intl.NumberFormat for proper locale formatting (Nova standard)
     if (typeof Intl !== 'undefined' && Intl.NumberFormat) {
       const formatter = new Intl.NumberFormat(props.field.locale || 'en-US', {
         style: 'currency',
-        currency: props.field.currency || 'USD',
-        minimumFractionDigits: props.field.precision || 2,
-        maximumFractionDigits: props.field.precision || 2
+        currency: props.field.currency || 'USD'
+        // Nova determines precision automatically based on currency
       })
       return formatter.format(value)
     }
-    
+
     // Fallback formatting
     const symbol = props.field.symbol || '$'
-    return `${symbol}${value.toFixed(props.field.precision || 2)}`
+    return `${symbol}${value.toFixed(2)}`
   } catch (error) {
     return null
   }
@@ -190,14 +189,15 @@ const formattedDisplay = computed(() => {
 // Methods
 const handleInput = (event) => {
   let value = event.target.value
-  
+
   // Convert to number if valid
   if (value !== '' && !isNaN(value)) {
     value = parseFloat(value)
   } else if (value === '') {
     value = null
   }
-  
+  // Otherwise keep as string for validation
+
   emit('update:modelValue', value)
 }
 

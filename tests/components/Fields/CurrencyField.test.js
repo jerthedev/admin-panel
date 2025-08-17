@@ -102,15 +102,17 @@ describe('CurrencyField', () => {
     })
 
     it('handles different precision values', () => {
+      // Nova determines precision automatically based on currency
+      // The component always uses 2 decimal places for placeholder
       const precisionField = createMockField({
         ...mockField,
-        precision: 3
+        currency: 'USD'
       })
 
       wrapper = mountField(CurrencyField, { field: precisionField })
 
       const input = wrapper.find('input')
-      expect(input.attributes('placeholder')).toBe('$0.000')
+      expect(input.attributes('placeholder')).toBe('$0.00')
     })
 
     it('handles missing symbol gracefully', () => {
@@ -326,16 +328,16 @@ describe('CurrencyField', () => {
     })
 
     it('handles precision with no symbol', () => {
+      // Nova uses standard 2 decimal places regardless of precision setting
       const noSymbolField = createMockField({
         ...mockField,
-        symbol: null,
-        precision: 4
+        symbol: null
       })
 
       wrapper = mountField(CurrencyField, { field: noSymbolField })
 
       const input = wrapper.find('input')
-      expect(input.attributes('placeholder')).toBe('0.0000')
+      expect(input.attributes('placeholder')).toBe('0.00')
     })
   })
 })

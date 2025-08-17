@@ -34,16 +34,6 @@ class Currency extends Field
     public string $currency = 'USD';
 
     /**
-     * The currency symbol.
-     */
-    public ?string $symbol = null;
-
-    /**
-     * The number of decimal places.
-     */
-    public int $precision = 2;
-
-    /**
      * The minimum value allowed.
      */
     public ?float $minValue = null;
@@ -54,14 +44,42 @@ class Currency extends Field
     public ?float $maxValue = null;
 
     /**
-     * The display format (symbol, code, name).
-     */
-    public string $displayFormat = 'symbol';
-
-    /**
      * The step value for input.
      */
     public float $step = 0.01;
+
+    /**
+     * Whether the underlying stored value is in minor units (e.g., cents).
+     * When enabled, values will be divided by 100 for display and
+     * multiplied by 100 for storage to maintain Nova compatibility.
+     */
+    public bool $asMinorUnits = false;
+
+    /**
+     * Treat value as stored in minor units (e.g., cents).
+     */
+    public function asMinorUnits(bool $asMinorUnits = true): static
+    {
+        $this->asMinorUnits = $asMinorUnits;
+
+        // Nova sets step to 1 when using minor units
+        if ($asMinorUnits) {
+            $this->step = 1;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Treat value as stored in major units (default - decimals).
+     */
+    public function asMajorUnits(): static
+    {
+        $this->asMinorUnits = false;
+        $this->step = 0.01; // Reset to default step
+
+        return $this;
+    }
 
     /**
      * Set the locale for currency formatting.
@@ -83,25 +101,7 @@ class Currency extends Field
         return $this;
     }
 
-    /**
-     * Set the currency symbol.
-     */
-    public function symbol(string $symbol): static
-    {
-        $this->symbol = $symbol;
 
-        return $this;
-    }
-
-    /**
-     * Set the number of decimal places.
-     */
-    public function precision(int $precision): static
-    {
-        $this->precision = $precision;
-
-        return $this;
-    }
 
     /**
      * Set the minimum value allowed.
@@ -123,15 +123,7 @@ class Currency extends Field
         return $this;
     }
 
-    /**
-     * Set the display format.
-     */
-    public function displayFormat(string $format): static
-    {
-        $this->displayFormat = $format;
 
-        return $this;
-    }
 
     /**
      * Set the step value for input.
@@ -150,6 +142,11 @@ class Currency extends Field
     {
         parent::resolve($resource, $attribute);
 
+        // If values are stored in minor units, convert to major units for display / client
+        if ($this->asMinorUnits && is_numeric($this->value)) {
+            $this->value = ((float) $this->value) / 100;
+        }
+
         // Only format for display if there's a display callback that expects formatting
         // The raw value should be preserved for form inputs and API responses
     }
@@ -167,6 +164,12 @@ class Currency extends Field
             if ($value !== null && $value !== '') {
                 // Remove currency symbols and formatting for storage
                 $cleanValue = $this->cleanCurrencyValue($value);
+
+                if ($this->asMinorUnits && $cleanValue !== null) {
+                    // Store as integer/float representing minor units (cents)
+                    $cleanValue = (float) round($cleanValue * 100);
+                }
+
                 $model->{$this->attribute} = $cleanValue;
             } else {
                 $model->{$this->attribute} = null;
@@ -204,15 +207,20 @@ class Currency extends Field
     }
 
     /**
-     * Get the currency symbol for the current currency.
+     * Get the currency symbol for the current currency using Intl.
+     * Falls back to currency code if Intl is not available.
      */
     protected function getCurrencySymbol(): string
     {
-        if ($this->symbol) {
-            return $this->symbol;
+        if (class_exists('NumberFormatter')) {
+            $formatter = new \NumberFormatter($this->locale, \NumberFormatter::CURRENCY);
+            $symbol = $formatter->getSymbol(\NumberFormatter::CURRENCY_SYMBOL);
+            if ($symbol && $symbol !== $this->currency) {
+                return $symbol;
+            }
         }
 
-        // Common currency symbols
+        // Fallback to common currency symbols
         $symbols = [
             'USD' => '$',
             'EUR' => '€',
@@ -238,12 +246,11 @@ class Currency extends Field
         return array_merge(parent::meta(), [
             'locale' => $this->locale,
             'currency' => $this->currency,
-            'symbol' => $this->symbol ?? $this->getCurrencySymbol(),
-            'precision' => $this->precision,
+            'symbol' => $this->getCurrencySymbol(),
             'minValue' => $this->minValue,
             'maxValue' => $this->maxValue,
-            'displayFormat' => $this->displayFormat,
             'step' => $this->step,
+            'asMinorUnits' => $this->asMinorUnits,
         ]);
     }
 }

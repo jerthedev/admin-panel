@@ -294,21 +294,15 @@ class CurrencyFieldTest extends TestCase
         $field = Currency::make('Product Price')
             ->locale('en_GB')
             ->currency('GBP')
-            ->symbol('£')
-            ->precision(2)
             ->min(0.01)
             ->max(9999.99)
-            ->displayFormat('symbol')
             ->step(0.01);
 
         // Test all configurations are set
         $this->assertEquals('en_GB', $field->locale);
         $this->assertEquals('GBP', $field->currency);
-        $this->assertEquals('£', $field->symbol);
-        $this->assertEquals(2, $field->precision);
         $this->assertEquals(0.01, $field->minValue);
         $this->assertEquals(9999.99, $field->maxValue);
-        $this->assertEquals('symbol', $field->displayFormat);
         $this->assertEquals(0.01, $field->step);
     }
 
@@ -316,7 +310,6 @@ class CurrencyFieldTest extends TestCase
     {
         $field = Currency::make('Product Price')
             ->currency('EUR')
-            ->precision(2)
             ->min(0.0)
             ->max(1000.0)
             ->required()
@@ -328,11 +321,79 @@ class CurrencyFieldTest extends TestCase
         $this->assertEquals('product_price', $json['attribute']);
         $this->assertEquals('CurrencyField', $json['component']);
         $this->assertEquals('EUR', $json['currency']);
-        $this->assertEquals(2, $json['precision']);
         $this->assertEquals(0.0, $json['minValue']);
         $this->assertEquals(1000.0, $json['maxValue']);
         $this->assertContains('required', $json['rules']);
         $this->assertEquals('Enter product price', $json['helpText']);
+    }
+
+    public function test_as_minor_units_affects_resolve_and_fill(): void
+    {
+        $field = Currency::make('Price')->asMinorUnits();
+
+        // Resolve: stored as cents -> display as major units
+        $resource = (object) ['price' => 12345]; // 123.45 in major units
+        $field->resolve($resource);
+        $this->assertEquals(123.45, $field->value);
+
+        // Fill: incoming major units -> store as cents
+        $model = new \stdClass();
+        $request = new \Illuminate\Http\Request(['price' => '99.99']);
+        $field->fill($request, $model);
+        $this->assertEquals(9999.0, $model->price);
+
+        // Meta serialization includes asMinorUnits flag
+        $meta = $field->meta();
+        $this->assertArrayHasKey('asMinorUnits', $meta);
+        $this->assertTrue($meta['asMinorUnits']);
+
+        // Step should be 1 for minor units
+        $this->assertEquals(1, $field->step);
+    }
+
+    public function test_as_major_units_resets_step(): void
+    {
+        $field = Currency::make('Price')->asMinorUnits()->asMajorUnits();
+
+        $this->assertFalse($field->asMinorUnits);
+        $this->assertEquals(0.01, $field->step);
+    }
+
+    public function test_nova_api_methods_exist(): void
+    {
+        $field = Currency::make('Price')
+            ->currency('EUR')
+            ->locale('fr')
+            ->min(0)
+            ->max(1000)
+            ->step(0.05);
+
+        $this->assertEquals('EUR', $field->currency);
+        $this->assertEquals('fr', $field->locale);
+        $this->assertEquals(0, $field->minValue);
+        $this->assertEquals(1000, $field->maxValue);
+        $this->assertEquals(0.05, $field->step);
+    }
+
+    public function test_meta_excludes_non_nova_properties(): void
+    {
+        $field = Currency::make('Price')->currency('USD');
+        $meta = $field->meta();
+
+        // Should include Nova properties
+        $this->assertArrayHasKey('currency', $meta);
+        $this->assertArrayHasKey('locale', $meta);
+        $this->assertArrayHasKey('symbol', $meta);
+        $this->assertArrayHasKey('minValue', $meta);
+        $this->assertArrayHasKey('maxValue', $meta);
+        $this->assertArrayHasKey('step', $meta);
+        $this->assertArrayHasKey('asMinorUnits', $meta);
+
+        // Should NOT include non-Nova properties
+        $this->assertArrayNotHasKey('precision', $meta);
+        $this->assertArrayNotHasKey('displayFormat', $meta);
+    }
+
     }
 
     public function test_currency_field_inherited_field_methods(): void

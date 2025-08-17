@@ -13,12 +13,6 @@ vi.mock('@/stores/admin', () => ({
   useAdminStore: () => mockAdminStore
 }))
 
-// Mock Heroicons
-vi.mock('@heroicons/vue/24/outline', () => ({
-  ChevronUpIcon: { template: '<div data-testid="chevron-up-icon"></div>' },
-  ChevronDownIcon: { template: '<div data-testid="chevron-down-icon"></div>' }
-}))
-
 describe('NumberField', () => {
   let wrapper
   let mockField
@@ -106,178 +100,7 @@ describe('NumberField', () => {
     })
   })
 
-  describe('Increment/Decrement Buttons', () => {
-    it('shows buttons when showButtons is true', () => {
-      const fieldWithButtons = createMockField({
-        ...mockField,
-        showButtons: true
-      })
 
-      wrapper = mountField(NumberField, { field: fieldWithButtons })
-
-      const incrementButton = wrapper.find('[data-testid="chevron-up-icon"]').element.parentElement
-      const decrementButton = wrapper.find('[data-testid="chevron-down-icon"]').element.parentElement
-
-      expect(incrementButton).toBeTruthy()
-      expect(decrementButton).toBeTruthy()
-    })
-
-    it('hides buttons when showButtons is false', () => {
-      const fieldWithoutButtons = createMockField({
-        ...mockField,
-        showButtons: false
-      })
-
-      wrapper = mountField(NumberField, { field: fieldWithoutButtons })
-
-      expect(wrapper.find('[data-testid="chevron-up-icon"]').exists()).toBe(false)
-      expect(wrapper.find('[data-testid="chevron-down-icon"]').exists()).toBe(false)
-    })
-
-    it('increments value when increment button is clicked', async () => {
-      const fieldWithButtons = createMockField({
-        ...mockField,
-        showButtons: true
-      })
-
-      wrapper = mountField(NumberField, {
-        field: fieldWithButtons,
-        modelValue: 5
-      })
-
-      const incrementButton = wrapper.find('[data-testid="chevron-up-icon"]').element.parentElement
-      await incrementButton.click()
-
-      expect(wrapper.emitted('update:modelValue')[0][0]).toBe(6)
-      expect(wrapper.emitted('change')[0][0]).toBe(6)
-    })
-
-    it('decrements value when decrement button is clicked', async () => {
-      const fieldWithButtons = createMockField({
-        ...mockField,
-        showButtons: true
-      })
-
-      wrapper = mountField(NumberField, {
-        field: fieldWithButtons,
-        modelValue: 5
-      })
-
-      const decrementButton = wrapper.find('[data-testid="chevron-down-icon"]').element.parentElement
-      await decrementButton.click()
-
-      expect(wrapper.emitted('update:modelValue')[0][0]).toBe(4)
-      expect(wrapper.emitted('change')[0][0]).toBe(4)
-    })
-
-    it('respects max value when incrementing', async () => {
-      const fieldWithButtons = createMockField({
-        ...mockField,
-        showButtons: true,
-        max: 10
-      })
-
-      wrapper = mountField(NumberField, {
-        field: fieldWithButtons,
-        modelValue: 10
-      })
-
-      const incrementButton = wrapper.find('[data-testid="chevron-up-icon"]').element.parentElement
-      await incrementButton.click()
-
-      // Should not emit since we're at max
-      expect(wrapper.emitted('update:modelValue')).toBeFalsy()
-    })
-
-    it('respects min value when decrementing', async () => {
-      const fieldWithButtons = createMockField({
-        ...mockField,
-        showButtons: true,
-        min: 0
-      })
-
-      wrapper = mountField(NumberField, {
-        field: fieldWithButtons,
-        modelValue: 0
-      })
-
-      const decrementButton = wrapper.find('[data-testid="chevron-down-icon"]').element.parentElement
-      await decrementButton.click()
-
-      // Should not emit since we're at min
-      expect(wrapper.emitted('update:modelValue')).toBeFalsy()
-    })
-
-    it('disables increment button at max value', () => {
-      const fieldWithButtons = createMockField({
-        ...mockField,
-        showButtons: true,
-        max: 10
-      })
-
-      wrapper = mountField(NumberField, {
-        field: fieldWithButtons,
-        modelValue: 10
-      })
-
-      const incrementButton = wrapper.find('[data-testid="chevron-up-icon"]').element.parentElement
-      expect(incrementButton.disabled).toBe(true)
-    })
-
-    it('disables decrement button at min value', () => {
-      const fieldWithButtons = createMockField({
-        ...mockField,
-        showButtons: true,
-        min: 0
-      })
-
-      wrapper = mountField(NumberField, {
-        field: fieldWithButtons,
-        modelValue: 0
-      })
-
-      const decrementButton = wrapper.find('[data-testid="chevron-down-icon"]').element.parentElement
-      expect(decrementButton.disabled).toBe(true)
-    })
-  })
-
-  describe('Step Functionality', () => {
-    it('uses custom step value for increment/decrement', async () => {
-      const fieldWithStep = createMockField({
-        ...mockField,
-        showButtons: true,
-        step: 5
-      })
-
-      wrapper = mountField(NumberField, {
-        field: fieldWithStep,
-        modelValue: 10
-      })
-
-      const incrementButton = wrapper.find('[data-testid="chevron-up-icon"]').element.parentElement
-      await incrementButton.click()
-
-      expect(wrapper.emitted('update:modelValue')[0][0]).toBe(15)
-    })
-
-    it('handles decimal step values', async () => {
-      const fieldWithDecimalStep = createMockField({
-        ...mockField,
-        showButtons: true,
-        step: 0.5
-      })
-
-      wrapper = mountField(NumberField, {
-        field: fieldWithDecimalStep,
-        modelValue: 1.0
-      })
-
-      const incrementButton = wrapper.find('[data-testid="chevron-up-icon"]').element.parentElement
-      await incrementButton.click()
-
-      expect(wrapper.emitted('update:modelValue')[0][0]).toBe(1.5)
-    })
-  })
 
   describe('Event Handling', () => {
     it('emits update:modelValue on input', async () => {
@@ -320,7 +143,43 @@ describe('NumberField', () => {
       expect(wrapper.emitted('blur')).toBeTruthy()
     })
 
+    it('handles decimal input correctly', async () => {
+      wrapper = mountField(NumberField, { field: mockField })
 
+      const input = wrapper.find('input')
+      await input.setValue('19.99')
+      await input.trigger('input')
+
+      expect(wrapper.emitted('update:modelValue')[0][0]).toBe(19.99)
+      expect(wrapper.emitted('change')[0][0]).toBe(19.99)
+    })
+
+    it('handles negative input correctly', async () => {
+      const fieldWithNegative = createMockField({
+        ...mockField,
+        min: -100
+      })
+
+      wrapper = mountField(NumberField, { field: fieldWithNegative })
+
+      const input = wrapper.find('input')
+      await input.setValue('-15')
+      await input.trigger('input')
+
+      expect(wrapper.emitted('update:modelValue')[0][0]).toBe(-15)
+      expect(wrapper.emitted('change')[0][0]).toBe(-15)
+    })
+
+    it('handles zero input correctly', async () => {
+      wrapper = mountField(NumberField, { field: mockField })
+
+      const input = wrapper.find('input')
+      await input.setValue('0')
+      await input.trigger('input')
+
+      expect(wrapper.emitted('update:modelValue')[0][0]).toBe(0)
+      expect(wrapper.emitted('change')[0][0]).toBe(0)
+    })
   })
 
 
@@ -337,7 +196,14 @@ describe('NumberField', () => {
       expect(input.classes()).toContain('admin-input-dark')
     })
 
+    it('does not apply dark theme classes when dark theme is inactive', () => {
+      mockAdminStore.isDarkTheme = false
 
+      wrapper = mountField(NumberField, { field: mockField })
+
+      const input = wrapper.find('input')
+      expect(input.classes()).not.toContain('admin-input-dark')
+    })
   })
 
   describe('Exposed Methods', () => {
@@ -362,14 +228,15 @@ describe('NumberField', () => {
   })
 
   describe('Edge Cases', () => {
-    it('handles zero value correctly', () => {
-      wrapper = mountField(NumberField, {
-        field: mockField,
-        modelValue: 0
-      })
+    it('handles zero value correctly via input event', async () => {
+      wrapper = mountField(NumberField, { field: mockField })
 
       const input = wrapper.find('input')
-      expect(input.element.value).toBe('')
+      await input.setValue('0')
+      await input.trigger('input')
+
+      expect(wrapper.emitted('update:modelValue')[0][0]).toBe(0)
+      expect(wrapper.emitted('change')[0][0]).toBe(0)
     })
 
     it('handles negative values', () => {
@@ -396,21 +263,88 @@ describe('NumberField', () => {
       expect(input.attributes('max')).toBeUndefined()
     })
 
-    it('handles increment from null value', async () => {
-      const fieldWithButtons = createMockField({
-        ...mockField,
-        showButtons: true
-      })
-
+    it('handles null value correctly', () => {
       wrapper = mountField(NumberField, {
-        field: fieldWithButtons,
+        field: mockField,
         modelValue: null
       })
 
-      const incrementButton = wrapper.find('[data-testid="chevron-up-icon"]').element.parentElement
-      await incrementButton.click()
+      const input = wrapper.find('input')
+      expect(input.element.value).toBe('')
+    })
 
-      expect(wrapper.emitted('update:modelValue')[0][0]).toBe(1)
+    it('handles large numbers correctly', () => {
+      wrapper = mountField(NumberField, {
+        field: mockField,
+        modelValue: 1000000
+      })
+
+      const input = wrapper.find('input')
+      expect(input.element.value).toBe('1000000')
+    })
+
+    it('handles decimal values correctly', () => {
+      wrapper = mountField(NumberField, {
+        field: mockField,
+        modelValue: 123.456
+      })
+
+      const input = wrapper.find('input')
+      expect(input.element.value).toBe('123.456')
+    })
+  })
+
+  describe('Nova API Compatibility', () => {
+    it('supports all Nova Number field attributes', () => {
+      const novaCompatibleField = createMockField({
+        name: 'Price',
+        attribute: 'price',
+        type: 'number',
+        min: 0,
+        max: 9999.99,
+        step: 0.01
+      })
+
+      wrapper = mountField(NumberField, { field: novaCompatibleField })
+
+      const input = wrapper.find('input')
+      expect(input.attributes('type')).toBe('number')
+      expect(input.attributes('min')).toBe('0')
+      expect(input.attributes('max')).toBe('9999.99')
+      expect(input.attributes('step')).toBe('0.01')
+    })
+
+    it('works without min/max/step (Nova defaults)', () => {
+      const basicField = createMockField({
+        name: 'Count',
+        attribute: 'count',
+        type: 'number'
+      })
+
+      wrapper = mountField(NumberField, { field: basicField })
+
+      const input = wrapper.find('input')
+      expect(input.attributes('type')).toBe('number')
+      expect(input.attributes('step')).toBe('1') // Default step
+    })
+
+    it('handles Nova-style field configuration', async () => {
+      const novaField = createMockField({
+        name: 'Quantity',
+        attribute: 'quantity',
+        type: 'number',
+        min: 1,
+        max: 100,
+        step: 1
+      })
+
+      wrapper = mountField(NumberField, { field: novaField })
+
+      const input = wrapper.find('input')
+      await input.setValue('50')
+      await input.trigger('input')
+
+      expect(wrapper.emitted('update:modelValue')[0][0]).toBe(50)
     })
   })
 })

@@ -8,12 +8,11 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 /**
- * Date Field
- * 
+ * Date Field.
+ *
  * A date input field with formatting and timezone support.
- * 
+ *
  * @author Jeremy Fall <jerthedev@gmail.com>
- * @package JTD\AdminPanel\Fields
  */
 class Date extends Field
 {
@@ -46,6 +45,21 @@ class Date extends Field
      * Whether to show a date picker.
      */
     public bool $showPicker = true;
+
+    /**
+     * The format to use for the date picker.
+     */
+    public ?string $pickerFormat = null;
+
+    /**
+     * The display format for the date picker.
+     */
+    public ?string $pickerDisplayFormat = null;
+
+    /**
+     * The first day of the week (0 = Sunday, 1 = Monday, etc.).
+     */
+    public int $firstDayOfWeek = 0;
 
     /**
      * Set the format for displaying the date.
@@ -98,6 +112,36 @@ class Date extends Field
     }
 
     /**
+     * Set the format for the date picker.
+     */
+    public function pickerFormat(string $format): static
+    {
+        $this->pickerFormat = $format;
+
+        return $this;
+    }
+
+    /**
+     * Set the display format for the date picker.
+     */
+    public function pickerDisplayFormat(string $format): static
+    {
+        $this->pickerDisplayFormat = $format;
+
+        return $this;
+    }
+
+    /**
+     * Set the first day of the week for the date picker.
+     */
+    public function firstDayOfWeek(int $day): static
+    {
+        $this->firstDayOfWeek = $day;
+
+        return $this;
+    }
+
+    /**
      * Resolve the field's value for display.
      */
     public function resolve($resource, ?string $attribute = null): void
@@ -124,7 +168,7 @@ class Date extends Field
             call_user_func($this->fillCallback, $request, $model, $this->attribute);
         } elseif ($request->exists($this->attribute)) {
             $value = $request->input($this->attribute);
-            
+
             if ($value) {
                 try {
                     // Parse the date and format it for storage
@@ -151,6 +195,9 @@ class Date extends Field
             'minDate' => $this->minDate,
             'maxDate' => $this->maxDate,
             'showPicker' => $this->showPicker,
+            'pickerFormat' => $this->pickerFormat,
+            'pickerDisplayFormat' => $this->pickerDisplayFormat,
+            'firstDayOfWeek' => $this->firstDayOfWeek,
         ]);
     }
 }

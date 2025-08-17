@@ -31,7 +31,10 @@ describe('DateField', () => {
       attribute: 'event_date',
       type: 'date',
       minDate: '2020-01-01',
-      maxDate: '2030-12-31'
+      maxDate: '2030-12-31',
+      pickerFormat: null,
+      pickerDisplayFormat: null,
+      firstDayOfWeek: 0
     })
   })
 
@@ -385,6 +388,97 @@ describe('DateField', () => {
 
       const input = wrapper.find('input')
       expect(input.element.value).toBe('2050-12-31')
+    })
+  })
+
+  describe('Nova API Compatibility', () => {
+    it('supports pickerFormat for input formatting', () => {
+      const fieldWithPickerFormat = createMockField({
+        ...mockField,
+        pickerFormat: 'd-m-Y'
+      })
+
+      wrapper = mountField(DateField, {
+        field: fieldWithPickerFormat,
+        modelValue: '2023-06-15'
+      })
+
+      // Should format the input value according to pickerFormat
+      expect(wrapper.vm.formattedValue).toBe('15-06-2023')
+    })
+
+    it('supports pickerDisplayFormat for display formatting', () => {
+      const fieldWithPickerDisplayFormat = createMockField({
+        ...mockField,
+        pickerDisplayFormat: 'DD-MM-YYYY'
+      })
+
+      wrapper = mountField(DateField, {
+        field: fieldWithPickerDisplayFormat,
+        modelValue: '2023-06-15'
+      })
+
+      // Should use pickerDisplayFormat for display
+      expect(wrapper.vm.displayValue).toBe('15-06-2023')
+    })
+
+    it('supports firstDayOfWeek configuration', () => {
+      const fieldWithFirstDayOfWeek = createMockField({
+        ...mockField,
+        firstDayOfWeek: 1
+      })
+
+      wrapper = mountField(DateField, {
+        field: fieldWithFirstDayOfWeek
+      })
+
+      // Should have access to firstDayOfWeek setting
+      expect(wrapper.vm.field.firstDayOfWeek).toBe(1)
+    })
+
+    it('falls back to displayFormat when pickerDisplayFormat is not set', () => {
+      const fieldWithDisplayFormat = createMockField({
+        ...mockField,
+        displayFormat: 'd/m/Y',
+        pickerDisplayFormat: null
+      })
+
+      wrapper = mountField(DateField, {
+        field: fieldWithDisplayFormat,
+        modelValue: '2023-06-15'
+      })
+
+      // Should fall back to displayFormat
+      expect(wrapper.vm.displayValue).toBe('15/06/2023')
+    })
+
+    it('handles various picker formats correctly', () => {
+      const testCases = [
+        { format: 'd-m-Y', expected: '15-06-2023' },
+        { format: 'd/m/Y', expected: '15/06/2023' },
+        { format: 'm-d-Y', expected: '06-15-2023' },
+        { format: 'm/d/Y', expected: '06/15/2023' },
+        { format: 'Y-m-d', expected: '2023-06-15' },
+        { format: 'Y/m/d', expected: '2023/06/15' }
+      ]
+
+      testCases.forEach(({ format, expected }) => {
+        const fieldWithFormat = createMockField({
+          ...mockField,
+          pickerFormat: format
+        })
+
+        wrapper = mountField(DateField, {
+          field: fieldWithFormat,
+          modelValue: '2023-06-15'
+        })
+
+        expect(wrapper.vm.formattedValue).toBe(expected)
+
+        if (wrapper) {
+          wrapper.unmount()
+        }
+      })
     })
   })
 })

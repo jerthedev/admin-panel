@@ -313,7 +313,10 @@ class DateFieldTest extends TestCase
             ->storageFormat('Y-m-d')
             ->min('1900-01-01')
             ->max('2023-12-31')
-            ->showPicker(false);
+            ->showPicker(false)
+            ->pickerFormat('d-m-Y')
+            ->pickerDisplayFormat('DD-MM-YYYY')
+            ->firstDayOfWeek(1);
 
         $meta = $field->meta();
 
@@ -322,12 +325,18 @@ class DateFieldTest extends TestCase
         $this->assertArrayHasKey('minDate', $meta);
         $this->assertArrayHasKey('maxDate', $meta);
         $this->assertArrayHasKey('showPicker', $meta);
+        $this->assertArrayHasKey('pickerFormat', $meta);
+        $this->assertArrayHasKey('pickerDisplayFormat', $meta);
+        $this->assertArrayHasKey('firstDayOfWeek', $meta);
 
         $this->assertEquals('d/m/Y', $meta['displayFormat']);
         $this->assertEquals('Y-m-d', $meta['storageFormat']);
         $this->assertEquals('1900-01-01', $meta['minDate']);
         $this->assertEquals('2023-12-31', $meta['maxDate']);
         $this->assertFalse($meta['showPicker']);
+        $this->assertEquals('d-m-Y', $meta['pickerFormat']);
+        $this->assertEquals('DD-MM-YYYY', $meta['pickerDisplayFormat']);
+        $this->assertEquals(1, $meta['firstDayOfWeek']);
     }
 
     public function test_date_field_meta_with_default_values(): void
@@ -341,6 +350,9 @@ class DateFieldTest extends TestCase
         $this->assertNull($meta['minDate']);
         $this->assertNull($meta['maxDate']);
         $this->assertTrue($meta['showPicker']);
+        $this->assertNull($meta['pickerFormat']);
+        $this->assertNull($meta['pickerDisplayFormat']);
+        $this->assertEquals(0, $meta['firstDayOfWeek']);
     }
 
     public function test_date_field_fill_with_different_storage_format(): void
@@ -369,6 +381,46 @@ class DateFieldTest extends TestCase
         $this->assertEquals('invalid-date', $model->birth_date);
     }
 
+    public function test_date_field_picker_format_configuration(): void
+    {
+        $field = Date::make('Birth Date')->pickerFormat('d-m-Y');
+
+        $this->assertEquals('d-m-Y', $field->pickerFormat);
+    }
+
+    public function test_date_field_picker_display_format_configuration(): void
+    {
+        $field = Date::make('Birth Date')->pickerDisplayFormat('DD-MM-YYYY');
+
+        $this->assertEquals('DD-MM-YYYY', $field->pickerDisplayFormat);
+    }
+
+    public function test_date_field_first_day_of_week_configuration(): void
+    {
+        $field = Date::make('Birth Date')->firstDayOfWeek(1);
+
+        $this->assertEquals(1, $field->firstDayOfWeek);
+    }
+
+    public function test_date_field_first_day_of_week_default(): void
+    {
+        $field = Date::make('Birth Date');
+
+        $this->assertEquals(0, $field->firstDayOfWeek);
+    }
+
+    public function test_date_field_nova_api_method_chaining(): void
+    {
+        $field = Date::make('Birth Date')
+            ->pickerFormat('d-m-Y')
+            ->pickerDisplayFormat('DD-MM-YYYY')
+            ->firstDayOfWeek(1);
+
+        $this->assertEquals('d-m-Y', $field->pickerFormat);
+        $this->assertEquals('DD-MM-YYYY', $field->pickerDisplayFormat);
+        $this->assertEquals(1, $field->firstDayOfWeek);
+    }
+
     public function test_date_field_comprehensive_method_coverage(): void
     {
         $field = Date::make('Birth Date');
@@ -379,6 +431,9 @@ class DateFieldTest extends TestCase
         $this->assertTrue(method_exists($field, 'min'));
         $this->assertTrue(method_exists($field, 'max'));
         $this->assertTrue(method_exists($field, 'showPicker'));
+        $this->assertTrue(method_exists($field, 'pickerFormat'));
+        $this->assertTrue(method_exists($field, 'pickerDisplayFormat'));
+        $this->assertTrue(method_exists($field, 'firstDayOfWeek'));
         $this->assertTrue(method_exists($field, 'resolve'));
         $this->assertTrue(method_exists($field, 'fill'));
         $this->assertTrue(method_exists($field, 'meta'));
@@ -388,7 +443,10 @@ class DateFieldTest extends TestCase
                        ->storageFormat('Y-m-d')
                        ->min('1900-01-01')
                        ->max('2023-12-31')
-                       ->showPicker(false);
+                       ->showPicker(false)
+                       ->pickerFormat('d-m-Y')
+                       ->pickerDisplayFormat('DD-MM-YYYY')
+                       ->firstDayOfWeek(1);
 
         $this->assertInstanceOf(Date::class, $result);
         $this->assertEquals('d/m/Y', $field->displayFormat);
@@ -396,5 +454,8 @@ class DateFieldTest extends TestCase
         $this->assertEquals('1900-01-01', $field->minDate);
         $this->assertEquals('2023-12-31', $field->maxDate);
         $this->assertFalse($field->showPicker);
+        $this->assertEquals('d-m-Y', $field->pickerFormat);
+        $this->assertEquals('DD-MM-YYYY', $field->pickerDisplayFormat);
+        $this->assertEquals(1, $field->firstDayOfWeek);
     }
 }

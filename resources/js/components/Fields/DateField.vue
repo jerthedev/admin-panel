@@ -170,12 +170,16 @@ const fieldId = computed(() => {
 
 const formattedValue = computed(() => {
   if (!props.modelValue) return ''
-  
+
   try {
     const date = new Date(props.modelValue)
     if (isNaN(date.getTime())) return props.modelValue
-    
-    // Format for HTML date input (YYYY-MM-DD)
+
+    // Use pickerFormat if available, otherwise format for HTML date input (YYYY-MM-DD)
+    if (props.field.pickerFormat) {
+      return formatDateWithCustomFormat(date, props.field.pickerFormat)
+    }
+
     return date.toISOString().split('T')[0]
   } catch (error) {
     return props.modelValue
@@ -184,12 +188,13 @@ const formattedValue = computed(() => {
 
 const displayValue = computed(() => {
   if (!props.modelValue) return ''
-  
+
   try {
     const date = new Date(props.modelValue)
     if (isNaN(date.getTime())) return props.modelValue
-    
-    const format = props.field.displayFormat || 'Y-m-d'
+
+    // Use pickerDisplayFormat if available, otherwise use displayFormat
+    const format = props.field.pickerDisplayFormat || props.field.displayFormat || 'Y-m-d'
     return formatDate(date, format)
   } catch (error) {
     return props.modelValue
@@ -272,7 +277,7 @@ const formatDate = (date, format) => {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
-  
+
   switch (format) {
     case 'Y-m-d':
       return `${year}-${month}-${day}`
@@ -280,6 +285,24 @@ const formatDate = (date, format) => {
       return `${day}/${month}/${year}`
     case 'm/d/Y':
       return `${month}/${day}/${year}`
+    case 'd-m-Y':
+      return `${day}-${month}-${year}`
+    case 'm-d-Y':
+      return `${month}-${day}-${year}`
+    case 'Y/m/d':
+      return `${year}/${month}/${day}`
+    case 'DD-MM-YYYY':
+      return `${day}-${month}-${year}`
+    case 'DD/MM/YYYY':
+      return `${day}/${month}/${year}`
+    case 'MM-DD-YYYY':
+      return `${month}-${day}-${year}`
+    case 'MM/DD/YYYY':
+      return `${month}/${day}/${year}`
+    case 'YYYY-MM-DD':
+      return `${year}-${month}-${day}`
+    case 'YYYY/MM/DD':
+      return `${year}/${month}/${day}`
     case 'M d, Y':
       const months = [
         'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -294,6 +317,31 @@ const formatDate = (date, format) => {
       return `${fullMonths[date.getMonth()]} ${parseInt(day)}, ${year}`
     default:
       return date.toLocaleDateString()
+  }
+}
+
+const formatDateWithCustomFormat = (date, format) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  // Handle common Nova picker formats
+  switch (format) {
+    case 'd-m-Y':
+      return `${day}-${month}-${year}`
+    case 'd/m/Y':
+      return `${day}/${month}/${year}`
+    case 'm-d-Y':
+      return `${month}-${day}-${year}`
+    case 'm/d/Y':
+      return `${month}/${day}/${year}`
+    case 'Y-m-d':
+      return `${year}-${month}-${day}`
+    case 'Y/m/d':
+      return `${year}/${month}/${day}`
+    default:
+      // Fallback to standard format
+      return formatDate(date, format)
   }
 }
 

@@ -9,8 +9,8 @@ use Illuminate\Http\Request;
 /**
  * MultiSelect Field.
  *
- * A multi-select dropdown field with support for multiple selections,
- * tagging interface, and searchable options.
+ * A multi-select dropdown field with support for multiple selections
+ * and searchable options. 100% compatible with Nova's MultiSelect field API.
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
@@ -30,16 +30,6 @@ class MultiSelect extends Field
      * Whether the multi-select should be searchable.
      */
     public bool $searchable = false;
-
-    /**
-     * Whether the multi-select should allow creating new tags.
-     */
-    public bool $taggable = false;
-
-    /**
-     * The maximum number of selections allowed.
-     */
-    public ?int $maxSelections = null;
 
     /**
      * Set the available options for the multi-select field.
@@ -76,26 +66,6 @@ class MultiSelect extends Field
     public function searchable(bool $searchable = true): static
     {
         $this->searchable = $searchable;
-
-        return $this;
-    }
-
-    /**
-     * Allow creating new tags in the multi-select field.
-     */
-    public function taggable(bool $taggable = true): static
-    {
-        $this->taggable = $taggable;
-
-        return $this;
-    }
-
-    /**
-     * Set the maximum number of selections allowed.
-     */
-    public function maxSelections(int $maxSelections): static
-    {
-        $this->maxSelections = $maxSelections;
 
         return $this;
     }
@@ -145,15 +115,10 @@ class MultiSelect extends Field
             }
 
             // Validate selections against options if we have them
-            if (! empty($this->options) && ! $this->taggable) {
+            if (! empty($this->options)) {
                 $value = array_filter($value, function ($item) {
                     return array_key_exists($item, $this->options);
                 });
-            }
-
-            // Enforce max selections limit
-            if ($this->maxSelections !== null && count($value) > $this->maxSelections) {
-                $value = array_slice($value, 0, $this->maxSelections);
             }
 
             $model->{$this->attribute} = $value;
@@ -168,8 +133,6 @@ class MultiSelect extends Field
         return array_merge(parent::meta(), [
             'options' => $this->options,
             'searchable' => $this->searchable,
-            'taggable' => $this->taggable,
-            'maxSelections' => $this->maxSelections,
         ]);
     }
 }

@@ -34,6 +34,8 @@ class User extends Authenticatable
         'code',        // For Code field E2E tests
         'config',      // For Code field E2E tests (JSON)
         'color',       // For Color field tests
+        'skills',      // For MultiSelect field tests
+        'tags',        // For MultiSelect field tests
     ];
 
     protected $hidden = [
@@ -48,6 +50,8 @@ class User extends Authenticatable
         'permissions' => 'array', // For BooleanGroup field E2E tests
         'features' => 'array',    // For BooleanGroup field E2E tests
         'config' => 'array',      // For Code field E2E tests (JSON)
+        'skills' => 'array',      // For MultiSelect field tests
+        'tags' => 'array',        // For MultiSelect field tests
     ];
 
     public function isAdmin(): bool

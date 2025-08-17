@@ -64,7 +64,16 @@
           </div>
           <div class="flex items-center space-x-2">
             <button
-              v-if="!readonly"
+              v-if="!field.downloadsDisabled && currentFile"
+              type="button"
+              class="text-blue-600 hover:text-blue-500 text-sm"
+              :class="{ 'text-blue-400': isDarkTheme }"
+              @click="downloadFile"
+            >
+              Download
+            </button>
+            <button
+              v-if="!readonly && field.deletable !== false"
               type="button"
               class="text-red-600 hover:text-red-500 text-sm"
               :class="{ 'text-red-400': isDarkTheme }"
@@ -250,12 +259,40 @@ const simulateUpload = () => {
 }
 
 const removeFile = () => {
+  if (props.field.deletable === false) {
+    return
+  }
+
   emit('update:modelValue', null)
   emit('change', null)
-  
+
   // Clear the file input
   if (fileInputRef.value) {
     fileInputRef.value.value = ''
+  }
+}
+
+const downloadFile = () => {
+  if (props.field.downloadsDisabled || !currentFile.value) {
+    return
+  }
+
+  // For now, just trigger a download using the file URL
+  // In a real implementation, this would make an API call to the download endpoint
+  if (typeof currentFile.value === 'string') {
+    // If it's a file path, construct the download URL
+    const downloadUrl = `/admin/files/download?path=${encodeURIComponent(currentFile.value)}&field=${props.field.attribute}`
+    window.open(downloadUrl, '_blank')
+  } else if (currentFile.value instanceof File) {
+    // If it's a File object, create a blob URL
+    const url = URL.createObjectURL(currentFile.value)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = currentFile.value.name
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 }
 

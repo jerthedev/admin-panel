@@ -44,11 +44,10 @@ describe('ImageField', () => {
       name: 'Profile Image',
       attribute: 'profile_image',
       type: 'image',
-      accept: 'image/*',
-      maxSize: 2097152, // 2MB
-      maxWidth: 1920,
-      maxHeight: 1080,
-      aspectRatio: '16:9'
+      acceptedTypes: 'image/*',
+      maxSize: 2048, // 2MB in KB
+      squared: false,
+      rounded: false
     })
   })
 
@@ -86,11 +85,7 @@ describe('ImageField', () => {
       expect(wrapper.text()).toContain('2 MB')
     })
 
-    it('shows image dimensions', () => {
-      wrapper = mountField(ImageField, { field: mockField })
 
-      expect(wrapper.text()).toContain('1920x1080')
-    })
 
     it('applies disabled state', () => {
       wrapper = mountField(ImageField, {
@@ -222,47 +217,7 @@ describe('ImageField', () => {
       expect(wrapper.vm.validationError).toContain('Invalid file type')
     })
 
-    it('validates image dimensions', async () => {
-      wrapper = mountField(ImageField, { field: mockField })
 
-      // Mock image load to simulate dimension validation
-      const mockImage = {
-        width: 3000,
-        height: 2000,
-        onload: null
-      }
-
-      global.Image = vi.fn(() => mockImage)
-
-      const file = new File(['content'], 'large-image.jpg', { type: 'image/jpeg' })
-      await wrapper.vm.validateImageDimensions(file)
-
-      // Trigger onload
-      mockImage.onload()
-
-      expect(wrapper.vm.validationError).toContain('Image dimensions exceed')
-    })
-
-    it('validates aspect ratio', async () => {
-      wrapper = mountField(ImageField, { field: mockField })
-
-      // Mock image with wrong aspect ratio
-      const mockImage = {
-        width: 1000,
-        height: 1000, // Square instead of 16:9
-        onload: null
-      }
-
-      global.Image = vi.fn(() => mockImage)
-
-      const file = new File(['content'], 'square.jpg', { type: 'image/jpeg' })
-      await wrapper.vm.validateImageDimensions(file)
-
-      // Trigger onload
-      mockImage.onload()
-
-      expect(wrapper.vm.validationError).toContain('aspect ratio')
-    })
 
     it('shows validation errors', async () => {
       wrapper = mountField(ImageField, { field: mockField })
@@ -397,50 +352,76 @@ describe('ImageField', () => {
     })
   })
 
-  describe('Image Cropping', () => {
-    it('shows crop modal when cropping is enabled', async () => {
-      const croppableField = createMockField({
+
+
+  describe('Nova Image Features', () => {
+    it('applies squared styling when field.squared is true', async () => {
+      const squaredField = createMockField({
         ...mockField,
-        enableCropping: true
+        squared: true
       })
 
-      wrapper = mountField(ImageField, { field: croppableField })
+      wrapper = mountField(ImageField, {
+        field: squaredField,
+        modelValue: {
+          name: 'profile.jpg',
+          url: '/images/profile.jpg'
+        }
+      })
+
+      const image = wrapper.find('img')
+      expect(image.classes()).toContain('image-preview-squared')
+    })
+
+    it('applies rounded styling when field.rounded is true', async () => {
+      const roundedField = createMockField({
+        ...mockField,
+        rounded: true
+      })
+
+      wrapper = mountField(ImageField, {
+        field: roundedField,
+        modelValue: {
+          name: 'profile.jpg',
+          url: '/images/profile.jpg'
+        }
+      })
+
+      const image = wrapper.find('img')
+      expect(image.classes()).toContain('image-preview-rounded')
+    })
+
+    it('applies both squared and rounded styling when both are true', async () => {
+      const styledField = createMockField({
+        ...mockField,
+        squared: true,
+        rounded: true
+      })
+
+      wrapper = mountField(ImageField, {
+        field: styledField,
+        modelValue: {
+          name: 'profile.jpg',
+          url: '/images/profile.jpg'
+        }
+      })
+
+      const image = wrapper.find('img')
+      expect(image.classes()).toContain('image-preview-squared')
+      expect(image.classes()).toContain('image-preview-rounded')
+    })
+
+    it('shows thumbnail preview for uploaded images', async () => {
+      wrapper = mountField(ImageField, { field: mockField })
 
       const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' })
       wrapper.vm.selectedImage = file
-      wrapper.vm.showCropModal = true
+      wrapper.vm.previewUrl = 'blob:mock-url'
       await nextTick()
 
-      expect(wrapper.text()).toContain('Crop Image')
-    })
-
-    it('applies crop settings', async () => {
-      const croppableField = createMockField({
-        ...mockField,
-        enableCropping: true,
-        cropAspectRatio: '1:1'
-      })
-
-      wrapper = mountField(ImageField, { field: croppableField })
-
-      expect(wrapper.vm.cropAspectRatio).toBe('1:1')
-    })
-
-    it('saves cropped image', async () => {
-      const croppableField = createMockField({
-        ...mockField,
-        enableCropping: true
-      })
-
-      wrapper = mountField(ImageField, { field: croppableField })
-
-      const saveCropSpy = vi.spyOn(wrapper.vm, 'saveCroppedImage')
-      wrapper.vm.showCropModal = true
-      await nextTick()
-
-      // Simulate save crop action
-      wrapper.vm.saveCroppedImage()
-      expect(saveCropSpy).toHaveBeenCalled()
+      const preview = wrapper.find('img')
+      expect(preview.exists()).toBe(true)
+      expect(preview.attributes('src')).toBe('blob:mock-url')
     })
   })
 

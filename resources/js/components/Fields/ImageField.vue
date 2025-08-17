@@ -22,7 +22,10 @@
             :src="imagePreviewUrl"
             :alt="field.name"
             class="image-preview"
-            :class="{ 'image-preview-squared': field.squared }"
+            :class="{
+              'image-preview-squared': field.squared,
+              'image-preview-rounded': field.rounded
+            }"
             @error="handleImageError"
           />
           
@@ -80,9 +83,6 @@
           </p>
           <p v-if="field.maxSize" class="text-xs text-gray-500">
             Max size: {{ formatFileSize(field.maxSize * 1024) }}
-          </p>
-          <p v-if="field.width || field.height" class="text-xs text-gray-500">
-            Dimensions: {{ field.width || 'auto' }} × {{ field.height || 'auto' }}px
           </p>
         </div>
       </div>
@@ -169,11 +169,6 @@ const isDarkTheme = computed(() => adminStore.isDarkTheme)
 const fieldId = computed(() => {
   return `image-field-${props.field.attribute}-${Math.random().toString(36).substr(2, 9)}`
 })
-
-// Watch for model value changes
-watch(() => props.modelValue, (newValue) => {
-  updateImagePreview(newValue)
-}, { immediate: true })
 
 // Methods
 const updateImagePreview = (value) => {
@@ -308,6 +303,11 @@ const focus = () => {
   fileInputRef.value?.focus()
 }
 
+// Watch for model value changes
+watch(() => props.modelValue, (newValue) => {
+  updateImagePreview(newValue)
+}, { immediate: true })
+
 defineExpose({
   focus
 })
@@ -324,6 +324,10 @@ defineExpose({
 
 .image-preview-rectangle {
   @apply max-w-xs max-h-48 object-contain rounded-lg;
+}
+
+.image-preview-rounded {
+  @apply rounded-full;
 }
 
 .image-preview {

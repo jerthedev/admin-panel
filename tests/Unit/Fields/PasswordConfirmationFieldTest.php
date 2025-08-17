@@ -38,8 +38,8 @@ class PasswordConfirmationFieldTest extends TestCase
     {
         $field = PasswordConfirmation::make('Password Confirmation');
 
-        $this->assertNull($field->minLength);
-        $this->assertFalse($field->showStrengthIndicator);
+        // Test that the field has the correct component
+        $this->assertEquals('PasswordConfirmationField', $field->component);
     }
 
     public function test_password_confirmation_field_default_visibility(): void
@@ -53,26 +53,13 @@ class PasswordConfirmationFieldTest extends TestCase
         $this->assertTrue($field->showOnUpdate);
     }
 
-    public function test_password_confirmation_field_min_length_configuration(): void
+    public function test_password_confirmation_field_with_validation_rules(): void
     {
-        $field = PasswordConfirmation::make('Password Confirmation')->minLength(8);
+        $field = PasswordConfirmation::make('Password Confirmation')
+            ->rules('required', 'confirmed');
 
-        $this->assertEquals(8, $field->minLength);
-        $this->assertEquals(['min:8'], $field->rules);
-    }
-
-    public function test_password_confirmation_field_show_strength_indicator(): void
-    {
-        $field = PasswordConfirmation::make('Password Confirmation')->showStrengthIndicator();
-
-        $this->assertTrue($field->showStrengthIndicator);
-    }
-
-    public function test_password_confirmation_field_show_strength_indicator_false(): void
-    {
-        $field = PasswordConfirmation::make('Password Confirmation')->showStrengthIndicator(false);
-
-        $this->assertFalse($field->showStrengthIndicator);
+        // Test that the field can accept validation rules
+        $this->assertEquals(['required', 'confirmed'], $field->rules);
     }
 
     public function test_password_confirmation_field_resolve_always_returns_null(): void
@@ -112,25 +99,21 @@ class PasswordConfirmationFieldTest extends TestCase
         $this->assertObjectNotHasProperty('password_confirmation', $model);
     }
 
-    public function test_password_confirmation_field_meta_includes_all_properties(): void
+    public function test_password_confirmation_field_meta_returns_empty_array(): void
     {
-        $field = PasswordConfirmation::make('Password Confirmation')
-            ->minLength(8)
-            ->showStrengthIndicator();
+        $field = PasswordConfirmation::make('Password Confirmation');
 
         $meta = $field->meta();
 
-        $this->assertArrayHasKey('minLength', $meta);
-        $this->assertArrayHasKey('showStrengthIndicator', $meta);
-        $this->assertEquals(8, $meta['minLength']);
-        $this->assertTrue($meta['showStrengthIndicator']);
+        // Test that meta returns an empty array (base behavior)
+        $this->assertIsArray($meta);
+        $this->assertEmpty($meta);
     }
 
     public function test_password_confirmation_field_json_serialization(): void
     {
         $field = PasswordConfirmation::make('Confirm Password')
-            ->minLength(8)  // This sets rules to ['min:8']
-            ->showStrengthIndicator()
+            ->rules('required', 'confirmed')
             ->help('Re-enter your password');
 
         $json = $field->jsonSerialize();
@@ -138,9 +121,7 @@ class PasswordConfirmationFieldTest extends TestCase
         $this->assertEquals('Confirm Password', $json['name']);
         $this->assertEquals('confirm_password', $json['attribute']);
         $this->assertEquals('PasswordConfirmationField', $json['component']);
-        $this->assertEquals(8, $json['minLength']);
-        $this->assertTrue($json['showStrengthIndicator']);
-        $this->assertEquals(['min:8'], $json['rules']);
+        $this->assertEquals(['required', 'confirmed'], $json['rules']);
         $this->assertEquals('Re-enter your password', $json['helpText']);
         $this->assertFalse($json['showOnIndex']);
         $this->assertFalse($json['showOnDetail']);
@@ -158,14 +139,7 @@ class PasswordConfirmationFieldTest extends TestCase
         $this->assertTrue($field->showOnDetail);
     }
 
-    public function test_password_confirmation_field_with_validation_rules(): void
-    {
-        $field = PasswordConfirmation::make('Password Confirmation')
-            ->minLength(8);
 
-        // Test that the field has the expected rules from the methods called
-        $this->assertEquals(['min:8'], $field->rules);
-    }
 
     public function test_password_confirmation_field_inheritance_from_field(): void
     {

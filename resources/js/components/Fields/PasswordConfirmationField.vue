@@ -15,14 +15,12 @@
         type="password"
         :value="modelValue"
         :placeholder="field.placeholder || field.name"
-        :minlength="field.minLength"
         :disabled="disabled"
         :readonly="readonly"
         class="admin-input w-full pr-10"
         :class="[
           { 'admin-input-dark': isDarkTheme },
-          { 'border-red-300': hasError },
-          { 'border-green-300': isValid && modelValue }
+          { 'border-red-300': hasError }
         ]"
         @input="handleInput"
         @focus="handleFocus"
@@ -49,46 +47,18 @@
       </button>
     </div>
 
-    <!-- Password strength indicator -->
-    <div
-      v-if="field.showStrengthIndicator && modelValue"
-      class="mt-2"
-    >
-      <div class="flex items-center space-x-2">
-        <div class="flex-1 bg-gray-200 rounded-full h-2" :class="{ 'bg-gray-700': isDarkTheme }">
-          <div
-            class="h-2 rounded-full transition-all duration-300"
-            :class="strengthBarClass"
-            :style="{ width: strengthPercentage + '%' }"
-          ></div>
-        </div>
-        <span
-          class="text-xs font-medium"
-          :class="strengthTextClass"
-        >
-          {{ strengthText }}
-        </span>
-      </div>
-    </div>
 
-    <!-- Character count -->
-    <div
-      v-if="field.minLength && showCharacterCount"
-      class="mt-1 text-xs text-gray-500"
-      :class="{ 'text-gray-400': isDarkTheme }"
-    >
-      {{ characterCount }}/{{ field.minLength }} minimum characters
-    </div>
   </BaseField>
 </template>
 
 <script setup>
 /**
  * PasswordConfirmationField Component
- * 
- * Password confirmation input field with strength indicator and visibility toggle.
+ *
+ * Password confirmation input field with visibility toggle.
  * Used for password verification alongside Password fields.
- * 
+ * Compatible with Nova's PasswordConfirmation field API.
+ *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
 
@@ -146,55 +116,7 @@ const hasError = computed(() => {
   return props.errors && Object.keys(props.errors).length > 0
 })
 
-const characterCount = computed(() => {
-  return String(props.modelValue || '').length
-})
 
-const showCharacterCount = computed(() => {
-  return props.field.minLength && characterCount.value < props.field.minLength
-})
-
-const isValid = computed(() => {
-  return props.field.minLength ? characterCount.value >= props.field.minLength : characterCount.value > 0
-})
-
-// Password strength calculation
-const strengthScore = computed(() => {
-  const password = props.modelValue || ''
-  let score = 0
-  
-  if (password.length >= 8) score += 1
-  if (password.length >= 12) score += 1
-  if (/[a-z]/.test(password)) score += 1
-  if (/[A-Z]/.test(password)) score += 1
-  if (/[0-9]/.test(password)) score += 1
-  if (/[^A-Za-z0-9]/.test(password)) score += 1
-  
-  return score
-})
-
-const strengthPercentage = computed(() => {
-  return Math.min((strengthScore.value / 6) * 100, 100)
-})
-
-const strengthText = computed(() => {
-  if (strengthScore.value <= 2) return 'Weak'
-  if (strengthScore.value <= 4) return 'Medium'
-  return 'Strong'
-})
-
-const strengthBarClass = computed(() => {
-  if (strengthScore.value <= 2) return 'bg-red-500'
-  if (strengthScore.value <= 4) return 'bg-yellow-500'
-  return 'bg-green-500'
-})
-
-const strengthTextClass = computed(() => {
-  const baseClasses = isDarkTheme.value ? 'text-gray-300' : 'text-gray-700'
-  if (strengthScore.value <= 2) return `${baseClasses} text-red-500`
-  if (strengthScore.value <= 4) return `${baseClasses} text-yellow-500`
-  return `${baseClasses} text-green-500`
-})
 
 // Methods
 const handleInput = (event) => {

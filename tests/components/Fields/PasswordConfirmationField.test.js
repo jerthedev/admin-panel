@@ -77,18 +77,7 @@ describe('PasswordConfirmationField', () => {
 
 
 
-    it('applies minlength attribute when specified', () => {
-      const fieldWithMinLength = createMockField({
-        name: 'Confirm Password',
-        attribute: 'password_confirmation',
-        minLength: 8
-      })
 
-      wrapper = mountField(PasswordConfirmationField, { field: fieldWithMinLength })
-
-      const input = wrapper.find('input[type="password"]')
-      expect(input.attributes('minlength')).toBe('8')
-    })
   })
 
   describe('Password Visibility Toggle', () => {
@@ -136,93 +125,9 @@ describe('PasswordConfirmationField', () => {
     })
   })
 
-  describe('Password Strength Indicator', () => {
-    beforeEach(() => {
-      const fieldWithStrength = createMockField({
-        name: 'Confirm Password',
-        attribute: 'password_confirmation',
-        showStrengthIndicator: true
-      })
 
-      wrapper = mountField(PasswordConfirmationField, { field: fieldWithStrength })
-    })
 
-    it('does not show strength indicator when no password', () => {
-      expect(wrapper.find('.bg-gray-200').exists()).toBe(false)
-    })
 
-    it('shows strength indicator when password is entered', async () => {
-      await wrapper.setProps({ modelValue: 'test' })
-
-      expect(wrapper.find('.bg-gray-200').exists()).toBe(true)
-    })
-
-    it('calculates weak password strength correctly', async () => {
-      await wrapper.setProps({ modelValue: 'test' })
-
-      expect(wrapper.text()).toContain('Weak')
-      expect(wrapper.find('.bg-red-500').exists()).toBe(true)
-    })
-
-    it('calculates medium password strength correctly', async () => {
-      await wrapper.setProps({ modelValue: 'Test123' })
-
-      expect(wrapper.text()).toContain('Medium')
-      expect(wrapper.find('.bg-yellow-500').exists()).toBe(true)
-    })
-
-    it('calculates strong password strength correctly', async () => {
-      await wrapper.setProps({ modelValue: 'Test123!@#' })
-
-      expect(wrapper.text()).toContain('Strong')
-      expect(wrapper.find('.bg-green-500').exists()).toBe(true)
-    })
-
-    it('updates strength indicator dynamically', async () => {
-      // Start with weak password
-      await wrapper.setProps({ modelValue: 'test' })
-      expect(wrapper.text()).toContain('Weak')
-
-      // Update to strong password
-      await wrapper.setProps({ modelValue: 'Test123!@#' })
-      expect(wrapper.text()).toContain('Strong')
-    })
-  })
-
-  describe('Character Count', () => {
-    beforeEach(() => {
-      const fieldWithMinLength = createMockField({
-        name: 'Confirm Password',
-        attribute: 'password_confirmation',
-        minLength: 8
-      })
-
-      wrapper = mountField(PasswordConfirmationField, { field: fieldWithMinLength })
-    })
-
-    it('shows character count when below minimum length', async () => {
-      await wrapper.setProps({ modelValue: 'test' })
-
-      expect(wrapper.text()).toContain('4/8 minimum characters')
-    })
-
-    it('hides character count when minimum length is reached', async () => {
-      await wrapper.setProps({ modelValue: 'test1234' })
-
-      expect(wrapper.text()).not.toContain('minimum characters')
-    })
-
-    it('does not show character count when no minLength specified', () => {
-      const fieldWithoutMinLength = createMockField({
-        name: 'Confirm Password',
-        attribute: 'password_confirmation'
-      })
-
-      wrapper = mountField(PasswordConfirmationField, { field: fieldWithoutMinLength })
-
-      expect(wrapper.text()).not.toContain('minimum characters')
-    })
-  })
 
   describe('Validation States', () => {
     it('applies error styling when errors are present', () => {
@@ -235,35 +140,14 @@ describe('PasswordConfirmationField', () => {
       expect(input.classes()).toContain('border-red-300')
     })
 
-    it('applies valid styling when password meets requirements', () => {
-      const fieldWithMinLength = createMockField({
-        name: 'Confirm Password',
-        attribute: 'password_confirmation',
-        minLength: 8
-      })
-
+    it('does not apply validation styling when no errors', () => {
       wrapper = mountField(PasswordConfirmationField, {
-        field: fieldWithMinLength,
-        modelValue: 'validpassword'
+        field: mockField,
+        modelValue: 'somepassword'
       })
 
       const input = wrapper.find('input')
-      expect(input.classes()).toContain('border-green-300')
-    })
-
-    it('does not apply valid styling when password is empty', () => {
-      const fieldWithMinLength = createMockField({
-        name: 'Confirm Password',
-        attribute: 'password_confirmation',
-        minLength: 8
-      })
-
-      wrapper = mountField(PasswordConfirmationField, {
-        field: fieldWithMinLength,
-        modelValue: ''
-      })
-
-      const input = wrapper.find('input')
+      expect(input.classes()).not.toContain('border-red-300')
       expect(input.classes()).not.toContain('border-green-300')
     })
   })

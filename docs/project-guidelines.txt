@@ -10,6 +10,7 @@ Important: Ticket process should be:
 4. Review the ticket description and the current code one more time.  Ensure all acceptance criteria is met.  If anything is missing, stop and summarize for me.
 5. Add a comment to the task about what was finished and change the task status to In Review
 
+Follow ALL steps completely and thoroughly - don't just verify files exist.
 Everything should be 100% compatible with Nova's documentation.  In some cases, there are features we are expanding.
 Expanded features should still be compatible with Nova's documentation, but with the additional APIs and features.
 

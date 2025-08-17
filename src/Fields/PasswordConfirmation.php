@@ -12,6 +12,10 @@ use Illuminate\Http\Request;
  * A password confirmation input field that doesn't store data but validates
  * password confirmation. Used alongside Password fields for verification.
  *
+ * This field provides an input that can be used for password confirmation
+ * and is typically used alongside a Password field with the 'confirmed'
+ * validation rule.
+ *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
 class PasswordConfirmation extends Field
@@ -22,45 +26,14 @@ class PasswordConfirmation extends Field
     public string $component = 'PasswordConfirmationField';
 
     /**
-     * The minimum password length.
-     */
-    public ?int $minLength = null;
-
-    /**
-     * Whether to show password strength indicator.
-     */
-    public bool $showStrengthIndicator = false;
-
-    /**
      * Create a new field instance.
      */
     public function __construct(string $name, ?string $attribute = null, ?callable $resolveCallback = null)
     {
         parent::__construct($name, $attribute, $resolveCallback);
 
-        // Password confirmation fields should only be shown on forms
+        // Password confirmation fields should only be shown on forms by default
         $this->onlyOnForms();
-    }
-
-    /**
-     * Set the minimum password length.
-     */
-    public function minLength(int $minLength): static
-    {
-        $this->minLength = $minLength;
-        $this->rules("min:{$minLength}");
-
-        return $this;
-    }
-
-    /**
-     * Show password strength indicator.
-     */
-    public function showStrengthIndicator(bool $show = true): static
-    {
-        $this->showStrengthIndicator = $show;
-
-        return $this;
     }
 
     /**
@@ -81,16 +54,5 @@ class PasswordConfirmation extends Field
         // They are only used for validation purposes
         // The actual validation happens through Laravel's 'confirmed' rule
         // on the main password field
-    }
-
-    /**
-     * Get additional meta information to merge with the field payload.
-     */
-    public function meta(): array
-    {
-        return array_merge(parent::meta(), [
-            'minLength' => $this->minLength,
-            'showStrengthIndicator' => $this->showStrengthIndicator,
-        ]);
     }
 }

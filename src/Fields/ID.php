@@ -20,6 +20,11 @@ class ID extends Field
     public string $component = 'IDField';
 
     /**
+     * Whether the ID should be treated as a big integer.
+     */
+    public bool $asBigInt = false;
+
+    /**
      * Create a new ID field instance.
      */
     public function __construct(string $name = 'ID', ?string $attribute = null, ?callable $resolveCallback = null)
@@ -45,12 +50,23 @@ class ID extends Field
     }
 
     /**
+     * Indicate that the ID should be treated as a big integer.
+     * This is necessary for very large integer IDs to be correctly rendered by the Nova client.
+     */
+    public function asBigInt(bool $asBigInt = true): static
+    {
+        $this->asBigInt = $asBigInt;
+
+        return $this;
+    }
+
+    /**
      * Get additional meta information to merge with the field payload.
      */
     public function meta(): array
     {
         return array_merge(parent::meta(), [
-            // ID-specific meta can be added here if needed
+            'asBigInt' => $this->asBigInt,
         ]);
     }
 }

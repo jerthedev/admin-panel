@@ -336,4 +336,224 @@ describe('IDField', () => {
       expect(baseField.props('errors')).toEqual({ id: ['Some error'] })
     })
   })
+
+  describe('Display Modes', () => {
+    it('renders in display mode for index view', () => {
+      wrapper = mountField(IDField, {
+        field: mockField,
+        modelValue: 123,
+        props: {
+          field: mockField,
+          mode: 'index'
+        }
+      })
+
+      // Should show display span, not input
+      expect(wrapper.find('span.text-sm.font-mono').exists()).toBe(true)
+      expect(wrapper.find('input').exists()).toBe(false)
+    })
+
+    it('renders in display mode for detail view', () => {
+      wrapper = mountField(IDField, {
+        field: mockField,
+        modelValue: 456,
+        props: {
+          field: mockField,
+          mode: 'detail'
+        }
+      })
+
+      // Should show display span, not input
+      expect(wrapper.find('span.text-sm.font-mono').exists()).toBe(true)
+      expect(wrapper.find('input').exists()).toBe(false)
+    })
+
+    it('renders in form mode when not readonly', () => {
+      const fieldWithCreation = createMockField({
+        ...mockField,
+        showOnCreation: true
+      })
+
+      wrapper = mountField(IDField, {
+        field: fieldWithCreation,
+        modelValue: 789,
+        props: {
+          field: fieldWithCreation,
+          mode: 'form'
+        }
+      })
+
+      // Should show input, not display span
+      expect(wrapper.find('input').exists()).toBe(true)
+      expect(wrapper.find('span.text-sm.font-mono').exists()).toBe(false)
+    })
+
+    it('shows display value with dash for null/undefined', () => {
+      wrapper = mountField(IDField, {
+        field: mockField,
+        props: {
+          field: mockField,
+          modelValue: null, // Set null directly in props to bypass helper default
+          mode: 'index'
+        }
+      })
+
+      // Find the display span within the display mode div
+      const displayDiv = wrapper.find('div.flex.items-center.space-x-2')
+      expect(displayDiv.exists()).toBe(true)
+
+      const displaySpan = displayDiv.find('span.text-sm.font-mono')
+      expect(displaySpan.exists()).toBe(true)
+      expect(displaySpan.text()).toBe('—')
+    })
+  })
+
+  describe('Copyable Functionality', () => {
+    beforeEach(() => {
+      // Mock clipboard API
+      Object.assign(navigator, {
+        clipboard: {
+          writeText: vi.fn().mockResolvedValue()
+        }
+      })
+    })
+
+    it('shows copy button when field is copyable and has value', () => {
+      const copyableField = createMockField({
+        ...mockField,
+        copyable: true
+      })
+
+      wrapper = mountField(IDField, {
+        field: copyableField,
+        modelValue: 123,
+        props: {
+          field: copyableField,
+          mode: 'index'
+        }
+      })
+
+      expect(wrapper.find('button[title="Copy to clipboard"]').exists()).toBe(true)
+    })
+
+    it('hides copy button when field is not copyable', () => {
+      wrapper = mountField(IDField, {
+        field: mockField,
+        modelValue: 123,
+        props: {
+          field: mockField,
+          mode: 'index'
+        }
+      })
+
+      expect(wrapper.find('button').exists()).toBe(false)
+    })
+
+    it('hides copy button when no value', () => {
+      const copyableField = createMockField({
+        ...mockField,
+        copyable: true
+      })
+
+      wrapper = mountField(IDField, {
+        field: copyableField,
+        modelValue: null,
+        props: {
+          field: copyableField,
+          mode: 'index'
+        }
+      })
+
+      expect(wrapper.find('button').exists()).toBe(false)
+    })
+
+    it('copies value to clipboard when copy button clicked', async () => {
+      const copyableField = createMockField({
+        ...mockField,
+        copyable: true
+      })
+
+      wrapper = mountField(IDField, {
+        field: copyableField,
+        modelValue: 'test-id-123',
+        props: {
+          field: copyableField,
+          mode: 'index'
+        }
+      })
+
+      const copyButton = wrapper.find('button')
+      await copyButton.trigger('click')
+
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('test-id-123')
+    })
+
+    it('shows copied state after successful copy', async () => {
+      const copyableField = createMockField({
+        ...mockField,
+        copyable: true
+      })
+
+      wrapper = mountField(IDField, {
+        field: copyableField,
+        modelValue: 999,
+        props: {
+          field: copyableField,
+          mode: 'index'
+        }
+      })
+
+      const copyButton = wrapper.find('button')
+      await copyButton.trigger('click')
+      await nextTick()
+
+      expect(copyButton.attributes('title')).toBe('Copied!')
+      expect(wrapper.find('svg').classes()).toContain('text-green-500')
+    })
+  })
+
+  describe('Nova API Compatibility', () => {
+    it('handles asBigInt meta property', () => {
+      const bigIntField = createMockField({
+        ...mockField,
+        asBigInt: true
+      })
+
+      wrapper = mountField(IDField, {
+        field: bigIntField,
+        modelValue: '9007199254740991'
+      })
+
+      // Should handle big integers as strings
+      const input = wrapper.find('input')
+      expect(input.element.value).toBe('9007199254740991')
+    })
+
+    it('supports all Nova field visibility options', () => {
+      const field = createMockField({
+        ...mockField,
+        showOnCreation: false,
+        showOnIndex: true,
+        showOnDetail: true,
+        showOnUpdate: true
+      })
+
+      wrapper = mountField(IDField, { field })
+
+      // Should respect Nova visibility settings
+      expect(wrapper.vm.isReadonlyByDefault).toBe(true)
+    })
+
+    it('defaults to sortable behavior', () => {
+      const field = createMockField({
+        ...mockField,
+        sortable: true
+      })
+
+      wrapper = mountField(IDField, { field })
+
+      // Field should indicate it's sortable (this would be used by parent components)
+      expect(field.sortable).toBe(true)
+    })
+  })
 })

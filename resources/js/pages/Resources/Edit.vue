@@ -188,6 +188,7 @@ import SelectField from '@/components/Fields/SelectField.vue'
 import BooleanField from '@/components/Fields/BooleanField.vue'
 import DateField from '@/components/Fields/DateField.vue'
 import MarkdownField from '@/components/Fields/MarkdownField.vue'
+import ColorField from '@/components/Fields/ColorField.vue'
 
 // Props from Inertia
 const props = defineProps({
@@ -237,6 +238,7 @@ const fieldComponents = {
   BooleanField,
   DateField,
   MarkdownField,
+  ColorField,
 }
 
 // Methods

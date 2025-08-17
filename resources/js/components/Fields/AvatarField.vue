@@ -60,7 +60,7 @@
           class="sr-only"
           @change="handleFileSelect"
         />
-        
+
         <label
           :for="fieldId"
           class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors duration-200"
@@ -139,10 +139,10 @@
 <script setup>
 /**
  * AvatarField Component
- * 
+ *
  * User avatar field that extends Image with special display features.
  * Optimized for user profile pictures with squared/rounded display options.
- * 
+ *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
 
@@ -220,15 +220,22 @@ const currentAvatarName = computed(() => {
 })
 
 const avatarSizeClass = computed(() => {
-  const size = props.field.size || 80
-  return `w-${Math.min(Math.floor(size / 4), 32)} h-${Math.min(Math.floor(size / 4), 32)}`
+  // Default avatar size - can be overridden by CSS or field meta
+  const defaultSize = 80
+  const size = props.field.meta?.size || defaultSize
+  const sizeClass = Math.min(Math.floor(size / 4), 32)
+  return `w-${sizeClass} h-${sizeClass}`
 })
 
 const avatarShapeClass = computed(() => {
-  if (props.field.rounded) {
+  // Check meta properties first (Nova API compatibility)
+  const rounded = props.field.meta?.rounded || props.field.rounded
+  const squared = props.field.meta?.squared || props.field.squared
+
+  if (rounded) {
     return 'rounded-full'
   }
-  return props.field.squared ? 'rounded-none' : 'rounded-lg'
+  return squared ? 'rounded-none' : 'rounded-lg'
 })
 
 const acceptedTypesText = computed(() => {
@@ -278,7 +285,7 @@ const processFile = (file) => {
 const isFileTypeAccepted = (file) => {
   const acceptedTypes = props.field.acceptedTypes || 'image/*'
   const fileType = file.type
-  
+
   return acceptedTypes.split(',').some(type => {
     type = type.trim()
     if (type === 'image/*') {
@@ -295,7 +302,7 @@ const removeAvatar = () => {
   selectedFile.value = null
   emit('update:modelValue', null)
   emit('change', null)
-  
+
   if (fileInputRef.value) {
     fileInputRef.value.value = ''
   }

@@ -27,6 +27,13 @@ class User extends Authenticatable
         'is_admin',
         'is_active',
         'country_id',
+        'avatar',      // For Avatar field E2E tests
+        'theme_song',  // For Audio field E2E tests
+        'permissions', // For BooleanGroup field E2E tests
+        'features',    // For BooleanGroup field E2E tests
+        'code',        // For Code field E2E tests
+        'config',      // For Code field E2E tests (JSON)
+        'color',       // For Color field tests
     ];
 
     protected $hidden = [
@@ -38,6 +45,9 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'is_admin' => 'boolean',
         'is_active' => 'boolean',
+        'permissions' => 'array', // For BooleanGroup field E2E tests
+        'features' => 'array',    // For BooleanGroup field E2E tests
+        'config' => 'array',      // For Code field E2E tests (JSON)
     ];
 
     public function isAdmin(): bool

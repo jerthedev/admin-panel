@@ -20,10 +20,20 @@ use JTD\AdminPanel\Http\Controllers\UserController;
 |
 */
 
+// Simple health check for E2E readiness
+Route::get('/health', function () {
+    return response('OK', 200);
+})->name('health');
+
 // Test route (no middleware) - Simple HTML test for asset pipeline
 Route::get('/test', function () {
     return view('admin-panel::test-assets');
 })->name('test');
+
+// Simple Country field demo page for Playwright tests
+Route::get('/test-country-field', function () {
+    return view('admin-panel::test-country-field');
+})->name('test-country-field');
 
 // Test route for self-contained Inertia
 Route::get('/inertia-test', function () {

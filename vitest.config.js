@@ -34,7 +34,8 @@ export default defineConfig({
       '@components': resolve(__dirname, './resources/js/components'),
       '@pages': resolve(__dirname, './resources/js/pages'),
       '@stores': resolve(__dirname, './resources/js/stores'),
-      '@layouts': resolve(__dirname, './resources/js/Layouts')
+      '@layouts': resolve(__dirname, './resources/js/Layouts'),
+      '@tests': resolve(__dirname, './tests')
     }
   }
 })

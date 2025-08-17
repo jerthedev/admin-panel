@@ -41,7 +41,7 @@ async function waitForServer(page) {
     try {
       console.log(`⏳ Waiting for server... (attempt ${attempt}/${maxAttempts})`);
 
-      const response = await page.goto('http://localhost:8000/admin/test', {
+      const response = await page.goto('http://localhost:8000/playwright/health', {
         waitUntil: 'networkidle',
         timeout: 10000
       });
@@ -66,10 +66,10 @@ async function setupTestData(page) {
   console.log('📊 Setting up test data...');
 
   try {
-    // Verify admin panel test route is accessible
-    const testResponse = await page.request.get('http://localhost:8000/admin/test');
+    // Verify app-level test route is accessible
+    const testResponse = await page.request.get('http://localhost:8000/playwright/health');
     if (!testResponse.ok()) {
-      throw new Error(`Admin panel test route not accessible: ${testResponse.status()}`);
+      throw new Error(`App-level test route not accessible: ${testResponse.status()}`);
     }
 
     // Create a dedicated test user for E2E tests

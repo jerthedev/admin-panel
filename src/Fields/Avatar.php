@@ -7,8 +7,11 @@ namespace JTD\AdminPanel\Fields;
 /**
  * Avatar Field.
  *
- * A user avatar field that extends Image with special display features.
- * Optimized for user profile pictures with squared/rounded display options.
+ * The Avatar field extends the Image field and accepts the same options and configuration.
+ * If a resource contains an Avatar field, that field will be displayed next to the
+ * resource's title when the resource is displayed in search results.
+ *
+ * 100% compatible with Laravel Nova Avatar field API.
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
@@ -25,29 +28,11 @@ class Avatar extends Image
     public string $path = 'avatars';
 
     /**
-     * Whether the avatar should be displayed as rounded.
-     */
-    public bool $rounded = false;
-
-    /**
-     * The size of the avatar display.
-     */
-    public int $size = 80;
-
-    /**
-     * Whether to show the avatar in index views.
-     */
-    public bool $showInIndex = false;
-
-    /**
      * Create a new avatar field instance.
      */
     public function __construct(string $name, ?string $attribute = null, ?callable $resolveCallback = null)
     {
         parent::__construct($name, $attribute, $resolveCallback);
-
-        // Avatars are squared by default
-        $this->squared = true;
 
         // Set default accepted types for avatars (more restrictive than general images)
         $this->acceptedTypes = 'image/jpeg,image/jpg,image/png,image/webp,.jpg,.jpeg,.png,.webp';
@@ -59,64 +44,24 @@ class Avatar extends Image
     }
 
     /**
-     * Set the avatar to be displayed as rounded.
-     */
-    public function rounded(bool $rounded = true): static
-    {
-        $this->rounded = $rounded;
-
-        // If rounded, disable squared
-        if ($rounded) {
-            $this->squared = false;
-        }
-
-        return $this;
-    }
-
-    /**
-     * Set the avatar to be displayed as squared.
+     * Display the image's thumbnail with squared edges.
+     *
+     * @param bool $squared
+     * @return $this
      */
     public function squared(bool $squared = true): static
     {
         parent::squared($squared);
-
-        // If squared, disable rounded
-        if ($squared) {
-            $this->rounded = false;
-        }
-
-        return $this;
+        return $this->withMeta(['squared' => $squared, 'rounded' => !$squared]);
     }
 
     /**
-     * Set the size of the avatar display.
+     * Display the image's thumbnail with fully-rounded edges.
+     *
+     * @return $this
      */
-    public function size(int $size): static
+    public function rounded(): static
     {
-        $this->size = $size;
-
-        return $this;
-    }
-
-    /**
-     * Set whether to show the avatar in index views.
-     */
-    public function showInIndex(bool $showInIndex = true): static
-    {
-        $this->showInIndex = $showInIndex;
-
-        return $this;
-    }
-
-    /**
-     * Get additional meta information to merge with the field payload.
-     */
-    public function meta(): array
-    {
-        return array_merge(parent::meta(), [
-            'rounded' => $this->rounded,
-            'size' => $this->size,
-            'showInIndex' => $this->showInIndex,
-        ]);
+        return $this->withMeta(['squared' => false, 'rounded' => true]);
     }
 }

@@ -10,31 +10,15 @@ use JTD\AdminPanel\Tests\TestCase;
 /**
  * Boolean Field Unit Tests
  *
- * Tests for Boolean field class including validation, visibility,
- * and value handling.
+ * Tests for Boolean field class with 100% Nova API compatibility.
+ * Tests all Nova Boolean field features including trueValue and falseValue methods.
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
 class BooleanFieldTest extends TestCase
 {
-    public function test_boolean_field_component(): void
-    {
-        $field = Boolean::make('Active');
-
-        $this->assertEquals('BooleanField', $field->component);
-    }
-
-    public function test_boolean_field_values(): void
-    {
-        $field = Boolean::make('Active')
-            ->trueValue('yes')
-            ->falseValue('no');
-
-        $this->assertEquals('yes', $field->trueValue);
-        $this->assertEquals('no', $field->falseValue);
-    }
-
-    public function test_boolean_field_creation(): void
+    /** @test */
+    public function it_creates_boolean_field_with_nova_syntax(): void
     {
         $field = Boolean::make('Active');
 
@@ -43,253 +27,310 @@ class BooleanFieldTest extends TestCase
         $this->assertEquals('BooleanField', $field->component);
     }
 
-    public function test_boolean_field_with_custom_attribute(): void
+    /** @test */
+    public function it_creates_boolean_field_with_custom_attribute(): void
     {
-        $field = Boolean::make('Is Active', 'is_active');
+        $field = Boolean::make('Is Published', 'is_published');
 
-        $this->assertEquals('Is Active', $field->name);
-        $this->assertEquals('is_active', $field->attribute);
+        $this->assertEquals('Is Published', $field->name);
+        $this->assertEquals('is_published', $field->attribute);
     }
 
-    public function test_boolean_field_default_values(): void
+    /** @test */
+    public function it_has_correct_default_properties(): void
     {
         $field = Boolean::make('Active');
 
-        $this->assertEquals(true, $field->trueValue);
-        $this->assertEquals(false, $field->falseValue);
+        $this->assertTrue($field->trueValue);
+        $this->assertFalse($field->falseValue);
     }
 
-    public function test_boolean_field_true_value_configuration(): void
+    /** @test */
+    public function it_supports_nova_true_value_method(): void
     {
-        $field = Boolean::make('Active')->trueValue('yes');
+        $field = Boolean::make('Active')->trueValue('On');
+
+        $this->assertEquals('On', $field->trueValue);
+        $this->assertFalse($field->falseValue); // Should remain default
+    }
+
+    /** @test */
+    public function it_supports_nova_false_value_method(): void
+    {
+        $field = Boolean::make('Active')->falseValue('Off');
+
+        $this->assertTrue($field->trueValue); // Should remain default
+        $this->assertEquals('Off', $field->falseValue);
+    }
+
+    /** @test */
+    public function it_supports_both_true_and_false_values(): void
+    {
+        $field = Boolean::make('Active')
+            ->trueValue('On')
+            ->falseValue('Off');
+
+        $this->assertEquals('On', $field->trueValue);
+        $this->assertEquals('Off', $field->falseValue);
+    }
+
+    /** @test */
+    public function it_supports_numeric_true_false_values(): void
+    {
+        $field = Boolean::make('Active')
+            ->trueValue(1)
+            ->falseValue(0);
+
+        $this->assertEquals(1, $field->trueValue);
+        $this->assertEquals(0, $field->falseValue);
+    }
+
+    /** @test */
+    public function it_supports_string_true_false_values(): void
+    {
+        $field = Boolean::make('Status')
+            ->trueValue('yes')
+            ->falseValue('no');
 
         $this->assertEquals('yes', $field->trueValue);
-    }
-
-    public function test_boolean_field_false_value_configuration(): void
-    {
-        $field = Boolean::make('Active')->falseValue('no');
-
         $this->assertEquals('no', $field->falseValue);
     }
 
-    public function test_boolean_field_fill_converts_to_boolean(): void
+    /** @test */
+    public function it_supports_mixed_type_true_false_values(): void
     {
-        $field = Boolean::make('Active');
-        $model = new \stdClass();
-        $request = new \Illuminate\Http\Request(['active' => '1']);
+        $field = Boolean::make('Status')
+            ->trueValue('active')
+            ->falseValue(0);
 
-        $field->fill($request, $model);
-
-        $this->assertTrue($model->active);
+        $this->assertEquals('active', $field->trueValue);
+        $this->assertEquals(0, $field->falseValue);
     }
 
-    public function test_boolean_field_fill_handles_false_value(): void
-    {
-        $field = Boolean::make('Active');
-        $model = new \stdClass();
-        $request = new \Illuminate\Http\Request(['active' => '0']);
-
-        $field->fill($request, $model);
-
-        $this->assertFalse($model->active);
-    }
-
-    public function test_boolean_field_fill_with_custom_values(): void
-    {
-        $field = Boolean::make('Published')
-            ->trueValue('yes')
-            ->falseValue('no');
-        $model = new \stdClass();
-        $request = new \Illuminate\Http\Request(['published' => 'yes']);
-
-        $field->fill($request, $model);
-
-        $this->assertEquals('yes', $model->published);
-    }
-
-    public function test_boolean_field_fill_handles_empty_value(): void
-    {
-        $field = Boolean::make('Active');
-        $model = new \stdClass();
-        $request = new \Illuminate\Http\Request(['active' => '']);
-
-        $field->fill($request, $model);
-
-        $this->assertFalse($model->active);
-    }
-
-    public function test_boolean_field_fill_with_callback(): void
-    {
-        $field = Boolean::make('Active')->fillUsing(function ($request, $model, $attribute) {
-            $model->{$attribute} = 'custom-value';
-        });
-        $model = new \stdClass();
-        $request = new \Illuminate\Http\Request(['active' => '1']);
-
-        $field->fill($request, $model);
-
-        $this->assertEquals('custom-value', $model->active);
-    }
-
-    public function test_boolean_field_resolve_with_custom_values(): void
-    {
-        $field = Boolean::make('Published')
-            ->trueValue('yes')
-            ->falseValue('no');
-        $resource = (object) ['published' => 'yes'];
-
-        $field->resolve($resource);
-
-        // Boolean field resolve converts to array with value and display
-        $this->assertIsArray($field->value);
-        $this->assertTrue($field->value['value']); // Should be true since 'yes' == trueValue
-        $this->assertEquals('Yes', $field->value['display']); // Default trueText
-    }
-
-    public function test_boolean_field_meta_includes_all_properties(): void
+    /** @test */
+    public function it_serializes_nova_properties_in_meta(): void
     {
         $field = Boolean::make('Active')
-            ->trueValue('yes')
-            ->falseValue('no');
+            ->trueValue('On')
+            ->falseValue('Off');
 
         $meta = $field->meta();
 
-        $this->assertArrayHasKey('trueValue', $meta);
-        $this->assertArrayHasKey('falseValue', $meta);
-        $this->assertEquals('yes', $meta['trueValue']);
-        $this->assertEquals('no', $meta['falseValue']);
+        $this->assertEquals('On', $meta['trueValue']);
+        $this->assertEquals('Off', $meta['falseValue']);
     }
 
-    public function test_boolean_field_values_method(): void
+    /** @test */
+    public function it_serializes_default_values_in_meta(): void
     {
-        $field = Boolean::make('Active')->values('enabled', 'disabled');
-
-        $this->assertEquals('enabled', $field->trueValue);
-        $this->assertEquals('disabled', $field->falseValue);
-    }
-
-    public function test_boolean_field_labels_method(): void
-    {
-        $field = Boolean::make('Active')->labels('Enabled', 'Disabled');
-
-        $this->assertEquals('Enabled', $field->trueText);
-        $this->assertEquals('Disabled', $field->falseText);
-    }
-
-    public function test_boolean_field_as_toggle_method(): void
-    {
-        $field = Boolean::make('Active')->asToggle();
-
-        $this->assertTrue($field->asToggle);
-    }
-
-    public function test_boolean_field_as_toggle_false(): void
-    {
-        $field = Boolean::make('Active')->asToggle(false);
-
-        $this->assertFalse($field->asToggle);
-    }
-
-    public function test_boolean_field_as_checkbox_method(): void
-    {
-        $field = Boolean::make('Active')->asCheckbox();
-
-        $this->assertFalse($field->asToggle);
-    }
-
-    public function test_boolean_field_display_as_switch(): void
-    {
-        $field = Boolean::make('Active')->displayAsSwitch();
-
-        $this->assertEquals('switch', $field->displayMode);
-        $this->assertTrue($field->asToggle);
-    }
-
-    public function test_boolean_field_display_as_button(): void
-    {
-        $field = Boolean::make('Active')->displayAsButton();
-
-        $this->assertEquals('button', $field->displayMode);
-        $this->assertFalse($field->asToggle);
-    }
-
-    public function test_boolean_field_display_as_checkbox(): void
-    {
-        $field = Boolean::make('Active')->displayAsCheckbox();
-
-        $this->assertEquals('checkbox', $field->displayMode);
-        $this->assertFalse($field->asToggle);
-    }
-
-    public function test_boolean_field_color_method(): void
-    {
-        $field = Boolean::make('Active')->color('success');
-
-        $this->assertEquals('success', $field->color);
-    }
-
-    public function test_boolean_field_size_method(): void
-    {
-        $field = Boolean::make('Active')->size('large');
-
-        $this->assertEquals('large', $field->size);
-    }
-
-    public function test_boolean_field_resolve_display_value(): void
-    {
-        $field = Boolean::make('Active')->labels('Enabled', 'Disabled');
-
-        $this->assertEquals('Enabled', $field->resolveDisplayValue(true));
-        $this->assertEquals('Disabled', $field->resolveDisplayValue(false));
-    }
-
-    public function test_boolean_field_comprehensive_meta_properties(): void
-    {
-        $field = Boolean::make('Active')
-            ->trueValue('yes')
-            ->falseValue('no')
-            ->labels('Enabled', 'Disabled')
-            ->displayAsSwitch()
-            ->color('success')
-            ->size('large');
+        $field = Boolean::make('Active');
 
         $meta = $field->meta();
 
-        $this->assertArrayHasKey('trueValue', $meta);
-        $this->assertArrayHasKey('falseValue', $meta);
-        $this->assertArrayHasKey('trueText', $meta);
-        $this->assertArrayHasKey('falseText', $meta);
-        $this->assertArrayHasKey('asToggle', $meta);
-        $this->assertArrayHasKey('displayMode', $meta);
-        $this->assertArrayHasKey('color', $meta);
-        $this->assertArrayHasKey('size', $meta);
-        $this->assertEquals('yes', $meta['trueValue']);
-        $this->assertEquals('no', $meta['falseValue']);
-        $this->assertEquals('Enabled', $meta['trueText']);
-        $this->assertEquals('Disabled', $meta['falseText']);
-        $this->assertTrue($meta['asToggle']);
-        $this->assertEquals('switch', $meta['displayMode']);
-        $this->assertEquals('success', $meta['color']);
-        $this->assertEquals('large', $meta['size']);
+        $this->assertTrue($meta['trueValue']);
+        $this->assertFalse($meta['falseValue']);
     }
 
-    public function test_boolean_field_json_serialization(): void
+    /** @test */
+    public function it_supports_method_chaining_like_nova(): void
     {
-        $field = Boolean::make('Is Published')
+        $field = Boolean::make('Active')
+            ->trueValue('On')
+            ->falseValue('Off')
+            ->nullable()
+            ->help('Toggle the active status');
+
+        $this->assertInstanceOf(Boolean::class, $field);
+        $this->assertEquals('On', $field->trueValue);
+        $this->assertEquals('Off', $field->falseValue);
+        $this->assertTrue($field->nullable);
+        $this->assertEquals('Toggle the active status', $field->helpText);
+    }
+
+    /** @test */
+    public function it_inherits_all_field_methods(): void
+    {
+        $field = Boolean::make('Active');
+
+        // Test that Boolean field inherits all base Field methods
+        $this->assertTrue(method_exists($field, 'rules'));
+        $this->assertTrue(method_exists($field, 'nullable'));
+        $this->assertTrue(method_exists($field, 'readonly'));
+        $this->assertTrue(method_exists($field, 'help'));
+        $this->assertTrue(method_exists($field, 'resolve'));
+        $this->assertTrue(method_exists($field, 'jsonSerialize'));
+
+        // Test Nova-specific Boolean methods
+        $this->assertTrue(method_exists($field, 'trueValue'));
+        $this->assertTrue(method_exists($field, 'falseValue'));
+    }
+
+    /** @test */
+    public function it_provides_consistent_api_with_nova_boolean_field(): void
+    {
+        $field = Boolean::make('Active');
+
+        // Test Nova-compatible methods exist and return correct types
+        $this->assertInstanceOf(Boolean::class, $field->trueValue('On'));
+        $this->assertInstanceOf(Boolean::class, $field->falseValue('Off'));
+
+        // Test component name matches Nova
+        $this->assertEquals('BooleanField', $field->component);
+
+        // Test default values match Nova (create fresh field)
+        $freshField = Boolean::make('Fresh');
+        $this->assertTrue($freshField->trueValue);
+        $this->assertFalse($freshField->falseValue);
+    }
+
+    /** @test */
+    public function it_handles_complex_nova_configuration(): void
+    {
+        $field = Boolean::make('User Status')
             ->trueValue('active')
             ->falseValue('inactive')
-            ->required()
-            ->help('Toggle publication status');
+            ->nullable()
+            ->help('Toggle user active status')
+            ->rules('required');
 
-        $json = $field->jsonSerialize();
+        // Test all configurations are set correctly
+        $this->assertEquals('active', $field->trueValue);
+        $this->assertEquals('inactive', $field->falseValue);
+        $this->assertTrue($field->nullable);
+        $this->assertEquals('Toggle user active status', $field->helpText);
+        $this->assertContains('required', $field->rules);
+    }
 
-        $this->assertEquals('Is Published', $json['name']);
-        $this->assertEquals('is_published', $json['attribute']);
-        $this->assertEquals('BooleanField', $json['component']);
-        $this->assertEquals('active', $json['trueValue']);
-        $this->assertEquals('inactive', $json['falseValue']);
-        $this->assertContains('required', $json['rules']);
-        $this->assertEquals('Toggle publication status', $json['helpText']);
+    /** @test */
+    public function it_serializes_boolean_field_for_frontend(): void
+    {
+        $field = Boolean::make('Active')
+            ->trueValue('On')
+            ->falseValue('Off')
+            ->help('Toggle the active status');
+
+        $serialized = $field->jsonSerialize();
+
+        $this->assertEquals('Active', $serialized['name']);
+        $this->assertEquals('active', $serialized['attribute']);
+        $this->assertEquals('BooleanField', $serialized['component']);
+        $this->assertEquals('Toggle the active status', $serialized['helpText']);
+
+        // Check meta properties
+        $this->assertEquals('On', $serialized['trueValue']);
+        $this->assertEquals('Off', $serialized['falseValue']);
+    }
+
+    /** @test */
+    public function it_handles_boolean_field_with_validation_rules(): void
+    {
+        $field = Boolean::make('Active')
+            ->trueValue(1)
+            ->falseValue(0)
+            ->rules('required', 'boolean')
+            ->nullable(false);
+
+        // Test that validation rules are properly set
+        $this->assertContains('required', $field->rules);
+        $this->assertContains('boolean', $field->rules);
+        $this->assertFalse($field->nullable);
+
+        // Test field serialization includes validation rules
+        $serialized = $field->jsonSerialize();
+        $this->assertEquals(['required', 'boolean'], $serialized['rules']);
+        $this->assertFalse($serialized['nullable']);
+    }
+
+    /** @test */
+    public function it_supports_nova_examples_from_documentation(): void
+    {
+        // Example from Nova docs: Boolean::make('Active')
+        $field1 = Boolean::make('Active');
+        $this->assertEquals('Active', $field1->name);
+        $this->assertEquals('active', $field1->attribute);
+        $this->assertTrue($field1->trueValue);
+        $this->assertFalse($field1->falseValue);
+
+        // Example from Nova docs: Boolean::make('Active')->trueValue('On')->falseValue('Off')
+        $field2 = Boolean::make('Active')
+            ->trueValue('On')
+            ->falseValue('Off');
+
+        $this->assertEquals('On', $field2->trueValue);
+        $this->assertEquals('Off', $field2->falseValue);
+    }
+
+    /** @test */
+    public function it_handles_edge_cases_with_null_and_empty_values(): void
+    {
+        // Test with null values
+        $field1 = Boolean::make('Active')
+            ->trueValue(null)
+            ->falseValue('inactive');
+
+        $this->assertNull($field1->trueValue);
+        $this->assertEquals('inactive', $field1->falseValue);
+
+        // Test with empty string values
+        $field2 = Boolean::make('Active')
+            ->trueValue('')
+            ->falseValue('no');
+
+        $this->assertEquals('', $field2->trueValue);
+        $this->assertEquals('no', $field2->falseValue);
+    }
+
+    /** @test */
+    public function it_maintains_backward_compatibility_with_standard_boolean_values(): void
+    {
+        $field = Boolean::make('Active');
+
+        // Should work with standard true/false values
+        $this->assertTrue($field->trueValue);
+        $this->assertFalse($field->falseValue);
+
+        // Meta should serialize correctly
+        $meta = $field->meta();
+        $this->assertTrue($meta['trueValue']);
+        $this->assertFalse($meta['falseValue']);
+    }
+
+    /** @test */
+    public function it_handles_type_coercion_correctly(): void
+    {
+        // Test that values are stored exactly as provided (no type coercion)
+        $field = Boolean::make('Status')
+            ->trueValue('1')  // String '1'
+            ->falseValue(0);  // Integer 0
+
+        $this->assertSame('1', $field->trueValue);
+        $this->assertSame(0, $field->falseValue);
+
+        // Verify types are preserved in meta
+        $meta = $field->meta();
+        $this->assertSame('1', $meta['trueValue']);
+        $this->assertSame(0, $meta['falseValue']);
+    }
+
+    /** @test */
+    public function it_works_with_all_inherited_field_functionality(): void
+    {
+        $field = Boolean::make('Active')
+            ->trueValue('active')
+            ->falseValue('inactive')
+            ->nullable()
+            ->readonly()
+            ->help('User active status')
+            ->rules('required');
+
+        // Test inherited functionality works
+        $this->assertTrue($field->nullable);
+        $this->assertTrue($field->readonly);
+        $this->assertEquals('User active status', $field->helpText);
+        $this->assertContains('required', $field->rules);
+
+        // Test Nova-specific functionality still works
+        $this->assertEquals('active', $field->trueValue);
+        $this->assertEquals('inactive', $field->falseValue);
     }
 }

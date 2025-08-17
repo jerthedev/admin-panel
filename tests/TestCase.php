@@ -7,8 +7,8 @@ namespace JTD\AdminPanel\Tests;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
-use Inertia\Testing\AssertableInertia;
 use Inertia\ServiceProvider as InertiaServiceProvider;
+use Inertia\Testing\AssertableInertia;
 use JTD\AdminPanel\AdminPanelServiceProvider;
 use JTD\AdminPanel\Tests\Fixtures\User;
 use Orchestra\Testbench\TestCase as Orchestra;
@@ -30,7 +30,7 @@ abstract class TestCase extends Orchestra
         parent::setUp();
 
         Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'JTD\\AdminPanel\\Tests\\Factories\\' . class_basename($modelName) . 'Factory'
+            fn (string $modelName) => 'JTD\\AdminPanel\\Tests\\Factories\\'.class_basename($modelName).'Factory'
         );
 
         $this->setUpDatabase();
@@ -145,6 +145,14 @@ abstract class TestCase extends Orchestra
             $table->boolean('is_admin')->default(false);
             $table->boolean('is_active')->default(true);
             $table->foreignId('country_id')->nullable()->constrained()->onDelete('set null');
+            // Add columns for field testing
+            $table->string('avatar')->nullable(); // For Avatar field E2E tests
+            $table->string('theme_song')->nullable(); // For Audio field E2E tests
+            $table->json('permissions')->nullable(); // For BooleanGroup field E2E tests
+            $table->json('features')->nullable(); // For BooleanGroup field E2E tests
+            $table->text('code')->nullable(); // For Code field E2E tests
+            $table->json('config')->nullable(); // For Code field E2E tests (JSON)
+            $table->string('color')->nullable(); // For Color field tests
             $table->rememberToken();
             $table->timestamps();
         });

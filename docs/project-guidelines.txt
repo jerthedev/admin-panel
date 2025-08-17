@@ -1,0 +1,24 @@
+The Jira project for JTD-AdminPanel is JTDAP.
+The Confluence space is JTDAP.
+
+Important: Ticket process should be:
+1. Review the task and current project structure; summarize the details here in chat
+2. Write a comment on the task with the summary and assign the task for me, change the status to In Progress
+3. Complete the task; for items already completed ensure test coverage.
+4. Review the ticket description and the current code one more time.  Ensure all acceptance criteria is met.  If anything is missing, stop and summarize for me.
+5. Add a comment to the task about what was finished and change the task status to In Review
+
+Everything should be 100% compatible with Nova's documentation.  In some cases, there are features we are expanding.
+Expanded features should still be compatible with Nova's documentation, but with the additional APIs and features.
+
+Please ensure tests are complete and pass 100% for the each task:
+1. PHP Class Unit Test (tests/Unit/<feature>/)
+ - Run code coverage analysis and ensure 100% coverage
+2. Vue component test (tests/components/<feature>/)
+3. PHP Laravel Integration Test (in tests/Integration/<feature>/)
+4. Vue component integration test (in tests/Integration/<feature>/components/)
+5. PHP e2e test (in tests/e2e/<feature>/)
+6. Vue component playwright tests (in tests/e2e/<feature>/components)
+ - Do not run the Playwright tests in this environment, simply ensure the tests are written and will pass.
+
+Where <feature> could be Fields, Filters, Actions, etc.

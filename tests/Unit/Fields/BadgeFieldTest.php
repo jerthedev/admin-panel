@@ -10,14 +10,16 @@ use JTD\AdminPanel\Tests\TestCase;
 /**
  * Badge Field Unit Tests
  *
- * Tests for Badge field class including validation, visibility,
- * and value handling.
+ * Tests for Badge field class with 100% Nova API compatibility.
+ * Tests all Nova Badge field features including map, types, addTypes,
+ * withIcons, icons, label, and labels methods.
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
 class BadgeFieldTest extends TestCase
 {
-    public function test_badge_field_creation(): void
+    /** @test */
+    public function it_creates_badge_field_with_nova_syntax(): void
     {
         $field = Badge::make('Status');
 
@@ -26,7 +28,8 @@ class BadgeFieldTest extends TestCase
         $this->assertEquals('BadgeField', $field->component);
     }
 
-    public function test_badge_field_with_custom_attribute(): void
+    /** @test */
+    public function it_creates_badge_field_with_custom_attribute(): void
     {
         $field = Badge::make('User Status', 'user_status');
 
@@ -34,258 +37,323 @@ class BadgeFieldTest extends TestCase
         $this->assertEquals('user_status', $field->attribute);
     }
 
-    public function test_badge_field_default_properties(): void
+    /** @test */
+    public function it_has_correct_default_properties(): void
     {
         $field = Badge::make('Status');
 
-        $this->assertEquals([], $field->colorMap);
-        $this->assertEquals('secondary', $field->defaultColor);
-        $this->assertFalse($field->showIcons);
+        // Test built-in types
+        $expectedBuiltInTypes = [
+            'info' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+            'success' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+            'danger' => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+            'warning' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+        ];
+        $this->assertEquals($expectedBuiltInTypes, $field->builtInTypes);
+        
+        $this->assertEquals([], $field->valueMap);
+        $this->assertEquals([], $field->customTypes);
+        $this->assertFalse($field->withIcons);
         $this->assertEquals([], $field->iconMap);
-        $this->assertEquals('solid', $field->style);
-        $this->assertEquals('medium', $field->size);
+        $this->assertNull($field->labelCallback);
+        $this->assertEquals([], $field->labelMap);
     }
 
-    public function test_badge_field_color_map_configuration(): void
+    /** @test */
+    public function it_supports_nova_map_method(): void
     {
-        $colorMap = [
-            'active' => 'success',
-            'inactive' => 'danger',
-            'pending' => 'warning',
+        $valueMap = [
+            'draft' => 'danger',
+            'published' => 'success',
         ];
 
-        $field = Badge::make('Status')->map($colorMap);
+        $field = Badge::make('Status')->map($valueMap);
 
-        $this->assertEquals($colorMap, $field->colorMap);
+        $this->assertEquals($valueMap, $field->valueMap);
     }
 
-    public function test_badge_field_default_color_configuration(): void
+    /** @test */
+    public function it_supports_nova_types_method(): void
     {
-        $field = Badge::make('Status')->defaultColor('primary');
+        $customTypes = [
+            'draft' => 'font-medium text-gray-600',
+            'published' => ['font-bold', 'text-green-600'],
+        ];
 
-        $this->assertEquals('primary', $field->defaultColor);
+        $field = Badge::make('Status')->types($customTypes);
+
+        $this->assertEquals($customTypes, $field->customTypes);
     }
 
-    public function test_badge_field_with_icons_configuration(): void
+    /** @test */
+    public function it_supports_nova_add_types_method(): void
+    {
+        $initialTypes = [
+            'draft' => 'custom classes',
+        ];
+        
+        $additionalTypes = [
+            'archived' => 'text-gray-500',
+        ];
+
+        $field = Badge::make('Status')
+            ->types($initialTypes)
+            ->addTypes($additionalTypes);
+
+        $expectedTypes = array_merge($initialTypes, $additionalTypes);
+        $this->assertEquals($expectedTypes, $field->customTypes);
+    }
+
+    /** @test */
+    public function it_supports_nova_with_icons_method(): void
     {
         $field = Badge::make('Status')->withIcons();
 
-        $this->assertTrue($field->showIcons);
+        $this->assertTrue($field->withIcons);
     }
 
-    public function test_badge_field_with_icons_false(): void
-    {
-        $field = Badge::make('Status')->withIcons(false);
-
-        $this->assertFalse($field->showIcons);
-    }
-
-    public function test_badge_field_icon_map_configuration(): void
+    /** @test */
+    public function it_supports_nova_icons_method(): void
     {
         $iconMap = [
-            'active' => 'check-circle',
-            'inactive' => 'x-circle',
-            'pending' => 'clock',
+            'danger' => 'exclamation-circle',
+            'success' => 'check-circle',
         ];
 
-        $field = Badge::make('Status')->iconMap($iconMap);
+        $field = Badge::make('Status')->icons($iconMap);
 
         $this->assertEquals($iconMap, $field->iconMap);
     }
 
-    public function test_badge_field_style_configuration(): void
+    /** @test */
+    public function it_supports_nova_label_method(): void
     {
-        $field = Badge::make('Status')->style('outline');
+        $labelCallback = function ($value) {
+            return strtoupper($value);
+        };
 
-        $this->assertEquals('outline', $field->style);
+        $field = Badge::make('Status')->label($labelCallback);
+
+        $this->assertEquals($labelCallback, $field->labelCallback);
     }
 
-    public function test_badge_field_size_configuration(): void
+    /** @test */
+    public function it_supports_nova_labels_method(): void
     {
-        $field = Badge::make('Status')->size('large');
-
-        $this->assertEquals('large', $field->size);
-    }
-
-    public function test_badge_field_resolve_color_with_mapping(): void
-    {
-        $colorMap = [
-            'active' => 'success',
-            'inactive' => 'danger',
+        $labelMap = [
+            'draft' => 'Draft',
+            'published' => 'Published',
         ];
 
-        $field = Badge::make('Status')->map($colorMap);
+        $field = Badge::make('Status')->labels($labelMap);
 
-        $this->assertEquals('success', $field->resolveColor('active'));
-        $this->assertEquals('danger', $field->resolveColor('inactive'));
+        $this->assertEquals($labelMap, $field->labelMap);
     }
 
-    public function test_badge_field_resolve_color_with_default(): void
+    /** @test */
+    public function it_resolves_badge_type_correctly(): void
     {
-        $colorMap = [
-            'active' => 'success',
-        ];
+        $field = Badge::make('Status')->map([
+            'draft' => 'danger',
+            'published' => 'success',
+        ]);
 
-        $field = Badge::make('Status')
-            ->map($colorMap)
-            ->defaultColor('warning');
-
-        $this->assertEquals('warning', $field->resolveColor('unknown'));
+        $this->assertEquals('danger', $field->resolveBadgeType('draft'));
+        $this->assertEquals('success', $field->resolveBadgeType('published'));
+        $this->assertEquals('info', $field->resolveBadgeType('unknown')); // Default
     }
 
-    public function test_badge_field_resolve_icon_with_mapping(): void
-    {
-        $iconMap = [
-            'active' => 'check-circle',
-            'inactive' => 'x-circle',
-        ];
-
-        $field = Badge::make('Status')->iconMap($iconMap);
-
-        $this->assertEquals('check-circle', $field->resolveIcon('active'));
-        $this->assertEquals('x-circle', $field->resolveIcon('inactive'));
-    }
-
-    public function test_badge_field_resolve_icon_with_no_mapping(): void
-    {
-        $iconMap = [
-            'active' => 'check-circle',
-        ];
-
-        $field = Badge::make('Status')->iconMap($iconMap);
-
-        $this->assertNull($field->resolveIcon('unknown'));
-    }
-
-    public function test_badge_field_resolve_icon_empty_map(): void
+    /** @test */
+    public function it_resolves_badge_classes_with_built_in_types(): void
     {
         $field = Badge::make('Status');
 
-        $this->assertNull($field->resolveIcon('active'));
+        $this->assertEquals(
+            'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+            $field->resolveBadgeClasses('info')
+        );
+        $this->assertEquals(
+            'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+            $field->resolveBadgeClasses('success')
+        );
     }
 
-    public function test_badge_field_meta_includes_all_properties(): void
+    /** @test */
+    public function it_resolves_badge_classes_with_custom_types(): void
     {
-        $colorMap = ['active' => 'success', 'inactive' => 'danger'];
-        $iconMap = ['active' => 'check', 'inactive' => 'x'];
+        $customTypes = [
+            'draft' => 'font-medium text-gray-600',
+            'published' => 'font-bold text-green-600',
+        ];
+
+        $field = Badge::make('Status')->types($customTypes);
+
+        $this->assertEquals('font-medium text-gray-600', $field->resolveBadgeClasses('draft'));
+        $this->assertEquals('font-bold text-green-600', $field->resolveBadgeClasses('published'));
+        
+        // Should fall back to built-in for unknown custom types
+        $this->assertEquals(
+            'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+            $field->resolveBadgeClasses('info')
+        );
+    }
+
+    /** @test */
+    public function it_resolves_icons_correctly(): void
+    {
+        $iconMap = [
+            'danger' => 'exclamation-circle',
+            'success' => 'check-circle',
+        ];
+
+        $field = Badge::make('Status')->icons($iconMap);
+
+        $this->assertEquals('exclamation-circle', $field->resolveIcon('danger'));
+        $this->assertEquals('check-circle', $field->resolveIcon('success'));
+        $this->assertNull($field->resolveIcon('unknown'));
+    }
+
+    /** @test */
+    public function it_resolves_labels_with_callback(): void
+    {
+        $field = Badge::make('Status')->label(function ($value) {
+            return strtoupper($value);
+        });
+
+        $this->assertEquals('DRAFT', $field->resolveLabel('draft'));
+        $this->assertEquals('PUBLISHED', $field->resolveLabel('published'));
+    }
+
+    /** @test */
+    public function it_resolves_labels_with_mapping(): void
+    {
+        $labelMap = [
+            'draft' => 'Draft',
+            'published' => 'Published',
+        ];
+
+        $field = Badge::make('Status')->labels($labelMap);
+
+        $this->assertEquals('Draft', $field->resolveLabel('draft'));
+        $this->assertEquals('Published', $field->resolveLabel('published'));
+        $this->assertEquals('unknown', $field->resolveLabel('unknown')); // Default to value
+    }
+
+    /** @test */
+    public function it_resolves_labels_with_default_behavior(): void
+    {
+        $field = Badge::make('Status');
+
+        $this->assertEquals('draft', $field->resolveLabel('draft'));
+        $this->assertEquals('published', $field->resolveLabel('published'));
+    }
+
+    /** @test */
+    public function it_serializes_all_nova_properties_in_meta(): void
+    {
+        $valueMap = ['draft' => 'danger', 'published' => 'success'];
+        $customTypes = ['draft' => 'custom-class'];
+        $iconMap = ['danger' => 'exclamation'];
+        $labelMap = ['draft' => 'Draft'];
 
         $field = Badge::make('Status')
-            ->map($colorMap)
-            ->defaultColor('primary')
+            ->map($valueMap)
+            ->types($customTypes)
             ->withIcons()
-            ->iconMap($iconMap)
-            ->style('outline')
-            ->size('large');
+            ->icons($iconMap)
+            ->labels($labelMap);
 
         $meta = $field->meta();
 
-        $this->assertArrayHasKey('colorMap', $meta);
-        $this->assertArrayHasKey('defaultColor', $meta);
-        $this->assertArrayHasKey('showIcons', $meta);
-        $this->assertArrayHasKey('iconMap', $meta);
-        $this->assertArrayHasKey('style', $meta);
-        $this->assertArrayHasKey('size', $meta);
-        $this->assertEquals($colorMap, $meta['colorMap']);
-        $this->assertEquals('primary', $meta['defaultColor']);
-        $this->assertTrue($meta['showIcons']);
+        $this->assertArrayHasKey('builtInTypes', $meta);
+        $this->assertEquals($valueMap, $meta['valueMap']);
+        $this->assertEquals($customTypes, $meta['customTypes']);
+        $this->assertTrue($meta['withIcons']);
         $this->assertEquals($iconMap, $meta['iconMap']);
-        $this->assertEquals('outline', $meta['style']);
-        $this->assertEquals('large', $meta['size']);
+        $this->assertEquals($labelMap, $meta['labelMap']);
     }
 
-    public function test_badge_field_json_serialization(): void
-    {
-        $colorMap = ['published' => 'success', 'draft' => 'warning'];
-        $iconMap = ['published' => 'check', 'draft' => 'edit'];
-
-        $field = Badge::make('Post Status')
-            ->map($colorMap)
-            ->defaultColor('secondary')
-            ->withIcons()
-            ->iconMap($iconMap)
-            ->style('pill')
-            ->size('small')
-            ->help('Post publication status');
-
-        $json = $field->jsonSerialize();
-
-        $this->assertEquals('Post Status', $json['name']);
-        $this->assertEquals('post_status', $json['attribute']);
-        $this->assertEquals('BadgeField', $json['component']);
-        $this->assertEquals($colorMap, $json['colorMap']);
-        $this->assertEquals('secondary', $json['defaultColor']);
-        $this->assertTrue($json['showIcons']);
-        $this->assertEquals($iconMap, $json['iconMap']);
-        $this->assertEquals('pill', $json['style']);
-        $this->assertEquals('small', $json['size']);
-        $this->assertEquals('Post publication status', $json['helpText']);
-    }
-
-    public function test_badge_field_complex_configuration(): void
-    {
-        $field = Badge::make('Order Status')
-            ->map([
-                'pending' => 'warning',
-                'processing' => 'info',
-                'shipped' => 'primary',
-                'delivered' => 'success',
-                'cancelled' => 'danger',
-            ])
-            ->iconMap([
-                'pending' => 'clock',
-                'processing' => 'cog',
-                'shipped' => 'truck',
-                'delivered' => 'check-circle',
-                'cancelled' => 'x-circle',
-            ])
-            ->withIcons()
-            ->style('outline')
-            ->size('large')
-            ->defaultColor('muted');
-
-        // Test color resolution
-        $this->assertEquals('warning', $field->resolveColor('pending'));
-        $this->assertEquals('success', $field->resolveColor('delivered'));
-        $this->assertEquals('muted', $field->resolveColor('unknown'));
-
-        // Test icon resolution
-        $this->assertEquals('clock', $field->resolveIcon('pending'));
-        $this->assertEquals('check-circle', $field->resolveIcon('delivered'));
-        $this->assertNull($field->resolveIcon('unknown'));
-
-        // Test configuration
-        $this->assertTrue($field->showIcons);
-        $this->assertEquals('outline', $field->style);
-        $this->assertEquals('large', $field->size);
-    }
-
-    public function test_badge_field_inheritance_from_field(): void
-    {
-        $field = Badge::make('Status');
-
-        // Test that Badge field inherits all base Field functionality
-        $this->assertTrue(method_exists($field, 'rules'));
-        $this->assertTrue(method_exists($field, 'nullable'));
-        $this->assertTrue(method_exists($field, 'readonly'));
-        $this->assertTrue(method_exists($field, 'help'));
-        $this->assertTrue(method_exists($field, 'sortable'));
-    }
-
-    public function test_badge_field_with_validation_rules(): void
+    /** @test */
+    public function it_supports_method_chaining_like_nova(): void
     {
         $field = Badge::make('Status')
-            ->rules('in:active,inactive,pending');
+            ->map(['draft' => 'danger', 'published' => 'success'])
+            ->types(['draft' => 'custom-class'])
+            ->addTypes(['archived' => 'gray-class'])
+            ->withIcons()
+            ->icons(['danger' => 'exclamation'])
+            ->labels(['draft' => 'Draft']);
 
-        $this->assertEquals(['in:active,inactive,pending'], $field->rules);
+        $this->assertInstanceOf(Badge::class, $field);
+        $this->assertEquals(['draft' => 'danger', 'published' => 'success'], $field->valueMap);
+        $this->assertEquals(['draft' => 'custom-class', 'archived' => 'gray-class'], $field->customTypes);
+        $this->assertTrue($field->withIcons);
+        $this->assertEquals(['danger' => 'exclamation'], $field->iconMap);
+        $this->assertEquals(['draft' => 'Draft'], $field->labelMap);
     }
 
-    public function test_badge_field_resolve_preserves_value(): void
+    /** @test */
+    public function it_provides_consistent_api_with_nova_badge_field(): void
     {
         $field = Badge::make('Status');
-        $resource = (object) ['status' => 'active'];
 
-        $field->resolve($resource);
+        // Test Nova-compatible methods exist and return correct types
+        $this->assertInstanceOf(Badge::class, $field->map([]));
+        $this->assertInstanceOf(Badge::class, $field->types([]));
+        $this->assertInstanceOf(Badge::class, $field->addTypes([]));
+        $this->assertInstanceOf(Badge::class, $field->withIcons());
+        $this->assertInstanceOf(Badge::class, $field->icons([]));
+        $this->assertInstanceOf(Badge::class, $field->label(fn($v) => $v));
+        $this->assertInstanceOf(Badge::class, $field->labels([]));
+        
+        // Test component name matches Nova
+        $this->assertEquals('BadgeField', $field->component);
+        
+        // Test built-in badge types match Nova
+        $this->assertArrayHasKey('info', $field->builtInTypes);
+        $this->assertArrayHasKey('success', $field->builtInTypes);
+        $this->assertArrayHasKey('danger', $field->builtInTypes);
+        $this->assertArrayHasKey('warning', $field->builtInTypes);
+    }
 
-        $this->assertEquals('active', $field->value);
+    /** @test */
+    public function it_handles_complex_nova_configuration(): void
+    {
+        $field = Badge::make('Post Status')
+            ->map([
+                'draft' => 'danger',
+                'published' => 'success',
+                'archived' => 'warning',
+            ])
+            ->types([
+                'danger' => 'bg-red-50 text-red-700 ring-red-600/20',
+                'success' => 'bg-green-50 text-green-700 ring-green-600/20',
+            ])
+            ->addTypes([
+                'warning' => 'bg-yellow-50 text-yellow-700 ring-yellow-600/20',
+            ])
+            ->withIcons()
+            ->icons([
+                'danger' => 'exclamation-triangle',
+                'success' => 'check-circle',
+                'warning' => 'exclamation-circle',
+            ])
+            ->labels([
+                'draft' => 'Draft Post',
+                'published' => 'Published Post',
+                'archived' => 'Archived Post',
+            ]);
+
+        // Test all configurations are set correctly
+        $this->assertEquals('danger', $field->resolveBadgeType('draft'));
+        $this->assertEquals('bg-red-50 text-red-700 ring-red-600/20', $field->resolveBadgeClasses('danger'));
+        $this->assertEquals('exclamation-triangle', $field->resolveIcon('danger'));
+        $this->assertEquals('Draft Post', $field->resolveLabel('draft'));
+        
+        $this->assertTrue($field->withIcons);
+        $this->assertCount(3, $field->valueMap);
+        $this->assertCount(3, $field->customTypes);
+        $this->assertCount(3, $field->iconMap);
+        $this->assertCount(3, $field->labelMap);
     }
 }

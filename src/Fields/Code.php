@@ -6,10 +6,10 @@ namespace JTD\AdminPanel\Fields;
 
 /**
  * Code Field
- * 
- * A code editor field with syntax highlighting, language support,
- * and customizable themes.
- * 
+ *
+ * A beautiful code editor field with syntax highlighting for various programming languages.
+ * 100% compatible with Nova's Code field API.
+ *
  * @author Jeremy Fall <jerthedev@gmail.com>
  * @package JTD\AdminPanel\Fields
  */
@@ -23,50 +23,39 @@ class Code extends Field
     /**
      * The programming language for syntax highlighting.
      */
-    public string $language = 'text';
+    public string $language = 'htmlmixed';
 
     /**
-     * The editor theme.
+     * Whether this field is for JSON editing.
      */
-    public string $theme = 'light';
+    public bool $isJson = false;
 
     /**
-     * Whether to show line numbers.
-     */
-    public bool $showLineNumbers = false;
-
-    /**
-     * The height of the editor in pixels.
-     */
-    public int $height = 200;
-
-    /**
-     * Whether the editor is read-only.
-     */
-    public bool $readOnly = false;
-
-    /**
-     * Whether to wrap long lines.
-     */
-    public bool $wrapLines = false;
-
-    /**
-     * Whether to auto-detect the language.
-     */
-    public bool $autoDetectLanguage = false;
-
-    /**
-     * Supported programming languages.
+     * Nova-supported programming languages for syntax highlighting.
      */
     protected array $supportedLanguages = [
-        'text', 'php', 'javascript', 'typescript', 'python', 'java', 'c', 'cpp',
-        'csharp', 'ruby', 'go', 'rust', 'swift', 'kotlin', 'scala', 'sql',
-        'html', 'css', 'scss', 'less', 'json', 'xml', 'yaml', 'markdown',
-        'bash', 'shell', 'powershell', 'dockerfile', 'nginx', 'apache'
+        'dockerfile',
+        'htmlmixed',
+        'javascript',
+        'markdown',
+        'nginx',
+        'php',
+        'ruby',
+        'sass',
+        'shell',
+        'sql',
+        'twig',
+        'vim',
+        'vue',
+        'xml',
+        'yaml-frontmatter',
+        'yaml',
     ];
 
     /**
-     * Set the programming language.
+     * Set the programming language for syntax highlighting.
+     *
+     * @param string $language The programming language
      */
     public function language(string $language): static
     {
@@ -76,71 +65,31 @@ class Code extends Field
     }
 
     /**
-     * Set the editor theme.
+     * Indicate that this field is for JSON editing.
+     * This will set the language to 'javascript' and enable JSON formatting.
      */
-    public function theme(string $theme): static
+    public function json(): static
     {
-        $this->theme = $theme;
+        $this->isJson = true;
+        $this->language = 'javascript'; // JSON is highlighted as JavaScript
 
         return $this;
     }
 
     /**
-     * Show line numbers.
-     */
-    public function lineNumbers(bool $show = true): static
-    {
-        $this->showLineNumbers = $show;
-
-        return $this;
-    }
-
-    /**
-     * Set the editor height.
-     */
-    public function height(int $height): static
-    {
-        $this->height = $height;
-
-        return $this;
-    }
-
-    /**
-     * Make the editor read-only.
-     */
-    public function readOnly(bool $readOnly = true): static
-    {
-        $this->readOnly = $readOnly;
-
-        return $this;
-    }
-
-    /**
-     * Enable line wrapping.
-     */
-    public function wrapLines(bool $wrap = true): static
-    {
-        $this->wrapLines = $wrap;
-
-        return $this;
-    }
-
-    /**
-     * Enable auto language detection.
-     */
-    public function autoDetectLanguage(bool $autoDetect = true): static
-    {
-        $this->autoDetectLanguage = $autoDetect;
-
-        return $this;
-    }
-
-    /**
-     * Get supported languages.
+     * Get the supported programming languages.
      */
     public function getSupportedLanguages(): array
     {
         return $this->supportedLanguages;
+    }
+
+    /**
+     * Determine if this field is configured for JSON editing.
+     */
+    public function isJsonField(): bool
+    {
+        return $this->isJson;
     }
 
     /**
@@ -150,12 +99,19 @@ class Code extends Field
     {
         return array_merge(parent::meta(), [
             'language' => $this->language,
-            'theme' => $this->theme,
-            'showLineNumbers' => $this->showLineNumbers,
-            'height' => $this->height,
-            'readOnly' => $this->readOnly,
-            'wrapLines' => $this->wrapLines,
-            'autoDetectLanguage' => $this->autoDetectLanguage,
+            'isJson' => $this->isJson,
+            'supportedLanguages' => $this->supportedLanguages,
+        ]);
+    }
+
+    /**
+     * Prepare the field for JSON serialization.
+     */
+    public function jsonSerialize(): array
+    {
+        return array_merge(parent::jsonSerialize(), [
+            'language' => $this->language,
+            'isJson' => $this->isJson,
             'supportedLanguages' => $this->supportedLanguages,
         ]);
     }

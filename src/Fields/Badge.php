@@ -6,10 +6,10 @@ namespace JTD\AdminPanel\Fields;
 
 /**
  * Badge Field
- * 
+ *
  * A badge field for displaying status indicators with customizable colors,
- * icons, and styles.
- * 
+ * icons, and labels. 100% compatible with Nova's Badge field API.
+ *
  * @author Jeremy Fall <jerthedev@gmail.com>
  * @package JTD\AdminPanel\Fields
  */
@@ -21,51 +21,77 @@ class Badge extends Field
     public string $component = 'BadgeField';
 
     /**
-     * The color mapping for different values.
+     * Built-in badge types and their CSS classes.
      */
-    public array $colorMap = [];
+    public array $builtInTypes = [
+        'info' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+        'success' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+        'danger' => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+        'warning' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+    ];
 
     /**
-     * The default color when no mapping is found.
+     * The value to badge type mapping.
      */
-    public string $defaultColor = 'secondary';
+    public array $valueMap = [];
+
+    /**
+     * Custom badge types and their CSS classes.
+     */
+    public array $customTypes = [];
 
     /**
      * Whether to show icons in badges.
      */
-    public bool $showIcons = false;
+    public bool $withIcons = false;
 
     /**
-     * The icon mapping for different values.
+     * The icon mapping for different badge types.
      */
     public array $iconMap = [];
 
     /**
-     * The badge style (solid, outline, pill).
+     * Custom label function.
      */
-    public string $style = 'solid';
+    public $labelCallback = null;
 
     /**
-     * The badge size (small, medium, large).
+     * Label mapping for different values.
      */
-    public string $size = 'medium';
+    public array $labelMap = [];
 
     /**
-     * Set the color mapping for different values.
+     * Map field values to badge types.
+     *
+     * @param array $map Array mapping values to badge types (info, success, danger, warning)
      */
-    public function map(array $colorMap): static
+    public function map(array $map): static
     {
-        $this->colorMap = $colorMap;
+        $this->valueMap = $map;
 
         return $this;
     }
 
     /**
-     * Set the default color.
+     * Replace built-in badge types with custom CSS classes.
+     *
+     * @param array $types Array mapping badge types to CSS classes
      */
-    public function defaultColor(string $color): static
+    public function types(array $types): static
     {
-        $this->defaultColor = $color;
+        $this->customTypes = $types;
+
+        return $this;
+    }
+
+    /**
+     * Supplement built-in badge types with additional custom types.
+     *
+     * @param array $types Array mapping badge types to CSS classes
+     */
+    public function addTypes(array $types): static
+    {
+        $this->customTypes = array_merge($this->customTypes, $types);
 
         return $this;
     }
@@ -73,57 +99,95 @@ class Badge extends Field
     /**
      * Enable icons in badges.
      */
-    public function withIcons(bool $showIcons = true): static
+    public function withIcons(): static
     {
-        $this->showIcons = $showIcons;
+        $this->withIcons = true;
 
         return $this;
     }
 
     /**
-     * Set the icon mapping for different values.
+     * Set the icon mapping for different badge types.
+     *
+     * @param array $icons Array mapping badge types to icon names
      */
-    public function iconMap(array $iconMap): static
+    public function icons(array $icons): static
     {
-        $this->iconMap = $iconMap;
+        $this->iconMap = $icons;
 
         return $this;
     }
 
     /**
-     * Set the badge style.
+     * Set a custom label function.
+     *
+     * @param callable $callback Function to transform the value into a label
      */
-    public function style(string $style): static
+    public function label(callable $callback): static
     {
-        $this->style = $style;
+        $this->labelCallback = $callback;
 
         return $this;
     }
 
     /**
-     * Set the badge size.
+     * Set label mapping for different values.
+     *
+     * @param array $labels Array mapping values to display labels
      */
-    public function size(string $size): static
+    public function labels(array $labels): static
     {
-        $this->size = $size;
+        $this->labelMap = $labels;
 
         return $this;
     }
 
     /**
-     * Resolve the color for a given value.
+     * Resolve the badge type for a given value.
      */
-    public function resolveColor($value): string
+    public function resolveBadgeType($value): string
     {
-        return $this->colorMap[$value] ?? $this->defaultColor;
+        return $this->valueMap[$value] ?? 'info';
     }
 
     /**
-     * Resolve the icon for a given value.
+     * Resolve the CSS classes for a given badge type.
      */
-    public function resolveIcon($value): ?string
+    public function resolveBadgeClasses(string $badgeType): string
     {
-        return $this->iconMap[$value] ?? null;
+        // Use custom types if defined, otherwise fall back to built-in types
+        if (!empty($this->customTypes)) {
+            return $this->customTypes[$badgeType] ?? $this->builtInTypes[$badgeType] ?? $this->builtInTypes['info'];
+        }
+
+        return $this->builtInTypes[$badgeType] ?? $this->builtInTypes['info'];
+    }
+
+    /**
+     * Resolve the icon for a given badge type.
+     */
+    public function resolveIcon(string $badgeType): ?string
+    {
+        return $this->iconMap[$badgeType] ?? null;
+    }
+
+    /**
+     * Resolve the display label for a given value.
+     */
+    public function resolveLabel($value): string
+    {
+        // Use custom label callback if defined
+        if ($this->labelCallback) {
+            return call_user_func($this->labelCallback, $value);
+        }
+
+        // Use label mapping if defined
+        if (isset($this->labelMap[$value])) {
+            return $this->labelMap[$value];
+        }
+
+        // Default to the value itself
+        return (string) $value;
     }
 
     /**
@@ -132,12 +196,12 @@ class Badge extends Field
     public function meta(): array
     {
         return array_merge(parent::meta(), [
-            'colorMap' => $this->colorMap,
-            'defaultColor' => $this->defaultColor,
-            'showIcons' => $this->showIcons,
+            'builtInTypes' => $this->builtInTypes,
+            'valueMap' => $this->valueMap,
+            'customTypes' => $this->customTypes,
+            'withIcons' => $this->withIcons,
             'iconMap' => $this->iconMap,
-            'style' => $this->style,
-            'size' => $this->size,
+            'labelMap' => $this->labelMap,
         ]);
     }
 }

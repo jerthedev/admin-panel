@@ -38,13 +38,8 @@ class ImageFieldTest extends TestCase
     {
         $field = Image::make('Image');
 
-        $this->assertEquals('images', $field->path); // Different from File field
         $this->assertFalse($field->squared);
-        $this->assertNull($field->thumbnailCallback);
-        $this->assertNull($field->previewCallback);
-        $this->assertNull($field->width);
-        $this->assertNull($field->height);
-        $this->assertEquals(90, $field->quality); // Set in constructor
+        $this->assertFalse($field->rounded);
     }
 
     public function test_image_field_inherits_file_properties(): void
@@ -53,7 +48,8 @@ class ImageFieldTest extends TestCase
 
         // Should inherit File field properties
         $this->assertEquals('public', $field->disk);
-        $this->assertEquals('image/*,.jpg,.jpeg,.png,.gif,.webp', $field->acceptedTypes); // Set in constructor
+        $this->assertEquals('files', $field->path); // Inherits from File field
+        $this->assertNull($field->acceptedTypes);
         $this->assertNull($field->maxSize);
         $this->assertFalse($field->multiple);
     }
@@ -72,112 +68,41 @@ class ImageFieldTest extends TestCase
         $this->assertFalse($field->squared);
     }
 
-    public function test_image_field_width_height_configuration(): void
+    public function test_image_field_rounded_configuration(): void
     {
-        $field = Image::make('Image')->width(800)->height(600);
+        $field = Image::make('Image')->rounded();
 
-        $this->assertEquals(800, $field->width);
-        $this->assertEquals(600, $field->height);
+        $this->assertTrue($field->rounded);
     }
 
-    public function test_image_field_quality_configuration(): void
+    public function test_image_field_rounded_false(): void
     {
-        $field = Image::make('Image')->quality(90);
+        $field = Image::make('Image')->rounded(false);
 
-        $this->assertEquals(90, $field->quality);
+        $this->assertFalse($field->rounded);
     }
 
-    public function test_image_field_thumbnail_callback_configuration(): void
+    public function test_image_field_disable_download(): void
     {
-        $callback = function ($path) {
-            return 'thumbnail-' . $path;
-        };
+        $field = Image::make('Image')->disableDownload();
 
-        $field = Image::make('Image')->thumbnail($callback);
-
-        $this->assertEquals($callback, $field->thumbnailCallback);
+        $this->assertFalse($field->downloadCallback);
     }
 
-    public function test_image_field_preview_callback_configuration(): void
-    {
-        $callback = function ($path) {
-            return 'preview-' . $path;
-        };
 
-        $field = Image::make('Image')->preview($callback);
-
-        $this->assertEquals($callback, $field->previewCallback);
-    }
-
-    public function test_image_field_get_thumbnail_url_with_callback(): void
-    {
-        $callback = function () {
-            return 'https://example.com/thumbnails/image.jpg';
-        };
-
-        $field = Image::make('Image')->thumbnail($callback);
-
-        $url = $field->getThumbnailUrl('image.jpg');
-
-        $this->assertEquals('https://example.com/thumbnails/image.jpg', $url);
-    }
-
-    public function test_image_field_get_thumbnail_url_without_callback(): void
-    {
-        $field = Image::make('Image');
-
-        $url = $field->getThumbnailUrl('image.jpg');
-
-        // Without callback, it returns the storage URL
-        $this->assertStringContains('image.jpg', $url);
-    }
-
-    public function test_image_field_get_preview_url_with_callback(): void
-    {
-        $callback = function () {
-            return 'https://example.com/previews/image.jpg';
-        };
-
-        $field = Image::make('Image')->preview($callback);
-
-        $url = $field->getPreviewUrl('image.jpg');
-
-        $this->assertEquals('https://example.com/previews/image.jpg', $url);
-    }
-
-    public function test_image_field_get_preview_url_without_callback(): void
-    {
-        $field = Image::make('Image');
-
-        $url = $field->getPreviewUrl('image.jpg');
-
-        // Without callback, it returns the storage URL
-        $this->assertStringContains('image.jpg', $url);
-    }
 
     public function test_image_field_meta_includes_all_properties(): void
     {
-        $thumbnailCallback = function () { return 'thumb-url'; };
-        $previewCallback = function () { return 'preview-url'; };
-
         $field = Image::make('Image')
             ->squared()
-            ->width(1200)
-            ->height(800)
-            ->quality(85)
-            ->thumbnail($thumbnailCallback)
-            ->preview($previewCallback);
+            ->rounded();
 
         $meta = $field->meta();
 
         $this->assertArrayHasKey('squared', $meta);
-        $this->assertArrayHasKey('width', $meta);
-        $this->assertArrayHasKey('height', $meta);
-        $this->assertArrayHasKey('quality', $meta);
+        $this->assertArrayHasKey('rounded', $meta);
         $this->assertTrue($meta['squared']);
-        $this->assertEquals(1200, $meta['width']);
-        $this->assertEquals(800, $meta['height']);
-        $this->assertEquals(85, $meta['quality']);
+        $this->assertTrue($meta['rounded']);
     }
 
     public function test_image_field_json_serialization(): void
@@ -186,9 +111,7 @@ class ImageFieldTest extends TestCase
             ->disk('products')
             ->path('product-images')
             ->squared()
-            ->width(800)
-            ->height(600)
-            ->quality(90)
+            ->rounded()
             ->acceptedTypes('image/jpeg,image/png')
             ->maxSize(5120)
             ->required()
@@ -202,9 +125,7 @@ class ImageFieldTest extends TestCase
         $this->assertEquals('products', $json['disk']);
         $this->assertEquals('product-images', $json['path']);
         $this->assertTrue($json['squared']);
-        $this->assertEquals(800, $json['width']);
-        $this->assertEquals(600, $json['height']);
-        $this->assertEquals(90, $json['quality']);
+        $this->assertTrue($json['rounded']);
         $this->assertEquals('image/jpeg,image/png', $json['acceptedTypes']);
         $this->assertEquals(5120, $json['maxSize']);
         $this->assertContains('required', $json['rules']);
@@ -223,6 +144,11 @@ class ImageFieldTest extends TestCase
         $this->assertTrue(method_exists($field, 'multiple'));
         $this->assertTrue(method_exists($field, 'download'));
         $this->assertTrue(method_exists($field, 'getUrl'));
+
+        // Test Image-specific methods
+        $this->assertTrue(method_exists($field, 'squared'));
+        $this->assertTrue(method_exists($field, 'rounded'));
+        $this->assertTrue(method_exists($field, 'disableDownload'));
     }
 
     public function test_image_field_with_validation_rules(): void
@@ -235,23 +161,12 @@ class ImageFieldTest extends TestCase
 
     public function test_image_field_complex_configuration(): void
     {
-        $thumbnailCallback = function () {
-            return url('thumbnails/image.jpg');
-        };
-
-        $previewCallback = function () {
-            return url('previews/image.jpg');
-        };
-
         $field = Image::make('Gallery Image')
             ->disk('gallery')
             ->path('gallery-images')
             ->squared()
-            ->width(1920)
-            ->height(1080)
-            ->quality(95)
-            ->thumbnail($thumbnailCallback)
-            ->preview($previewCallback)
+            ->rounded()
+            ->disableDownload()
             ->acceptedTypes('image/jpeg,image/png,image/webp')
             ->maxSize(10240);
 
@@ -259,11 +174,8 @@ class ImageFieldTest extends TestCase
         $this->assertEquals('gallery', $field->disk);
         $this->assertEquals('gallery-images', $field->path);
         $this->assertTrue($field->squared);
-        $this->assertEquals(1920, $field->width);
-        $this->assertEquals(1080, $field->height);
-        $this->assertEquals(95, $field->quality);
-        $this->assertEquals($thumbnailCallback, $field->thumbnailCallback);
-        $this->assertEquals($previewCallback, $field->previewCallback);
+        $this->assertTrue($field->rounded);
+        $this->assertFalse($field->downloadCallback);
         $this->assertEquals('image/jpeg,image/png,image/webp', $field->acceptedTypes);
         $this->assertEquals(10240, $field->maxSize);
     }
@@ -283,23 +195,9 @@ class ImageFieldTest extends TestCase
         $field = Image::make('Test Image');
 
         // Test that constructor sets image-specific defaults
-        $this->assertEquals('images', $field->path);
-        $this->assertEquals('image/*,.jpg,.jpeg,.png,.gif,.webp', $field->acceptedTypes);
-        $this->assertEquals(90, $field->quality);
         $this->assertEquals('ImageField', $field->component);
-    }
-
-    public function test_image_field_quality_bounds_validation(): void
-    {
-        // Test quality is clamped to 0-100 range
-        $field1 = Image::make('Image')->quality(-10);
-        $this->assertEquals(0, $field1->quality);
-
-        $field2 = Image::make('Image')->quality(150);
-        $this->assertEquals(100, $field2->quality);
-
-        $field3 = Image::make('Image')->quality(75);
-        $this->assertEquals(75, $field3->quality);
+        $this->assertFalse($field->squared);
+        $this->assertFalse($field->rounded);
     }
 
     public function test_image_field_fill_method_inherited_from_file(): void
@@ -335,9 +233,7 @@ class ImageFieldTest extends TestCase
         $methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
 
         $imageMethods = [];
-        $allMethods = [];
         foreach ($methods as $method) {
-            $allMethods[] = $method->getName() . ' (' . $method->getDeclaringClass()->getName() . ')';
             if ($method->getDeclaringClass()->getName() === 'JTD\\AdminPanel\\Fields\\Image') {
                 $imageMethods[] = $method->getName();
             }
@@ -348,15 +244,9 @@ class ImageFieldTest extends TestCase
 
         // Expected methods declared in Image class
         $expectedMethods = [
-            '__construct',
             'squared',
-            'thumbnail',
-            'preview',
-            'width',
-            'height',
-            'quality',
-            'getThumbnailUrl',
-            'getPreviewUrl',
+            'rounded',
+            'disableDownload',
             'meta'
         ];
 
@@ -364,11 +254,9 @@ class ImageFieldTest extends TestCase
             $this->assertContains($expectedMethod, $imageMethods, "Method {$expectedMethod} should be declared in Image class");
         }
 
-        // If there's an 11th method, this will help us find it
-        if (count($imageMethods) > 10) {
-            $extraMethods = array_diff($imageMethods, $expectedMethods);
-            $this->fail('Found extra methods in Image class: ' . implode(', ', $extraMethods));
-        }
+        // Ensure we only have the expected methods
+        $this->assertEquals(count($expectedMethods), count($imageMethods),
+            'Image class should only have the expected methods. Found: ' . implode(', ', $imageMethods));
     }
 
     public function test_image_field_comprehensive_inheritance_testing(): void
@@ -403,15 +291,14 @@ class ImageFieldTest extends TestCase
         $this->assertEquals('Profile Picture', $field2->name);
         $this->assertEquals('profile_pic', $field2->attribute);
 
-        // Test make method with callback
+        // Test make method with chaining
         $field3 = Image::make('Gallery Image', 'gallery_image');
-        $field3->squared()->width(800)->height(600);
+        $field3->squared()->rounded();
 
         $this->assertInstanceOf(Image::class, $field3);
         $this->assertEquals('Gallery Image', $field3->name);
         $this->assertEquals('gallery_image', $field3->attribute);
         $this->assertTrue($field3->squared);
-        $this->assertEquals(800, $field3->width);
-        $this->assertEquals(600, $field3->height);
+        $this->assertTrue($field3->rounded);
     }
 }

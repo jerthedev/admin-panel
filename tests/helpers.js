@@ -49,6 +49,12 @@ export function mountField(component, options = {}) {
     errors: options.errors || []
   }
 
+  // Extract common field props from top-level options
+  const fieldProps = {}
+  if (options.readonly !== undefined) fieldProps.readonly = options.readonly
+  if (options.disabled !== undefined) fieldProps.disabled = options.disabled
+  if (options.size !== undefined) fieldProps.size = options.size
+
   const defaultGlobal = {
     provide: {
       form: createMockForm({}, options.form || {})
@@ -59,13 +65,16 @@ export function mountField(component, options = {}) {
     }
   }
 
+  // Remove field props from options to avoid conflicts
+  const { readonly, disabled, size, field, modelValue, errors, props, global, form, ...restOptions } = options
+
   return mount(component, {
-    props: { ...defaultProps, ...(options.props || {}) },
+    props: { ...defaultProps, ...fieldProps, ...(props || {}) },
     global: {
       ...defaultGlobal,
-      ...(options.global || {})
+      ...(global || {})
     },
-    ...options
+    ...restOptions
   })
 }
 

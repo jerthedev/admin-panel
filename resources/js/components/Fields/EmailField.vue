@@ -35,10 +35,12 @@
         <CheckCircleIcon
           v-if="isValidEmail && modelValue"
           class="h-5 w-5 text-green-500"
+          data-testid="check-circle-icon"
         />
         <ExclamationCircleIcon
           v-else-if="modelValue && !isValidEmail"
           class="h-5 w-5 text-red-500"
+          data-testid="exclamation-circle-icon"
         />
       </div>
     </div>

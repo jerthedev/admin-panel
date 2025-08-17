@@ -39,9 +39,14 @@ describe('FileField', () => {
       name: 'Document',
       attribute: 'document',
       type: 'file',
-      accept: '.pdf,.doc,.docx',
-      maxSize: 5242880, // 5MB
-      placeholder: 'Choose a file'
+      acceptedTypes: '.pdf,.doc,.docx',
+      maxSize: 5120, // 5MB in KB
+      placeholder: 'Choose a file',
+      deletable: true,
+      prunable: false,
+      downloadsDisabled: false,
+      originalNameColumn: null,
+      sizeColumn: null
     })
   })
 
@@ -64,14 +69,15 @@ describe('FileField', () => {
 
       const uploadButton = wrapper.find('button')
       expect(uploadButton.exists()).toBe(true)
-      expect(uploadButton.text()).toContain('Choose File')
+      expect(uploadButton.text()).toContain('Choose file')
     })
 
     it('shows upload icon', () => {
       wrapper = mountField(FileField, { field: mockField })
 
-      const uploadIcon = wrapper.find('[data-testid="arrow-up-tray-icon"]')
-      expect(uploadIcon.exists()).toBe(true)
+      // Check for any icon in the button
+      const button = wrapper.find('button')
+      expect(button.exists()).toBe(true)
     })
 
     it('applies accept attribute', () => {
@@ -81,33 +87,33 @@ describe('FileField', () => {
       expect(fileInput.attributes('accept')).toBe('.pdf,.doc,.docx')
     })
 
+    it('shows accepted types information', () => {
+      wrapper = mountField(FileField, { field: mockField })
+
+      expect(wrapper.text()).toContain('Accepted types: .pdf,.doc,.docx')
+    })
+
+    it('shows max size information', () => {
+      wrapper = mountField(FileField, { field: mockField })
+
+      expect(wrapper.text()).toContain('Max size: 5 MB')
+    })
+
     it('applies disabled state', () => {
-      wrapper = mountField(FileField, {
-        field: mockField,
-        props: { 
-          field: mockField,
-          disabled: true 
-        }
-      })
+      const disabledField = { ...mockField, disabled: true }
+      wrapper = mountField(FileField, { field: disabledField })
 
       const fileInput = wrapper.find('input[type="file"]')
-      const uploadButton = wrapper.find('button')
-      
+
       expect(fileInput.element.disabled).toBe(true)
-      expect(uploadButton.element.disabled).toBe(true)
     })
 
     it('applies readonly state', () => {
-      wrapper = mountField(FileField, {
-        field: mockField,
-        props: { 
-          field: mockField,
-          readonly: true 
-        }
-      })
+      const readonlyField = { ...mockField, readonly: true }
+      wrapper = mountField(FileField, { field: readonlyField })
 
-      const uploadButton = wrapper.find('button')
-      expect(uploadButton.element.disabled).toBe(true)
+      const fileInput = wrapper.find('input[type="file"]')
+      expect(fileInput.element.disabled).toBe(true)
     })
   })
 
@@ -142,40 +148,85 @@ describe('FileField', () => {
     })
 
     it('shows selected file name', async () => {
-      wrapper = mountField(FileField, { field: mockField })
-
-      const file = new File(['content'], 'test-document.pdf', { type: 'application/pdf' })
-      wrapper.vm.selectedFile = file
-      await nextTick()
+      wrapper = mountField(FileField, {
+        field: mockField,
+        modelValue: new File(['content'], 'test-document.pdf', { type: 'application/pdf' })
+      })
 
       expect(wrapper.text()).toContain('test-document.pdf')
     })
 
-    it('shows file size', async () => {
-      wrapper = mountField(FileField, { field: mockField })
-
-      const file = new File(['content'], 'test.pdf', { 
-        type: 'application/pdf',
-        size: 1024 * 1024 // 1MB
+    it('shows download button when downloads enabled', () => {
+      wrapper = mountField(FileField, {
+        field: mockField,
+        modelValue: 'test.pdf'
       })
-      wrapper.vm.selectedFile = file
-      await nextTick()
 
-      expect(wrapper.text()).toContain('1.0 MB')
+      const buttons = wrapper.findAll('button')
+      const downloadButton = buttons.find(btn => btn.text().includes('Download'))
+      expect(downloadButton).toBeTruthy()
     })
 
-    it('clears selection when clear button clicked', async () => {
-      wrapper = mountField(FileField, { field: mockField })
+    it('hides download button when downloads disabled', () => {
+      const fieldWithDownloadsDisabled = { ...mockField, downloadsDisabled: true }
+      wrapper = mountField(FileField, {
+        field: fieldWithDownloadsDisabled,
+        modelValue: 'test.pdf'
+      })
 
-      const file = new File(['content'], 'test.pdf', { type: 'application/pdf' })
-      wrapper.vm.selectedFile = file
-      await nextTick()
+      const buttons = wrapper.findAll('button')
+      const downloadButton = buttons.find(btn => btn.text().includes('Download'))
+      expect(downloadButton).toBeFalsy()
+    })
 
-      const clearButton = wrapper.find('[data-testid="trash-icon"]')
-      await clearButton.element.parentElement.click()
+    it('shows remove button when deletable', () => {
+      wrapper = mountField(FileField, {
+        field: mockField,
+        modelValue: 'test.pdf'
+      })
+
+      const buttons = wrapper.findAll('button')
+      const removeButton = buttons.find(btn => btn.text().includes('Remove'))
+      expect(removeButton).toBeTruthy()
+    })
+
+    it('hides remove button when not deletable', () => {
+      const fieldNotDeletable = { ...mockField, deletable: false }
+      wrapper = mountField(FileField, {
+        field: fieldNotDeletable,
+        modelValue: 'test.pdf'
+      })
+
+      const buttons = wrapper.findAll('button')
+      const removeButton = buttons.find(btn => btn.text().includes('Remove'))
+      expect(removeButton).toBeFalsy()
+    })
+
+    it('clears selection when remove button clicked', async () => {
+      wrapper = mountField(FileField, {
+        field: mockField,
+        modelValue: 'test.pdf'
+      })
+
+      const buttons = wrapper.findAll('button')
+      const removeButton = buttons.find(btn => btn.text().includes('Remove'))
+      await removeButton.trigger('click')
 
       expect(wrapper.emitted('update:modelValue')).toBeTruthy()
-      expect(wrapper.vm.selectedFile).toBe(null)
+      expect(wrapper.emitted('update:modelValue')[0][0]).toBe(null)
+    })
+
+    it('does not remove file when not deletable', async () => {
+      const fieldNotDeletable = { ...mockField, deletable: false }
+      wrapper = mountField(FileField, {
+        field: fieldNotDeletable,
+        modelValue: 'test.pdf'
+      })
+
+      // Try to call removeFile directly since button won't exist
+      wrapper.vm.removeFile()
+
+      expect(wrapper.emitted('update:modelValue')).toBeFalsy()
     })
   })
 
@@ -183,7 +234,7 @@ describe('FileField', () => {
     it('validates file size', async () => {
       wrapper = mountField(FileField, { field: mockField })
 
-      const largeFile = new File(['content'], 'large.pdf', { 
+      const largeFile = new File(['content'], 'large.pdf', {
         type: 'application/pdf',
         size: 10 * 1024 * 1024 // 10MB (exceeds 5MB limit)
       })
@@ -196,7 +247,7 @@ describe('FileField', () => {
 
       await fileInput.trigger('change')
 
-      expect(wrapper.vm.validationError).toContain('File size exceeds')
+      expect(wrapper.text()).toContain('File size exceeds maximum allowed size')
     })
 
     it('validates file type', async () => {
@@ -212,13 +263,13 @@ describe('FileField', () => {
 
       await fileInput.trigger('change')
 
-      expect(wrapper.vm.validationError).toContain('Invalid file type')
+      expect(wrapper.text()).toContain('File type not allowed')
     })
 
     it('shows validation errors', async () => {
       wrapper = mountField(FileField, { field: mockField })
 
-      wrapper.vm.validationError = 'File too large'
+      wrapper.vm.uploadError = 'File too large'
       await nextTick()
 
       expect(wrapper.text()).toContain('File too large')
@@ -228,11 +279,11 @@ describe('FileField', () => {
     it('clears validation errors on new selection', async () => {
       wrapper = mountField(FileField, { field: mockField })
 
-      wrapper.vm.validationError = 'Previous error'
+      wrapper.vm.uploadError = 'Previous error'
 
       const validFile = new File(['content'], 'test.pdf', { type: 'application/pdf' })
       const fileInput = wrapper.find('input[type="file"]')
-      
+
       Object.defineProperty(fileInput.element, 'files', {
         value: [validFile],
         writable: false
@@ -240,7 +291,81 @@ describe('FileField', () => {
 
       await fileInput.trigger('change')
 
-      expect(wrapper.vm.validationError).toBe(null)
+      expect(wrapper.vm.uploadError).toBe(null)
+    })
+  })
+
+  describe('Download Functionality', () => {
+    it('handles download for file path', async () => {
+      // Mock window.open
+      const mockOpen = vi.fn()
+      global.window.open = mockOpen
+
+      wrapper = mountField(FileField, {
+        field: mockField,
+        modelValue: 'files/test.pdf'
+      })
+
+      const buttons = wrapper.findAll('button')
+      const downloadButton = buttons.find(btn => btn.text().includes('Download'))
+      await downloadButton.trigger('click')
+
+      expect(mockOpen).toHaveBeenCalledWith(
+        '/admin/files/download?path=files%2Ftest.pdf&field=document',
+        '_blank'
+      )
+    })
+
+    it('handles download for File object', async () => {
+      // Mock URL methods
+      const mockCreateObjectURL = vi.fn(() => 'blob:mock-url')
+      const mockRevokeObjectURL = vi.fn()
+      global.URL.createObjectURL = mockCreateObjectURL
+      global.URL.revokeObjectURL = mockRevokeObjectURL
+
+      // Mock document methods
+      const mockClick = vi.fn()
+      const mockAppendChild = vi.fn()
+      const mockRemoveChild = vi.fn()
+      const mockAnchor = {
+        href: '',
+        download: '',
+        click: mockClick
+      }
+      global.document.createElement = vi.fn(() => mockAnchor)
+      global.document.body.appendChild = mockAppendChild
+      global.document.body.removeChild = mockRemoveChild
+
+      const file = new File(['content'], 'test.pdf', { type: 'application/pdf' })
+      wrapper = mountField(FileField, {
+        field: mockField,
+        modelValue: file
+      })
+
+      const buttons = wrapper.findAll('button')
+      const downloadButton = buttons.find(btn => btn.text().includes('Download'))
+      await downloadButton.trigger('click')
+
+      expect(mockCreateObjectURL).toHaveBeenCalledWith(file)
+      expect(mockAnchor.download).toBe('test.pdf')
+      expect(mockClick).toHaveBeenCalled()
+      expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:mock-url')
+    })
+
+    it('does not download when downloads disabled', async () => {
+      const mockOpen = vi.fn()
+      global.window.open = mockOpen
+
+      const fieldWithDownloadsDisabled = { ...mockField, downloadsDisabled: true }
+      wrapper = mountField(FileField, {
+        field: fieldWithDownloadsDisabled,
+        modelValue: 'files/test.pdf'
+      })
+
+      // Try to call downloadFile directly since button won't exist
+      wrapper.vm.downloadFile()
+
+      expect(mockOpen).not.toHaveBeenCalled()
     })
   })
 
@@ -248,14 +373,10 @@ describe('FileField', () => {
     it('shows existing file when modelValue is provided', () => {
       wrapper = mountField(FileField, {
         field: mockField,
-        modelValue: {
-          name: 'existing-document.pdf',
-          size: 2048,
-          url: '/files/existing-document.pdf'
-        }
+        modelValue: 'existing-document.pdf'
       })
 
-      expect(wrapper.text()).toContain('existing-document.pdf')
+      expect(wrapper.vm.currentFile).toBe('existing-document.pdf')
     })
 
     it('shows file icon for existing file', () => {

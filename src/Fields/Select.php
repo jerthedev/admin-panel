@@ -11,6 +11,11 @@ use Illuminate\Http\Request;
  *
  * A select dropdown field with support for options and Enum integration.
  *
+ * API aligned with Laravel Nova v5 Select field.
+ * - options(array|string|callable): accepts key=>label array, backed enum class string, or a callable returning an array
+ * - searchable(): enable searchable select UI
+ * - displayUsingLabels(): control display of labels on index/detail (does not alter the stored value)
+ *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
 class Select extends Field
@@ -31,34 +36,46 @@ class Select extends Field
     public bool $searchable = false;
 
     /**
-     * Whether to display the option keys instead of values.
+     * Whether to display the option labels instead of values on index/detail.
      */
-    public bool $displayUsingLabels = true;
+    public bool $displayUsingLabels = false;
 
     /**
      * Set the available options for the select field.
+     *
+     * Accepts:
+     * - array of [value => label]
+     * - string enum class (backed enum) => will map [case->value => case->name]
+     * - callable returning array [value => label]
      */
-    public function options(array $options): static
+    public function options(array|string|callable $options): static
     {
-        $this->options = $options;
+        if (is_string($options)) {
+            // Enum class
+            if (! enum_exists($options)) {
+                throw new \InvalidArgumentException("Class {$options} is not an enum.");
+            }
 
-        return $this;
-    }
+            $mapped = [];
+            foreach ($options::cases() as $case) {
+                $mapped[$case->value] = $case->name;
+            }
+            $this->options = $mapped;
 
-    /**
-     * Set options from an Enum class.
-     */
-    public function enum(string $enumClass): static
-    {
-        if (! enum_exists($enumClass)) {
-            throw new \InvalidArgumentException("Class {$enumClass} is not an enum.");
+            return $this;
         }
 
-        $options = [];
-        foreach ($enumClass::cases() as $case) {
-            $options[$case->value] = $case->name;
+        if (is_callable($options)) {
+            $evaluated = $options();
+            if (! is_array($evaluated)) {
+                throw new \InvalidArgumentException('Select::options(callable) must return an array of [value => label].');
+            }
+            $this->options = $evaluated;
+
+            return $this;
         }
 
+        // Array of [value => label]
         $this->options = $options;
 
         return $this;
@@ -75,7 +92,7 @@ class Select extends Field
     }
 
     /**
-     * Display using option keys instead of values.
+     * Display using option labels instead of values on index/detail.
      */
     public function displayUsingLabels(bool $displayUsingLabels = true): static
     {
@@ -86,18 +103,14 @@ class Select extends Field
 
     /**
      * Resolve the field's value for display.
+     *
+     * Note: Do not mutate value to label here; display-only mapping occurs in the UI
+     * when displayUsingLabels() is enabled.
      */
     public function resolve($resource, ?string $attribute = null): void
     {
         parent::resolve($resource, $attribute);
-
-        // If we have options and should display using labels, convert the value
-        if ($this->displayUsingLabels && ! empty($this->options) && $this->value !== null) {
-            $this->value = [
-                'value' => $this->value,
-                'label' => $this->options[$this->value] ?? $this->value,
-            ];
-        }
+        // Keep raw value; UI will decide how to display based on displayUsingLabels
     }
 
     /**
@@ -108,14 +121,7 @@ class Select extends Field
         if ($this->fillCallback) {
             call_user_func($this->fillCallback, $request, $model, $this->attribute);
         } elseif ($request->exists($this->attribute)) {
-            $value = $request->input($this->attribute);
-
-            // Ensure the value is valid if we have options
-            if (! empty($this->options) && $value !== null && ! array_key_exists($value, $this->options)) {
-                $value = null;
-            }
-
-            $model->{$this->attribute} = $value;
+            $model->{$this->attribute} = $request->input($this->attribute);
         }
     }
 

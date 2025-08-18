@@ -71,7 +71,7 @@ class SelectFieldTest extends TestCase
     {
         $field = Select::make('Status');
 
-        $this->assertTrue($field->displayUsingLabels);
+        $this->assertFalse($field->displayUsingLabels);
     }
 
     public function test_select_field_display_using_labels_configuration(): void
@@ -81,13 +81,13 @@ class SelectFieldTest extends TestCase
         $this->assertFalse($field->displayUsingLabels);
     }
 
-    public function test_select_field_enum_configuration(): void
+    public function test_select_field_options_accepts_callable(): void
     {
-        // Create a mock enum for testing
-        $field = Select::make('Status');
+        $field = Select::make('Status')->options(function () {
+            return ['draft' => 'Draft', 'published' => 'Published'];
+        });
 
-        // Test that enum method exists and can be called
-        $this->assertTrue(method_exists($field, 'enum'));
+        $this->assertEquals(['draft' => 'Draft', 'published' => 'Published'], $field->options);
     }
 
     public function test_select_field_fill_validates_against_options(): void
@@ -106,7 +106,7 @@ class SelectFieldTest extends TestCase
         $this->assertEquals('published', $model->status);
     }
 
-    public function test_select_field_fill_rejects_invalid_options(): void
+    public function test_select_field_fill_does_not_coerce_invalid_value(): void
     {
         $options = [
             'draft' => 'Draft',
@@ -119,7 +119,7 @@ class SelectFieldTest extends TestCase
 
         $field->fill($request, $model);
 
-        $this->assertNull($model->status);
+        $this->assertEquals('invalid', $model->status);
     }
 
     public function test_select_field_fill_handles_empty_value(): void
@@ -198,7 +198,7 @@ class SelectFieldTest extends TestCase
         }
 
         $field = Select::make('Status');
-        $field->enum('SelectTestEnum');
+        $field->options('SelectTestEnum');
 
         $expectedOptions = [
             'draft' => 'DRAFT',
@@ -216,7 +216,7 @@ class SelectFieldTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Class NonExistentSelectEnum is not an enum.');
 
-        $field->enum('NonExistentSelectEnum');
+        $field->options('NonExistentSelectEnum');
     }
 
     public function test_select_field_resolve_with_display_using_labels(): void
@@ -235,12 +235,8 @@ class SelectFieldTest extends TestCase
 
         $field->resolve($resource);
 
-        $expected = [
-            'value' => 'published',
-            'label' => 'Published Status',
-        ];
-
-        $this->assertEquals($expected, $field->value);
+        // Should remain raw value; label mapping handled in UI when displayUsingLabels is true
+        $this->assertEquals('published', $field->value);
     }
 
     public function test_select_field_resolve_with_display_using_labels_false(): void
@@ -277,12 +273,8 @@ class SelectFieldTest extends TestCase
 
         $field->resolve($resource);
 
-        $expected = [
-            'value' => 'unknown',
-            'label' => 'unknown', // Falls back to the value itself
-        ];
-
-        $this->assertEquals($expected, $field->value);
+        // Should remain raw value even if option missing
+        $this->assertEquals('unknown', $field->value);
     }
 
     public function test_select_field_resolve_with_null_value(): void

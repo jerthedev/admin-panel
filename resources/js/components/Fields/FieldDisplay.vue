@@ -208,16 +208,23 @@ const booleanDisplayText = computed(() => {
 })
 
 const selectDisplayValue = computed(() => {
-  if (typeof props.value === 'object' && props.value.label !== undefined) {
-    return props.value.label
+  // When displayUsingLabels is enabled, prefer label display
+  if (props.field.displayUsingLabels) {
+    if (typeof props.value === 'object' && props.value.label !== undefined) {
+      return props.value.label
+    }
+    if (props.field.options && props.value !== null && props.value !== undefined) {
+      return props.field.options[props.value] ?? props.value ?? 'N/A'
+    }
+    return props.value ?? 'N/A'
   }
 
-  // Look up in field options
-  if (props.field.options && props.value !== null) {
-    return props.field.options[props.value] || props.value
+  // Otherwise, show the raw value
+  if (typeof props.value === 'object' && props.value.value !== undefined) {
+    return props.value.value
   }
 
-  return props.value || 'N/A'
+  return props.value ?? 'N/A'
 })
 
 // Methods

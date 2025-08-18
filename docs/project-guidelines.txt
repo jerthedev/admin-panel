@@ -14,7 +14,7 @@ Follow ALL steps completely and thoroughly - don't just verify files exist.
 Everything should be 100% compatible with Nova's documentation.  In some cases, there are features we are expanding.
 Expanded features should still be compatible with Nova's documentation, but with the additional APIs and features.
 
-Please ensure tests are complete and pass 100% for the each task:
+Please ensure tests are complete and pass 100% for PHP Classes and Vue components:
 1. PHP Class Unit Test (tests/Unit/<feature>/)
  - Run code coverage analysis and ensure 100% coverage
 2. Vue component test (tests/components/<feature>/)

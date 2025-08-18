@@ -12,10 +12,10 @@
       <input
         :id="fieldId"
         ref="inputRef"
-        :type="inputType"
+        type="text"
         :value="modelValue"
         :placeholder="field.placeholder || field.name"
-        :maxlength="field.maxLength"
+        :maxlength="field.maxlength"
         :disabled="disabled"
         :readonly="readonly"
         class="admin-input w-full"
@@ -41,7 +41,7 @@
 
       <!-- Character count -->
       <div
-        v-if="field.maxLength && showCharacterCount"
+        v-if="field.maxlength && showCharacterCount"
         class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"
         :class="{ 'pr-10': showSuggestions && suggestions.length > 0 }"
       >
@@ -49,7 +49,7 @@
           class="text-xs"
           :class="characterCountClasses"
         >
-          {{ characterCount }}/{{ field.maxLength }}
+          {{ characterCount }}/{{ field.maxlength }}
         </span>
       </div>
     </div>
@@ -85,10 +85,11 @@
 <script setup>
 /**
  * TextField Component
- * 
- * Text input field with support for suggestions, character limits,
- * and password mode functionality.
- * 
+ *
+ * Text input field with 100% Laravel Nova API compatibility.
+ * Supports suggestions, maxlength, enforceMaxlength, copyable,
+ * asHtml, asEncodedHtml, and withMeta features.
+ *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
 
@@ -142,20 +143,16 @@ const fieldId = computed(() => {
   return `text-field-${props.field.attribute}-${Math.random().toString(36).substr(2, 9)}`
 })
 
-const inputType = computed(() => {
-  return props.field.asPassword ? 'password' : 'text'
-})
-
 const suggestions = computed(() => {
   return props.field.suggestions || []
 })
 
 const showSuggestions = computed(() => {
-  return suggestions.value.length > 0 && !props.field.asPassword
+  return suggestions.value.length > 0
 })
 
 const showCharacterCount = computed(() => {
-  return props.field.maxLength && !props.field.asPassword
+  return props.field.maxlength && props.field.enforceMaxlength
 })
 
 const characterCount = computed(() => {
@@ -164,8 +161,10 @@ const characterCount = computed(() => {
 
 const characterCountClasses = computed(() => {
   const count = characterCount.value
-  const max = props.field.maxLength
-  
+  const max = props.field.maxlength
+
+  if (!max) return 'text-gray-500'
+
   if (count > max * 0.9) {
     return 'text-red-500'
   } else if (count > max * 0.7) {
@@ -186,13 +185,13 @@ const filteredSuggestions = computed(() => {
 // Methods
 const handleInput = (event) => {
   let value = event.target.value
-  
-  // Apply maxLength if specified
-  if (props.field.maxLength && value.length > props.field.maxLength) {
-    value = value.substring(0, props.field.maxLength)
+
+  // Apply maxlength if specified and enforceMaxlength is enabled
+  if (props.field.maxlength && props.field.enforceMaxlength && value.length > props.field.maxlength) {
+    value = value.substring(0, props.field.maxlength)
     event.target.value = value
   }
-  
+
   emit('update:modelValue', value)
   emit('change', value)
 }

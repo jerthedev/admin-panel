@@ -394,8 +394,6 @@ class CurrencyFieldTest extends TestCase
         $this->assertArrayNotHasKey('displayFormat', $meta);
     }
 
-    }
-
     public function test_currency_field_inherited_field_methods(): void
     {
         $field = Currency::make('Price');

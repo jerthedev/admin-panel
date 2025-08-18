@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace JTD\AdminPanel\Fields;
 
 /**
- * Media Library Avatar Field
+ * Media Library Avatar Field.
  *
  * A specialized image upload field for user avatars that integrates with
  * Spatie Media Library. Provides single file upload with automatic conversions,
  * aspect ratio enforcement, and fallback support.
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
- * @package JTD\AdminPanel\Fields
  */
 class MediaLibraryAvatar extends MediaLibraryField
 {
@@ -68,7 +67,7 @@ class MediaLibraryAvatar extends MediaLibraryField
      */
     public function getAvatarUrl($media = null, string $conversion = 'medium'): string
     {
-        if (!$media && $this->value) {
+        if (! $media && $this->value) {
             $media = $this->value;
         }
 
@@ -100,11 +99,11 @@ class MediaLibraryAvatar extends MediaLibraryField
      */
     public function getAvatarMetadata($media = null): array
     {
-        if (!$media && $this->value) {
+        if (! $media && $this->value) {
             $media = $this->value;
         }
 
-        if (!$media) {
+        if (! $media) {
             return [
                 'has_avatar' => false,
                 'fallback_url' => $this->fallbackUrl,
@@ -154,7 +153,7 @@ class MediaLibraryAvatar extends MediaLibraryField
         $power = floor(log($bytes, 1024));
         $power = min($power, count($units) - 1);
 
-        return round($bytes / (1024 ** $power), 2) . ' ' . $units[$power];
+        return round($bytes / (1024 ** $power), 2).' '.$units[$power];
     }
 
     /**
@@ -162,7 +161,7 @@ class MediaLibraryAvatar extends MediaLibraryField
      */
     public function hasAvatar($media = null): bool
     {
-        if (!$media && $this->value) {
+        if (! $media && $this->value) {
             $media = $this->value;
         }
 
@@ -185,5 +184,33 @@ class MediaLibraryAvatar extends MediaLibraryField
         }
 
         return $sizes;
+    }
+
+    /**
+     * Display the avatar with squared edges (Nova Avatar field compatibility).
+     */
+    public function squared(bool $squared = true): static
+    {
+        return $this->withMeta(['squared' => $squared, 'rounded' => ! $squared]);
+    }
+
+    /**
+     * Display the avatar with fully-rounded edges (Nova Avatar field compatibility).
+     */
+    public function rounded(): static
+    {
+        return $this->withMeta(['squared' => false, 'rounded' => true]);
+    }
+
+    /**
+     * Get additional meta information to merge with the field payload.
+     */
+    public function meta(): array
+    {
+        return array_merge(parent::meta(), [
+            'avatarMetadata' => $this->getAvatarMetadata(),
+            'avatarSizes' => $this->getAvatarSizes(),
+            'hasAvatar' => $this->hasAvatar(),
+        ]);
     }
 }

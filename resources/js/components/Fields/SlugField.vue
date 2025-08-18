@@ -21,7 +21,7 @@
         class="admin-input w-full pr-20"
         :class="[
           { 'admin-input-dark': isDarkTheme },
-          { 'border-red-300': hasError },
+          { 'border-red-300': hasError || (!isValid && modelValue) },
           { 'border-green-300': isValid && modelValue }
         ]"
         @input="handleInput"
@@ -38,18 +38,21 @@
         :class="{ 'text-blue-400 hover:text-blue-300 focus:text-blue-300': isDarkTheme }"
         @click="generateSlug"
       >
+        <svg data-testid="arrow-path-icon" class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
         Generate
       </button>
     </div>
 
     <!-- Character count and validation info -->
     <div
-      v-if="showMetaInfo"
+      v-if="showCharacterCount || showPreview"
       class="mt-1 flex items-center justify-between text-xs"
     >
       <!-- Character count -->
       <div
-        v-if="field.maxLength"
+        v-if="showCharacterCount"
         class="text-gray-500"
         :class="[
           { 'text-gray-400': isDarkTheme },
@@ -62,7 +65,7 @@
 
       <!-- Slug preview -->
       <div
-        v-if="modelValue && isValid"
+        v-if="showPreview"
         class="text-gray-500 font-mono text-xs"
         :class="{ 'text-gray-400': isDarkTheme }"
       >
@@ -158,14 +161,28 @@ const isOverLimit = computed(() => {
 const isValid = computed(() => {
   if (isOverLimit.value) return false
   if (!props.modelValue) return false
-  
-  // Basic slug validation
-  const slugPattern = /^[a-z0-9]+(?:[_-][a-z0-9]+)*$/i
-  return slugPattern.test(props.modelValue)
+
+  // Basic slug validation - should be lowercase letters, numbers, hyphens, underscores
+  // Cannot start or end with separator, no consecutive separators, no spaces or special chars
+  const slugPattern = /^[a-z0-9]+(?:[_-][a-z0-9]+)*$/
+  const hasSpaces = /\s/.test(props.modelValue)
+  const hasSpecialChars = /[^a-z0-9_-]/.test(props.modelValue)
+  const startsOrEndsWithSeparator = /^[_-]|[_-]$/.test(props.modelValue)
+  const hasConsecutiveSeparators = /[_-]{2,}/.test(props.modelValue)
+
+  return !hasSpaces && !hasSpecialChars && !startsOrEndsWithSeparator && !hasConsecutiveSeparators && slugPattern.test(props.modelValue)
 })
 
 const showMetaInfo = computed(() => {
   return props.field.maxLength || (props.modelValue && isValid.value)
+})
+
+const showPreview = computed(() => {
+  return props.modelValue && isValid.value && props.field.maxLength
+})
+
+const showCharacterCount = computed(() => {
+  return props.field.maxLength && props.modelValue
 })
 
 const slugPreview = computed(() => {
@@ -251,11 +268,22 @@ const handleKeydown = (event) => {
   if (event.ctrlKey || event.metaKey) {
     return
   }
-  
-  // Generate slug on Enter if fromAttribute is set
-  if (event.key === 'Enter' && props.field.fromAttribute) {
+
+  // Allow navigation and editing keys
+  const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End']
+  if (allowedKeys.includes(event.key)) {
+    // Generate slug on Enter if fromAttribute is set
+    if (event.key === 'Enter' && props.field.fromAttribute) {
+      event.preventDefault()
+      generateSlug()
+    }
+    return
+  }
+
+  // Prevent invalid characters for slugs (only allow letters, numbers, hyphens, underscores)
+  const validSlugChar = /^[a-zA-Z0-9\-_]$/
+  if (!validSlugChar.test(event.key)) {
     event.preventDefault()
-    generateSlug()
   }
 }
 

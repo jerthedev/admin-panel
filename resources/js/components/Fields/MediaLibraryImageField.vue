@@ -11,7 +11,7 @@
     <div class="media-library-image-field">
       <!-- Existing Images Gallery -->
       <div v-if="existingImages.length > 0" class="mb-4">
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div class="grid gap-4" :class="getGridClasses()" :style="getGridStyles()">
           <div
             v-for="(image, index) in existingImages"
             :key="image.id || index"
@@ -23,6 +23,8 @@
               :src="getImagePreviewUrl(image)"
               :alt="image.name || image.file_name || 'Image'"
               class="w-full h-full object-cover cursor-pointer"
+              :class="getImageClasses()"
+              :style="getImageStyles()"
               @click="openLightbox(image, index)"
               @error="handleImageError"
             />
@@ -38,6 +40,16 @@
                   title="View image"
                 >
                   <EyeIcon class="h-4 w-4" />
+                </button>
+                <!-- Download button -->
+                <button
+                  v-if="!field.downloadDisabled && image.download_url"
+                  type="button"
+                  class="p-2 bg-blue-500 bg-opacity-90 rounded-full text-white hover:bg-opacity-100 transition-all"
+                  @click="downloadImage(image)"
+                  title="Download image"
+                >
+                  <ArrowDownTrayIcon class="h-4 w-4" />
                 </button>
                 <!-- Remove button -->
                 <button
@@ -197,7 +209,8 @@ import {
   ExclamationCircleIcon,
   Bars3Icon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  ArrowDownTrayIcon
 } from '@heroicons/vue/24/outline'
 import BaseField from './BaseField.vue'
 import { useAdminStore } from '@/stores/admin'
@@ -456,6 +469,62 @@ const handleFocus = (event) => {
 
 const handleBlur = (event) => {
   emit('blur', event)
+}
+
+const getImageClasses = () => {
+  const classes = []
+
+  if (props.field.squared) {
+    classes.push('rounded-none')
+  } else if (props.field.rounded) {
+    classes.push('rounded-full')
+  } else {
+    classes.push('rounded-lg')
+  }
+
+  return classes.join(' ')
+}
+
+const getImageStyles = () => {
+  const styles = {}
+
+  // Apply width constraints based on context
+  if (props.field.maxWidth) {
+    styles.maxWidth = `${props.field.maxWidth}px`
+  }
+
+  // Note: indexWidth and detailWidth would be handled by the parent context
+  // in a real Nova implementation, but we can apply maxWidth as a fallback
+
+  return styles
+}
+
+const downloadImage = (image) => {
+  if (image.download_url) {
+    // Create a temporary link to trigger download
+    const link = document.createElement('a')
+    link.href = image.download_url
+    link.download = image.name || image.file_name || 'image'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+}
+
+const getGridClasses = () => {
+  // Default responsive grid
+  return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6'
+}
+
+const getGridStyles = () => {
+  const styles = {}
+
+  // Apply width constraints to the grid container
+  if (props.field.maxWidth) {
+    styles.maxWidth = `${props.field.maxWidth * 6}px` // Approximate for 6 columns
+  }
+
+  return styles
 }
 </script>
 

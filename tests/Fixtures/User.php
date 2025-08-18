@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use JTD\AdminPanel\Tests\Factories\UserFactory;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
  * Test User Model
@@ -16,9 +19,9 @@ use JTD\AdminPanel\Tests\Factories\UserFactory;
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
-class User extends Authenticatable
+class User extends Authenticatable implements HasMedia
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, InteractsWithMedia;
 
     protected $fillable = [
         'name',
@@ -111,6 +114,45 @@ class User extends Authenticatable
         return $this->morphToMany(Tag::class, 'taggable')
             ->withPivot(['notes', 'priority'])
             ->withTimestamps();
+    }
+
+    /**
+     * Get the media model class name.
+     */
+    public function getMediaModel(): string
+    {
+        return config('media-library.media_model', Media::class);
+    }
+
+    /**
+     * Register media collections for the user.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('avatars')
+            ->singleFile()
+            ->acceptsMimeTypes(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
+    }
+
+    /**
+     * Register media conversions for the user.
+     */
+    public function registerMediaConversions(Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+            ->width(64)
+            ->height(64)
+            ->sharpen(10);
+
+        $this->addMediaConversion('medium')
+            ->width(150)
+            ->height(150)
+            ->sharpen(10);
+
+        $this->addMediaConversion('large')
+            ->width(400)
+            ->height(400)
+            ->sharpen(10);
     }
 
     protected static function newFactory()

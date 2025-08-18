@@ -161,6 +161,67 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Media Library Field Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure specific settings for Media Library fields including
+    | avatar-specific conversions, file size limits, and accepted types.
+    |
+    */
+
+    'media_library' => [
+        'default_disk' => env('ADMIN_PANEL_MEDIA_LIBRARY_DISK', 'public'),
+
+        'accepted_mime_types' => [
+            'avatar' => [
+                'image/jpeg',
+                'image/jpg',
+                'image/png',
+                'image/webp',
+            ],
+            'image' => [
+                'image/jpeg',
+                'image/jpg',
+                'image/png',
+                'image/gif',
+                'image/webp',
+                'image/svg+xml',
+            ],
+            'file' => [
+                'image/jpeg',
+                'image/jpg',
+                'image/png',
+                'image/gif',
+                'image/webp',
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'text/plain',
+                'text/csv',
+            ],
+        ],
+
+        'file_size_limits' => [
+            'avatar' => 2048, // 2MB in KB
+            'image' => 5120, // 5MB in KB
+            'file' => 10240, // 10MB in KB
+        ],
+
+        'avatar_conversions' => [
+            'thumb' => ['width' => 64, 'height' => 64, 'fit' => 'crop'],
+            'medium' => ['width' => 150, 'height' => 150, 'fit' => 'crop'],
+            'large' => ['width' => 400, 'height' => 400, 'fit' => 'crop'],
+        ],
+
+        'image_conversions' => [
+            'thumb' => ['width' => 150, 'height' => 150, 'fit' => 'crop'],
+            'medium' => ['width' => 400, 'height' => 400, 'fit' => 'contain'],
+            'large' => ['width' => 800, 'height' => 800, 'fit' => 'contain'],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Dashboard Configuration
     |--------------------------------------------------------------------------
     |

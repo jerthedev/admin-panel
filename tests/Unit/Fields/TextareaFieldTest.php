@@ -48,40 +48,25 @@ class TextareaFieldTest extends TestCase
         $this->assertEquals(8, $field->rows);
     }
 
-    public function test_textarea_field_max_length(): void
+    public function test_textarea_field_maxlength(): void
     {
-        $field = Textarea::make('Description')->maxLength(500);
+        $field = Textarea::make('Description')->maxlength(500);
 
-        $this->assertEquals(500, $field->maxLength);
-        $this->assertTrue($field->showCharacterCount);
+        $this->assertEquals(500, $field->maxlength);
     }
 
-    public function test_textarea_field_auto_resize(): void
+    public function test_textarea_field_enforce_maxlength(): void
     {
-        $field = Textarea::make('Description')->autoResize();
+        $field = Textarea::make('Description')->enforceMaxlength();
 
-        $this->assertTrue($field->autoResize);
+        $this->assertTrue($field->enforceMaxlength);
     }
 
-    public function test_textarea_field_auto_resize_false(): void
+    public function test_textarea_field_enforce_maxlength_false(): void
     {
-        $field = Textarea::make('Description')->autoResize(false);
+        $field = Textarea::make('Description')->enforceMaxlength(false);
 
-        $this->assertFalse($field->autoResize);
-    }
-
-    public function test_textarea_field_show_character_count(): void
-    {
-        $field = Textarea::make('Description')->showCharacterCount();
-
-        $this->assertTrue($field->showCharacterCount);
-    }
-
-    public function test_textarea_field_show_character_count_false(): void
-    {
-        $field = Textarea::make('Description')->showCharacterCount(false);
-
-        $this->assertFalse($field->showCharacterCount);
+        $this->assertFalse($field->enforceMaxlength);
     }
 
     public function test_textarea_field_always_show(): void
@@ -122,25 +107,39 @@ class TextareaFieldTest extends TestCase
         $this->assertEquals('TEST DESCRIPTION', $model->description);
     }
 
+    public function test_textarea_field_with_meta_extra_attributes(): void
+    {
+        $field = Textarea::make('Description')->withMeta([
+            'extraAttributes' => [
+                'aria-label' => 'Description field',
+                'data-test' => 'textarea-field'
+            ]
+        ]);
+
+        $meta = $field->meta();
+
+        $this->assertArrayHasKey('extraAttributes', $meta);
+        $this->assertEquals('Description field', $meta['extraAttributes']['aria-label']);
+        $this->assertEquals('textarea-field', $meta['extraAttributes']['data-test']);
+    }
+
     public function test_textarea_field_meta_includes_all_properties(): void
     {
         $field = Textarea::make('Description')
             ->rows(6)
-            ->maxLength(1000)
-            ->autoResize()
+            ->maxlength(1000)
+            ->enforceMaxlength()
             ->alwaysShow();
 
         $meta = $field->meta();
 
         $this->assertArrayHasKey('rows', $meta);
-        $this->assertArrayHasKey('maxLength', $meta);
-        $this->assertArrayHasKey('autoResize', $meta);
-        $this->assertArrayHasKey('showCharacterCount', $meta);
+        $this->assertArrayHasKey('maxlength', $meta);
+        $this->assertArrayHasKey('enforceMaxlength', $meta);
         $this->assertArrayHasKey('alwaysShow', $meta);
         $this->assertEquals(6, $meta['rows']);
-        $this->assertEquals(1000, $meta['maxLength']);
-        $this->assertTrue($meta['autoResize']);
-        $this->assertTrue($meta['showCharacterCount']);
+        $this->assertEquals(1000, $meta['maxlength']);
+        $this->assertTrue($meta['enforceMaxlength']);
         $this->assertTrue($meta['alwaysShow']);
     }
 
@@ -148,8 +147,8 @@ class TextareaFieldTest extends TestCase
     {
         $field = Textarea::make('Bio')
             ->rows(5)
-            ->maxLength(500)
-            ->autoResize()
+            ->maxlength(500)
+            ->enforceMaxlength()
             ->alwaysShow()
             ->required()
             ->nullable();
@@ -160,9 +159,8 @@ class TextareaFieldTest extends TestCase
         $this->assertEquals('bio', $json['attribute']);
         $this->assertEquals('TextareaField', $json['component']);
         $this->assertEquals(5, $json['rows']);
-        $this->assertEquals(500, $json['maxLength']);
-        $this->assertTrue($json['autoResize']);
-        $this->assertTrue($json['showCharacterCount']);
+        $this->assertEquals(500, $json['maxlength']);
+        $this->assertTrue($json['enforceMaxlength']);
         $this->assertTrue($json['alwaysShow']);
         $this->assertContains('required', $json['rules']);
         $this->assertTrue($json['nullable']);

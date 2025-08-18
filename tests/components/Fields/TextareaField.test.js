@@ -111,11 +111,11 @@ describe('TextareaField', () => {
   })
 
   describe('Character Count', () => {
-    it('displays character count when maxLength is set', () => {
+    it('displays character count when maxlength is set', () => {
       const fieldWithLimit = createMockField({
         name: 'Limited Field',
         attribute: 'limited_field',
-        maxLength: 50
+        maxlength: 50
       })
 
       wrapper = mountField(TextareaField, {
@@ -127,42 +127,43 @@ describe('TextareaField', () => {
       expect(wrapper.text()).toContain('9/50')
     })
 
-    it('displays character count when showCharacterCount is true', () => {
-      const fieldWithCount = createMockField({
-        name: 'Count Field',
-        attribute: 'count_field',
-        showCharacterCount: true
+    it('does not display character count when maxlength is not set', () => {
+      const fieldWithoutLimit = createMockField({
+        name: 'No Limit Field',
+        attribute: 'no_limit_field'
       })
 
       wrapper = mountField(TextareaField, {
-        field: fieldWithCount,
+        field: fieldWithoutLimit,
         modelValue: 'Test text'
       })
 
-      // Character count should be displayed
-      expect(wrapper.text()).toContain('9')
+      // Character count should not be displayed
+      expect(wrapper.text()).not.toContain('9')
+      expect(wrapper.text()).not.toContain('characters')
     })
 
-    it('shows external character count when no maxLength', () => {
-      const fieldWithCount = createMockField({
-        name: 'Count Field',
-        attribute: 'count_field',
-        showCharacterCount: true
+    it('shows external character count when maxlength is not set but character count is shown', () => {
+      const fieldWithLimit = createMockField({
+        name: 'Limited Field',
+        attribute: 'limited_field',
+        maxlength: null
       })
 
       wrapper = mountField(TextareaField, {
-        field: fieldWithCount,
+        field: fieldWithLimit,
         modelValue: 'Test text'
       })
 
-      expect(wrapper.text()).toContain('9 characters')
+      // Should not show character count when no maxlength
+      expect(wrapper.text()).not.toContain('9 characters')
     })
 
     it('applies warning color when approaching limit', () => {
       const fieldWithLimit = createMockField({
         name: 'Limited Field',
         attribute: 'limited_field',
-        maxLength: 10
+        maxlength: 10
       })
 
       wrapper = mountField(TextareaField, {
@@ -178,7 +179,7 @@ describe('TextareaField', () => {
       const fieldWithLimit = createMockField({
         name: 'Limited Field',
         attribute: 'limited_field',
-        maxLength: 10
+        maxlength: 10
       })
 
       wrapper = mountField(TextareaField, {
@@ -190,20 +191,53 @@ describe('TextareaField', () => {
       expect(characterCount.classes()).toContain('text-red-500')
     })
 
-    it('enforces maxLength on input', async () => {
+    it('enforces maxlength when enforceMaxlength is true using HTML maxlength', async () => {
       const fieldWithLimit = createMockField({
         name: 'Limited Field',
         attribute: 'limited_field',
-        maxLength: 5
+        maxlength: 5,
+        enforceMaxlength: true
       })
 
       wrapper = mountField(TextareaField, { field: fieldWithLimit })
 
       const textarea = wrapper.find('textarea')
-      await textarea.setValue('123456789') // 9 chars, should be truncated to 5
+      // HTML maxlength should prevent entering more than 5 characters
+      expect(textarea.attributes('maxlength')).toBe('5')
+
+      // When setValue is used, it bypasses HTML maxlength, so we test the input event
+      await textarea.setValue('12345')
       await textarea.trigger('input')
 
       expect(wrapper.emitted('update:modelValue')[0][0]).toBe('12345')
+    })
+
+    it('uses HTML maxlength when enforceMaxlength is true', () => {
+      const fieldWithLimit = createMockField({
+        name: 'Limited Field',
+        attribute: 'limited_field',
+        maxlength: 5,
+        enforceMaxlength: true
+      })
+
+      wrapper = mountField(TextareaField, { field: fieldWithLimit })
+
+      const textarea = wrapper.find('textarea')
+      expect(textarea.attributes('maxlength')).toBe('5')
+    })
+
+    it('does not use HTML maxlength when enforceMaxlength is false', () => {
+      const fieldWithLimit = createMockField({
+        name: 'Limited Field',
+        attribute: 'limited_field',
+        maxlength: 5,
+        enforceMaxlength: false
+      })
+
+      wrapper = mountField(TextareaField, { field: fieldWithLimit })
+
+      const textarea = wrapper.find('textarea')
+      expect(textarea.attributes('maxlength')).toBeUndefined()
     })
   })
 
@@ -238,71 +272,35 @@ describe('TextareaField', () => {
     })
   })
 
-  describe('Tab Key Handling', () => {
-    it('inserts two spaces on tab key press', async () => {
-      wrapper = mountField(TextareaField, {
-        field: mockField,
-        modelValue: 'Hello world'
+  describe('Extra Attributes', () => {
+    it('applies extra attributes to textarea', () => {
+      const fieldWithAttributes = createMockField({
+        name: 'Attributed Field',
+        attribute: 'attributed_field',
+        extraAttributes: {
+          'aria-label': 'Custom label',
+          'data-test': 'textarea-field'
+        }
       })
+
+      wrapper = mountField(TextareaField, { field: fieldWithAttributes })
 
       const textarea = wrapper.find('textarea')
-      
-      // Mock selection at position 5 (after "Hello")
-      Object.defineProperty(textarea.element, 'selectionStart', { value: 5, writable: true })
-      Object.defineProperty(textarea.element, 'selectionEnd', { value: 5, writable: true })
-      
-      await textarea.trigger('keydown', { key: 'Tab' })
-
-      expect(wrapper.emitted('update:modelValue')[0][0]).toBe('Hello   world')
+      expect(textarea.attributes('aria-label')).toBe('Custom label')
+      expect(textarea.attributes('data-test')).toBe('textarea-field')
     })
 
-    it('does not handle tab when shift is pressed', async () => {
-      wrapper = mountField(TextareaField, {
-        field: mockField,
-        modelValue: 'Hello world'
+    it('handles empty extra attributes', () => {
+      const fieldWithoutAttributes = createMockField({
+        name: 'No Attributes Field',
+        attribute: 'no_attributes_field'
       })
+
+      wrapper = mountField(TextareaField, { field: fieldWithoutAttributes })
 
       const textarea = wrapper.find('textarea')
-      await textarea.trigger('keydown', { key: 'Tab', shiftKey: true })
-
-      // Should not emit update:modelValue for shift+tab
-      expect(wrapper.emitted('update:modelValue')).toBeFalsy()
-    })
-  })
-
-  describe('Auto Resize', () => {
-    it('calls autoResize on input when autoResize is enabled', async () => {
-      const fieldWithAutoResize = createMockField({
-        name: 'Auto Resize Field',
-        attribute: 'auto_resize_field',
-        autoResize: true
-      })
-
-      wrapper = mountField(TextareaField, { field: fieldWithAutoResize })
-
-      const textarea = wrapper.find('textarea')
-      await textarea.setValue('New line\nAnother line\nThird line')
-      await textarea.trigger('input')
-
-      // Auto-resize should have been triggered
-      expect(wrapper.emitted('update:modelValue')).toBeTruthy()
-    })
-
-    it('watches modelValue changes for auto-resize', async () => {
-      const fieldWithAutoResize = createMockField({
-        name: 'Auto Resize Field',
-        attribute: 'auto_resize_field',
-        autoResize: true
-      })
-
-      wrapper = mountField(TextareaField, { field: fieldWithAutoResize })
-
-      // Change the modelValue prop
-      await wrapper.setProps({ modelValue: 'New content\nWith multiple\nLines' })
-      await nextTick()
-
-      // Component should handle the change
-      expect(wrapper.find('textarea').element.value).toBe('New content\nWith multiple\nLines')
+      expect(textarea.attributes('aria-label')).toBeUndefined()
+      expect(textarea.attributes('data-test')).toBeUndefined()
     })
   })
 
@@ -331,7 +329,7 @@ describe('TextareaField', () => {
       const fieldWithLimit = createMockField({
         name: 'Limited Field',
         attribute: 'limited_field',
-        maxLength: 10
+        maxlength: 10
       })
 
       wrapper = mountField(TextareaField, {

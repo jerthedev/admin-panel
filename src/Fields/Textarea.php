@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 /**
  * Textarea Field.
  *
- * A textarea input field with support for character limits and auto-resize.
+ * A textarea input field compatible with Nova's Textarea field API.
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
@@ -28,17 +28,12 @@ class Textarea extends Field
     /**
      * The maximum number of characters allowed.
      */
-    public ?int $maxLength = null;
+    public ?int $maxlength = null;
 
     /**
-     * Whether the textarea should auto-resize.
+     * Whether to enforce the maximum length client-side.
      */
-    public bool $autoResize = false;
-
-    /**
-     * Whether to show the character count.
-     */
-    public bool $showCharacterCount = false;
+    public bool $enforceMaxlength = false;
 
     /**
      * Whether the textarea should always be shown (not collapsed).
@@ -58,30 +53,19 @@ class Textarea extends Field
     /**
      * Set the maximum number of characters allowed.
      */
-    public function maxLength(int $maxLength): static
+    public function maxlength(int $maxlength): static
     {
-        $this->maxLength = $maxLength;
-        $this->showCharacterCount = true;
+        $this->maxlength = $maxlength;
 
         return $this;
     }
 
     /**
-     * Enable auto-resize for the textarea.
+     * Enforce the maximum length client-side.
      */
-    public function autoResize(bool $autoResize = true): static
+    public function enforceMaxlength(bool $enforceMaxlength = true): static
     {
-        $this->autoResize = $autoResize;
-
-        return $this;
-    }
-
-    /**
-     * Show or hide the character count.
-     */
-    public function showCharacterCount(bool $show = true): static
-    {
-        $this->showCharacterCount = $show;
+        $this->enforceMaxlength = $enforceMaxlength;
 
         return $this;
     }
@@ -123,9 +107,8 @@ class Textarea extends Field
     {
         return array_merge(parent::meta(), [
             'rows' => $this->rows,
-            'maxLength' => $this->maxLength,
-            'autoResize' => $this->autoResize,
-            'showCharacterCount' => $this->showCharacterCount,
+            'maxlength' => $this->maxlength,
+            'enforceMaxlength' => $this->enforceMaxlength,
             'alwaysShow' => $this->alwaysShow,
         ]);
     }

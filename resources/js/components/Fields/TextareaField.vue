@@ -15,15 +15,15 @@
         :value="modelValue"
         :placeholder="field.placeholder || field.name"
         :rows="field.rows || 4"
-        :maxlength="field.maxLength"
+        :maxlength="field.enforceMaxlength ? field.maxlength : null"
         :disabled="disabled"
         :readonly="readonly"
         class="admin-textarea w-full"
         :class="{ 'admin-input-dark': isDarkTheme }"
+        v-bind="extraAttributes"
         @input="handleInput"
         @focus="handleFocus"
         @blur="handleBlur"
-        @keydown="handleKeydown"
       ></textarea>
 
       <!-- Character count -->
@@ -32,13 +32,13 @@
         class="absolute bottom-2 right-2 text-xs pointer-events-none"
         :class="characterCountClasses"
       >
-        {{ characterCount }}{{ field.maxLength ? `/${field.maxLength}` : '' }}
+        {{ characterCount }}{{ (field.maxlength !== null && field.maxlength !== undefined) ? `/${field.maxlength}` : '' }}
       </div>
     </div>
 
     <!-- Character count (external) -->
     <div
-      v-if="showCharacterCount && !field.maxLength"
+      v-if="showCharacterCount && (field.maxlength === null || field.maxlength === undefined)"
       class="mt-1 text-right text-xs text-gray-500"
       :class="{ 'text-gray-400': isDarkTheme }"
     >
@@ -50,14 +50,13 @@
 <script setup>
 /**
  * TextareaField Component
- * 
- * Textarea input field with support for character limits, auto-resize,
- * and character count display.
- * 
+ *
+ * Textarea input field compatible with Nova's Textarea field API.
+ *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
 
-import { ref, computed, nextTick, onMounted, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useAdminStore } from '@/stores/admin'
 import BaseField from './BaseField.vue'
 
@@ -105,8 +104,12 @@ const fieldId = computed(() => {
   return `textarea-field-${props.field.attribute}-${Math.random().toString(36).substr(2, 9)}`
 })
 
+const extraAttributes = computed(() => {
+  return props.field.extraAttributes || {}
+})
+
 const showCharacterCount = computed(() => {
-  return props.field.showCharacterCount || props.field.maxLength
+  return props.field.maxlength !== null && props.field.maxlength !== undefined
 })
 
 const characterCount = computed(() => {
@@ -115,12 +118,12 @@ const characterCount = computed(() => {
 
 const characterCountClasses = computed(() => {
   const count = characterCount.value
-  const max = props.field.maxLength
-  
+  const max = props.field.maxlength
+
   if (!max) {
     return isDarkTheme.value ? 'text-gray-400' : 'text-gray-500'
   }
-  
+
   if (count > max * 0.9) {
     return isDarkTheme.value ? 'text-red-400' : 'text-red-500'
   } else if (count > max * 0.7) {
@@ -132,18 +135,15 @@ const characterCountClasses = computed(() => {
 // Methods
 const handleInput = (event) => {
   let value = event.target.value
-  
-  // Apply maxLength if specified
-  if (props.field.maxLength && value.length > props.field.maxLength) {
-    value = value.substring(0, props.field.maxLength)
-    event.target.value = value
+
+  // Apply maxlength if enforceMaxlength is enabled and not using HTML maxlength
+  if (props.field.enforceMaxlength && props.field.maxlength && !event.target.hasAttribute('maxlength')) {
+    if (value.length > props.field.maxlength) {
+      value = value.substring(0, props.field.maxlength)
+      event.target.value = value
+    }
   }
-  
-  // Auto-resize if enabled
-  if (props.field.autoResize) {
-    autoResize()
-  }
-  
+
   emit('update:modelValue', value)
   emit('change', value)
 }
@@ -156,51 +156,10 @@ const handleBlur = (event) => {
   emit('blur', event)
 }
 
-const handleKeydown = (event) => {
-  // Handle tab key for indentation
-  if (event.key === 'Tab' && !event.shiftKey) {
-    event.preventDefault()
-    const start = event.target.selectionStart
-    const end = event.target.selectionEnd
-    const value = event.target.value
-    
-    const newValue = value.substring(0, start) + '  ' + value.substring(end)
-    event.target.value = newValue
-    event.target.selectionStart = event.target.selectionEnd = start + 2
-    
-    emit('update:modelValue', newValue)
-    emit('change', newValue)
-  }
-}
-
-const autoResize = () => {
-  if (!textareaRef.value || !props.field.autoResize) return
-  
-  nextTick(() => {
-    const textarea = textareaRef.value
-    textarea.style.height = 'auto'
-    textarea.style.height = textarea.scrollHeight + 'px'
-  })
-}
-
 // Focus method for external use
 const focus = () => {
   textareaRef.value?.focus()
 }
-
-// Watch for value changes to trigger auto-resize
-watch(() => props.modelValue, () => {
-  if (props.field.autoResize) {
-    autoResize()
-  }
-})
-
-// Initialize auto-resize on mount
-onMounted(() => {
-  if (props.field.autoResize) {
-    autoResize()
-  }
-})
 
 defineExpose({
   focus
@@ -208,12 +167,6 @@ defineExpose({
 </script>
 
 <style scoped>
-/* Auto-resize textarea */
-textarea.auto-resize {
-  resize: none;
-  overflow: hidden;
-}
-
 /* Character count positioning */
 .relative textarea {
   padding-bottom: 2rem;

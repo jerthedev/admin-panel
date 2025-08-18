@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
  * Text Field.
  *
  * A basic text input field with support for suggestions and validation.
+ * 100% compatible with Laravel Nova Text Field API.
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
  */
@@ -28,17 +29,17 @@ class Text extends Field
     /**
      * The field's maximum length.
      */
-    public ?int $maxLength = null;
-
-    /**
-     * Whether the field should be displayed as a password.
-     */
-    public bool $asPassword = false;
+    public ?int $maxlength = null;
 
     /**
      * Whether to enforce maximum length client-side.
      */
     public bool $enforceMaxlength = false;
+
+    /**
+     * Whether the field content should be rendered as encoded HTML.
+     */
+    public bool $asEncodedHtml = false;
 
     /**
      * Set suggestions for the field.
@@ -51,21 +52,11 @@ class Text extends Field
     }
 
     /**
-     * Set the maximum length for the field.
+     * Set the maximum length for the field (Nova API compatible).
      */
-    public function maxLength(int $maxLength): static
+    public function maxlength(int $maxlength): static
     {
-        $this->maxLength = $maxLength;
-
-        return $this;
-    }
-
-    /**
-     * Display the field as a password input.
-     */
-    public function asPassword(bool $asPassword = true): static
-    {
-        $this->asPassword = $asPassword;
+        $this->maxlength = $maxlength;
 
         return $this;
     }
@@ -81,6 +72,16 @@ class Text extends Field
     }
 
     /**
+     * Render the field content as encoded HTML.
+     */
+    public function asEncodedHtml(bool $asEncodedHtml = true): static
+    {
+        $this->asEncodedHtml = $asEncodedHtml;
+
+        return $this;
+    }
+
+    /**
      * Hydrate the given attribute on the model based on the incoming request.
      */
     public function fill(Request $request, $model): void
@@ -90,8 +91,8 @@ class Text extends Field
         } elseif ($request->exists($this->attribute)) {
             $value = $request->input($this->attribute);
 
-            // Trim whitespace unless it's a password field
-            if (! $this->asPassword && is_string($value)) {
+            // Trim whitespace for text fields
+            if (is_string($value)) {
                 $value = trim($value);
             }
 
@@ -106,9 +107,9 @@ class Text extends Field
     {
         return array_merge(parent::meta(), [
             'suggestions' => $this->suggestions,
-            'maxLength' => $this->maxLength,
-            'asPassword' => $this->asPassword,
+            'maxlength' => $this->maxlength,
             'enforceMaxlength' => $this->enforceMaxlength,
+            'asEncodedHtml' => $this->asEncodedHtml,
         ]);
     }
 }

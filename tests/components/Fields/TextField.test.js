@@ -95,54 +95,69 @@ describe('TextField', () => {
     })
   })
 
-  describe('Password Mode', () => {
-    it('renders password input when asPassword is true', () => {
-      const passwordField = createMockField({
-        name: 'Password',
-        attribute: 'password',
-        asPassword: true
+  describe('Nova API Compatibility', () => {
+    it('supports maxlength property', () => {
+      const fieldWithMaxlength = createMockField({
+        name: 'Limited Field',
+        attribute: 'limited_field',
+        maxlength: 50
       })
 
-      wrapper = mountField(TextField, { field: passwordField })
+      wrapper = mountField(TextField, { field: fieldWithMaxlength })
 
-      const input = wrapper.find('input[type="password"]')
-      expect(input.exists()).toBe(true)
+      const input = wrapper.find('input')
+      expect(input.attributes('maxlength')).toBe('50')
     })
 
-    it('hides suggestions in password mode', () => {
-      const passwordField = createMockField({
-        name: 'Password',
-        attribute: 'password',
-        asPassword: true,
-        suggestions: ['suggestion1', 'suggestion2']
+    it('supports enforceMaxlength property', () => {
+      const fieldWithEnforceMaxlength = createMockField({
+        name: 'Limited Field',
+        attribute: 'limited_field',
+        maxlength: 10,
+        enforceMaxlength: true
       })
 
-      wrapper = mountField(TextField, { field: passwordField })
+      wrapper = mountField(TextField, { field: fieldWithEnforceMaxlength })
 
-      expect(wrapper.find('button').exists()).toBe(false)
+      // Character count should be shown when enforceMaxlength is true
+      expect(wrapper.text()).toContain('/10')
     })
 
-    it('hides character count in password mode', () => {
-      const passwordField = createMockField({
-        name: 'Password',
-        attribute: 'password',
-        asPassword: true,
-        maxLength: 20
+    it('does not show character count when enforceMaxlength is false', () => {
+      const fieldWithoutEnforce = createMockField({
+        name: 'Limited Field',
+        attribute: 'limited_field',
+        maxlength: 10,
+        enforceMaxlength: false
       })
 
-      wrapper = mountField(TextField, { field: passwordField })
+      wrapper = mountField(TextField, { field: fieldWithoutEnforce })
 
-      // Character count should not be shown in password mode
-      expect(wrapper.text()).not.toContain('/')
+      // Character count should not be shown when enforceMaxlength is false
+      expect(wrapper.text()).not.toContain('/10')
+    })
+
+    it('supports suggestions array', () => {
+      const fieldWithSuggestions = createMockField({
+        name: 'Field with Suggestions',
+        attribute: 'field_suggestions',
+        suggestions: ['option1', 'option2', 'option3']
+      })
+
+      wrapper = mountField(TextField, { field: fieldWithSuggestions })
+
+      const suggestionsButton = wrapper.find('button')
+      expect(suggestionsButton.exists()).toBe(true)
     })
   })
 
   describe('Character Limit', () => {
-    it('displays character count when maxLength is set', () => {
+    it('displays character count when maxlength and enforceMaxlength are set', () => {
       const fieldWithLimit = createMockField({
         name: 'Limited Field',
         attribute: 'limited_field',
-        maxLength: 50
+        maxlength: 50,
+        enforceMaxlength: true
       })
 
       wrapper = mountField(TextField, {
@@ -158,7 +173,8 @@ describe('TextField', () => {
       const fieldWithLimit = createMockField({
         name: 'Limited Field',
         attribute: 'limited_field',
-        maxLength: 10
+        maxlength: 10,
+        enforceMaxlength: true
       })
 
       wrapper = mountField(TextField, {
@@ -174,7 +190,8 @@ describe('TextField', () => {
       const fieldWithLimit = createMockField({
         name: 'Limited Field',
         attribute: 'limited_field',
-        maxLength: 10
+        maxlength: 10,
+        enforceMaxlength: true
       })
 
       wrapper = mountField(TextField, {
@@ -186,11 +203,12 @@ describe('TextField', () => {
       expect(characterCountSpan.classes()).toContain('text-red-500')
     })
 
-    it('enforces maxLength on input', async () => {
+    it('enforces maxlength on input when enforceMaxlength is true', async () => {
       const fieldWithLimit = createMockField({
         name: 'Limited Field',
         attribute: 'limited_field',
-        maxLength: 5
+        maxlength: 5,
+        enforceMaxlength: true
       })
 
       wrapper = mountField(TextField, { field: fieldWithLimit })
@@ -200,6 +218,23 @@ describe('TextField', () => {
       await input.trigger('input')
 
       expect(wrapper.emitted('update:modelValue')[0][0]).toBe('12345')
+    })
+
+    it('does not enforce maxlength when enforceMaxlength is false', async () => {
+      const fieldWithLimit = createMockField({
+        name: 'Limited Field',
+        attribute: 'limited_field',
+        maxlength: 5,
+        enforceMaxlength: false
+      })
+
+      wrapper = mountField(TextField, { field: fieldWithLimit })
+
+      const input = wrapper.find('input')
+      await input.setValue('123456789') // 9 chars, should not be truncated
+      await input.trigger('input')
+
+      expect(wrapper.emitted('update:modelValue')[0][0]).toBe('123456789')
     })
   })
 

@@ -9,19 +9,18 @@ use Illuminate\Support\Facades\Cache;
 use JTD\AdminPanel\Support\AdminPanel;
 
 /**
- * Resource Count Metric
+ * Resource Count Metric.
  *
  * Displays the total number of registered resources in the admin panel.
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
- * @package JTD\AdminPanel\Metrics
  */
 class ResourceCountMetric extends Metric
 {
     /**
      * The metric's display name.
      */
-    protected string $name = 'Admin Resources';
+    public string $name = 'Admin Resources';
 
     /**
      * The metric's icon.
@@ -52,6 +51,7 @@ class ResourceCountMetric extends Metric
 
         return Cache::remember($cacheKey, $this->getCacheTtl(), function () {
             $adminPanel = app(AdminPanel::class);
+
             return $adminPanel->getResources()->count();
         });
     }

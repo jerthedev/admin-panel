@@ -9,20 +9,19 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Active Users Metric
+ * Active Users Metric.
  *
  * Displays the number of users who have been active within a specified
  * time period (default: last 30 days).
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
- * @package JTD\AdminPanel\Metrics
  */
 class ActiveUsersMetric extends Metric
 {
     /**
      * The metric's display name.
      */
-    protected string $name = 'Active Users';
+    public string $name = 'Active Users';
 
     /**
      * The metric's icon.
@@ -70,14 +69,14 @@ class ActiveUsersMetric extends Metric
         $cacheKey = $this->getCacheKey($request, (string) $this->activityPeriod);
 
         return Cache::remember($cacheKey, $this->getCacheTtl(), function () {
-            if (!class_exists($this->userModel)) {
+            if (! class_exists($this->userModel)) {
                 return 0;
             }
 
             $cutoffDate = Carbon::now()->subDays($this->activityPeriod);
 
             // Try to use the activity column if it exists
-            $model = new $this->userModel();
+            $model = new $this->userModel;
             if ($model->getConnection()->getSchemaBuilder()->hasColumn($model->getTable(), $this->activityColumn)) {
                 return $this->userModel::where($this->activityColumn, '>=', $cutoffDate)->count();
             }
@@ -92,17 +91,17 @@ class ActiveUsersMetric extends Metric
      */
     protected function calculateForPeriod(Carbon $start, Carbon $end, Request $request): int
     {
-        $cacheKey = $this->getCacheKey($request, $start->format('Y-m-d') . '_' . $end->format('Y-m-d') . '_period');
+        $cacheKey = $this->getCacheKey($request, $start->format('Y-m-d').'_'.$end->format('Y-m-d').'_period');
 
-        return Cache::remember($cacheKey, $this->getCacheTtl(), function () use ($start, $end) {
-            if (!class_exists($this->userModel)) {
+        return Cache::remember($cacheKey, $this->getCacheTtl(), function () use ($end) {
+            if (! class_exists($this->userModel)) {
                 return 0;
             }
 
             $cutoffDate = $end->copy()->subDays($this->activityPeriod);
 
             // Try to use the activity column if it exists
-            $model = new $this->userModel();
+            $model = new $this->userModel;
             if ($model->getConnection()->getSchemaBuilder()->hasColumn($model->getTable(), $this->activityColumn)) {
                 return $this->userModel::where($this->activityColumn, '>=', $cutoffDate)
                     ->where($this->activityColumn, '<=', $end)
@@ -131,6 +130,7 @@ class ActiveUsersMetric extends Metric
     public function withActivityPeriod(int $days): static
     {
         $this->activityPeriod = $days;
+
         return $this;
     }
 
@@ -140,6 +140,7 @@ class ActiveUsersMetric extends Metric
     public function withUserModel(string $model): static
     {
         $this->userModel = $model;
+
         return $this;
     }
 
@@ -149,6 +150,7 @@ class ActiveUsersMetric extends Metric
     public function withActivityColumn(string $column): static
     {
         $this->activityColumn = $column;
+
         return $this;
     }
 }

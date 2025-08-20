@@ -8,6 +8,7 @@
 // Main Dashboard Components
 export { default as Dashboard } from './Dashboard.vue'
 export { default as DashboardCard } from './DashboardCard.vue'
+export { default as DashboardGrid } from './DashboardGrid.vue'
 export { default as DashboardSelector } from './DashboardSelector.vue'
 
 // Dashboard Card Components
@@ -20,6 +21,7 @@ export const registerDashboardComponents = (app) => {
   // Register main components
   app.component('Dashboard', () => import('./Dashboard.vue'))
   app.component('DashboardCard', () => import('./DashboardCard.vue'))
+  app.component('DashboardGrid', () => import('./DashboardGrid.vue'))
   app.component('DashboardSelector', () => import('./DashboardSelector.vue'))
   
   // Register card components

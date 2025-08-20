@@ -90,6 +90,113 @@ class AdminCard extends Card
 }
 ```
 
+### Enhanced Card with Styling Options
+
+```php
+class EnhancedCard extends Card
+{
+    public function __construct()
+    {
+        parent::__construct();
+
+        $this
+            ->withTitle('Enhanced Card')
+            ->withSubtitle('With advanced styling')
+            ->withIcon('ChartBarIcon')
+            ->withColor('primary')
+            ->withVariant('elevated')
+            ->refreshable()
+            ->refreshEvery(30)
+            ->withLabels(['status' => 'Active'])
+            ->withStyles([
+                'borderRadius' => '12px',
+                'boxShadow' => '0 8px 25px rgba(0, 0, 0, 0.1)'
+            ]);
+    }
+}
+```
+
+## Enhanced withMeta() System
+
+The enhanced `withMeta()` system provides fluent methods for common card configurations:
+
+### Color and Theming Methods
+
+```php
+// Theme colors
+$card->withColor('primary')      // Blue theme
+$card->withColor('success')      // Green theme
+$card->withColor('danger')       // Red theme
+$card->withColor('warning')      // Yellow theme
+
+// Custom colors
+$card->withBackgroundColor('#f0f0f0')
+$card->withTextColor('#333333')
+$card->withBorderColor('#e5e5e5')
+
+// Hex colors and Tailwind classes supported
+$card->withColor('#3B82F6')      // Hex color
+$card->withColor('blue-500')     // Tailwind class
+```
+
+### Content Methods
+
+```php
+$card->withTitle('Card Title')
+$card->withSubtitle('Card subtitle')
+$card->withDescription('Detailed description')
+$card->withIcon('ChartBarIcon')
+```
+
+### Styling Methods
+
+```php
+// Variants
+$card->withVariant('default')    // Default styling
+$card->withVariant('bordered')   // Bordered variant
+$card->withVariant('elevated')   // Elevated with shadow
+$card->withVariant('flat')       // Flat styling
+$card->withVariant('gradient')   // Gradient background
+
+// Sizes
+$card->withSize('sm')           // Small
+$card->withSize('md')           // Medium (default)
+$card->withSize('lg')           // Large
+$card->withSize('xl')           // Extra large
+$card->withSize('full')         // Full width
+
+// Custom styling
+$card->withClasses(['custom-class', 'highlighted'])
+$card->withStyles([
+    'backgroundColor' => '#f8fafc',
+    'borderRadius' => '8px',
+    'padding' => '20px'
+])
+```
+
+### Interactive Methods
+
+```php
+$card->refreshable()            // Enable refresh
+$card->refreshEvery(30)         // Refresh every 30 seconds
+$card->withLabels([
+    'status' => 'Active',
+    'priority' => 'High'
+])
+```
+
+### Validation
+
+All meta data is automatically validated:
+
+- **Colors**: Hex colors, Tailwind classes, and theme colors
+- **Refresh intervals**: 1-3600 seconds
+- **Variants**: Valid variant names only
+- **Sizes**: Valid size names only
+- **Labels**: String key-value pairs only
+- **Styles**: Valid CSS properties only
+```
+
 ### Card with Complex Meta Data
 
 ```php

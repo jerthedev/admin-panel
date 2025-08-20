@@ -1,5 +1,5 @@
 <template>
-  <div :class="cardClasses" @click="handleClick">
+  <div :class="cardClasses" :style="cardStyles" @click="handleClick">
     <!-- Header -->
     <div v-if="hasHeader" :class="headerClasses">
       <div class="flex items-center justify-between">
@@ -133,7 +133,8 @@ const variantClasses = {
   default: 'bg-white shadow-sm border border-gray-200 dark:bg-gray-800 dark:border-gray-700',
   bordered: 'bg-white border-2 border-gray-200 dark:bg-gray-800 dark:border-gray-600',
   elevated: 'bg-white shadow-lg border border-gray-100 dark:bg-gray-800 dark:border-gray-700',
-  flat: 'bg-gray-50 dark:bg-gray-900'
+  flat: 'bg-gray-50 dark:bg-gray-900',
+  gradient: 'bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 border border-blue-200 dark:border-gray-700'
 }
 
 const paddingClasses = {
@@ -156,9 +157,19 @@ const roundedClasses = {
 const cardClasses = computed(() => {
   const classes = [
     'relative overflow-hidden transition-all duration-200',
-    variantClasses[props.variant],
+    variantClasses[props.card.meta?.variant || props.variant],
     roundedClasses[props.rounded]
   ]
+
+  // Apply custom classes from meta
+  if (props.card.meta?.classes) {
+    classes.push(...props.card.meta.classes)
+  }
+
+  // Apply color-based classes
+  if (props.card.meta?.color) {
+    classes.push(getColorClasses(props.card.meta.color))
+  }
 
   if (props.hoverable) {
     classes.push('hover:shadow-md dark:hover:shadow-gray-900/20')
@@ -173,6 +184,32 @@ const cardClasses = computed(() => {
   }
 
   return classes.join(' ')
+})
+
+const cardStyles = computed(() => {
+  const styles = {}
+
+  // Apply background color from meta
+  if (props.card.meta?.backgroundColor) {
+    styles.backgroundColor = props.card.meta.backgroundColor
+  }
+
+  // Apply text color from meta
+  if (props.card.meta?.textColor) {
+    styles.color = props.card.meta.textColor
+  }
+
+  // Apply border color from meta
+  if (props.card.meta?.borderColor) {
+    styles.borderColor = props.card.meta.borderColor
+  }
+
+  // Apply custom styles from meta
+  if (props.card.meta?.styles) {
+    Object.assign(styles, props.card.meta.styles)
+  }
+
+  return styles
 })
 
 const headerClasses = computed(() => {
@@ -241,6 +278,30 @@ const handleRefresh = () => {
   if (props.refreshable && !props.loading) {
     emit('refresh', props.card)
   }
+}
+
+const getColorClasses = (color) => {
+  // Handle predefined theme colors
+  const themeColors = {
+    primary: 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700',
+    secondary: 'bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-600',
+    success: 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-700',
+    danger: 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-700',
+    warning: 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-700',
+    info: 'bg-cyan-50 border-cyan-200 dark:bg-cyan-900/20 dark:border-cyan-700'
+  }
+
+  if (themeColors[color]) {
+    return themeColors[color]
+  }
+
+  // Handle Tailwind color classes
+  if (color.includes('-')) {
+    const [colorName, shade] = color.split('-')
+    return `bg-${colorName}-50 border-${colorName}-200 dark:bg-${colorName}-900/20 dark:border-${colorName}-700`
+  }
+
+  return ''
 }
 
 // Provide methods to parent components

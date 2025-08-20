@@ -9,20 +9,19 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
- * System Health Metric
+ * System Health Metric.
  *
  * Displays the overall system health as a percentage based on
  * various system checks (database, cache, storage, etc.).
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
- * @package JTD\AdminPanel\Metrics
  */
 class SystemHealthMetric extends Metric
 {
     /**
      * The metric's display name.
      */
-    protected string $name = 'System Health';
+    public string $name = 'System Health';
 
     /**
      * The metric's icon.
@@ -73,6 +72,7 @@ class SystemHealthMetric extends Metric
     {
         try {
             DB::connection()->getPdo();
+
             return 1;
         } catch (\Exception $e) {
             return 0;
@@ -85,7 +85,7 @@ class SystemHealthMetric extends Metric
     protected function checkCache(): int
     {
         try {
-            $testKey = 'admin_panel_health_check_' . time();
+            $testKey = 'admin_panel_health_check_'.time();
             $testValue = 'test';
 
             Cache::put($testKey, $testValue, 60);
@@ -173,7 +173,7 @@ class SystemHealthMetric extends Metric
         // Only show to admin users
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 

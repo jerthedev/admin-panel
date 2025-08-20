@@ -9,20 +9,19 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * User Count Metric
+ * User Count Metric.
  *
  * Displays the total number of users in the system with trend analysis
  * comparing to the previous period.
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
- * @package JTD\AdminPanel\Metrics
  */
 class UserCountMetric extends Metric
 {
     /**
      * The metric's display name.
      */
-    protected string $name = 'Total Users';
+    public string $name = 'Total Users';
 
     /**
      * The metric's icon.
@@ -60,7 +59,7 @@ class UserCountMetric extends Metric
         $cacheKey = $this->getCacheKey($request);
 
         return Cache::remember($cacheKey, $this->getCacheTtl(), function () {
-            if (!class_exists($this->userModel)) {
+            if (! class_exists($this->userModel)) {
                 return 0;
             }
 
@@ -73,10 +72,10 @@ class UserCountMetric extends Metric
      */
     protected function calculateForPeriod(Carbon $start, Carbon $end, Request $request): int
     {
-        $cacheKey = $this->getCacheKey($request, $start->format('Y-m-d') . '_' . $end->format('Y-m-d'));
+        $cacheKey = $this->getCacheKey($request, $start->format('Y-m-d').'_'.$end->format('Y-m-d'));
 
-        return Cache::remember($cacheKey, $this->getCacheTtl(), function () use ($start, $end) {
-            if (!class_exists($this->userModel)) {
+        return Cache::remember($cacheKey, $this->getCacheTtl(), function () use ($end) {
+            if (! class_exists($this->userModel)) {
                 return 0;
             }
 
@@ -99,6 +98,7 @@ class UserCountMetric extends Metric
     public function withUserModel(string $model): static
     {
         $this->userModel = $model;
+
         return $this;
     }
 }

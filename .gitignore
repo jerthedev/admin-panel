@@ -42,6 +42,8 @@ pids
 
 # Coverage directory used by tools like istanbul
 coverage/
+coverage-*.xml
+coverage-*/
 *.lcov
 
 # PHPUnit
@@ -50,6 +52,7 @@ coverage/
 /coverage
 /coverage-html
 /coverage.*
+/dashboard-coverage*
 
 # Temporary files
 *.tmp

@@ -41,6 +41,11 @@ class Markdown extends Field
      */
     public bool $autoResize = true;
 
+    /**
+     * The placeholder text for the editor.
+     */
+    public ?string $editorPlaceholder = null;
+
 
 
     /**
@@ -104,7 +109,15 @@ class Markdown extends Field
         return $this;
     }
 
+    /**
+     * Set the placeholder text for the editor.
+     */
+    public function placeholder(string $placeholder): static
+    {
+        $this->editorPlaceholder = $placeholder;
 
+        return $this;
+    }
 
     /**
      * Set the maximum length for the content.
@@ -145,6 +158,7 @@ class Markdown extends Field
             'enableSlashCommands' => $this->enableSlashCommands,
             'height' => $this->height,
             'autoResize' => $this->autoResize,
+            'editorPlaceholder' => $this->editorPlaceholder,
         ]);
     }
 }

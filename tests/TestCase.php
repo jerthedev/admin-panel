@@ -8,13 +8,12 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use Inertia\ServiceProvider as InertiaServiceProvider;
-use Inertia\Testing\AssertableInertia;
 use JTD\AdminPanel\AdminPanelServiceProvider;
 use JTD\AdminPanel\Tests\Fixtures\User;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 /**
- * Base Test Case
+ * Base Test Case.
  *
  * Base test case for all admin panel tests providing common
  * setup, utilities, and helper methods.
@@ -30,7 +29,7 @@ abstract class TestCase extends Orchestra
         parent::setUp();
 
         Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'JTD\\AdminPanel\\Tests\\Factories\\'.class_basename($modelName).'Factory'
+            fn (string $modelName) => 'JTD\\AdminPanel\\Tests\\Factories\\'.class_basename($modelName).'Factory',
         );
 
         $this->setUpDatabase();
@@ -288,6 +287,26 @@ abstract class TestCase extends Orchestra
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
+
+        // Create media table for Spatie Media Library
+        Schema::create('media', function ($table) {
+            $table->bigIncrements('id');
+            $table->morphs('model');
+            $table->uuid('uuid')->nullable()->unique();
+            $table->string('collection_name');
+            $table->string('name');
+            $table->string('file_name');
+            $table->string('mime_type')->nullable();
+            $table->string('disk');
+            $table->string('conversions_disk')->nullable();
+            $table->unsignedBigInteger('size');
+            $table->json('manipulations');
+            $table->json('custom_properties');
+            $table->json('generated_conversions');
+            $table->json('responsive_images');
+            $table->unsignedInteger('order_column')->nullable()->index();
+            $table->nullableTimestamps();
+        });
     }
 
     protected function createAdminUser(array $attributes = []): User
@@ -350,21 +369,21 @@ abstract class TestCase extends Orchestra
 
     protected function assertInertiaComponent(string $component): static
     {
-        $this->assertInertia(fn (AssertableInertia $page) => $page->component($component));
+        $this->fail('assertInertia method not implemented - use direct response data access');
 
         return $this;
     }
 
     protected function assertInertiaHas(string $key): static
     {
-        $this->assertInertia(fn (AssertableInertia $page) => $page->has($key));
+        $this->fail('assertInertia method not implemented - use direct response data access');
 
         return $this;
     }
 
     protected function assertInertiaCount(string $key, int $count): static
     {
-        $this->assertInertia(fn (AssertableInertia $page) => $page->count($key, $count));
+        $this->fail('assertInertia method not implemented - use direct response data access');
 
         return $this;
     }
@@ -374,7 +393,7 @@ abstract class TestCase extends Orchestra
         $this->assertThat(
             $haystack,
             $this->stringContains($needle),
-            $message
+            $message,
         );
     }
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\E2E\Fields;
+namespace JTD\AdminPanel\Tests\E2E\Fields;
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;

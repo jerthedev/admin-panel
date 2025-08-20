@@ -84,6 +84,11 @@ class MenuSection implements JsonSerializable
     protected ?string $stateId = null;
 
     /**
+     * Additional metadata for the section.
+     */
+    protected array $meta = [];
+
+    /**
      * Create a new menu section instance.
      */
     public function __construct(string $name, array $items = [])
@@ -101,14 +106,29 @@ class MenuSection implements JsonSerializable
     }
 
     /**
-     * Create a dashboard section.
+     * Create a dashboard menu section.
+     *
+     * @param string|\JTD\AdminPanel\Dashboards\Dashboard $dashboard Dashboard class name or instance
      */
-    public static function dashboard(string $dashboard): static
+    public static function dashboard(string|\JTD\AdminPanel\Dashboards\Dashboard $dashboard): static
     {
-        $path = '/admin/dashboards/' . $dashboard;
+        if (is_string($dashboard)) {
+            $dashboardInstance = app($dashboard);
+        } else {
+            $dashboardInstance = $dashboard;
+        }
 
-        return static::make('Dashboard')
-            ->path($path);
+        $request = request();
+        $url = $dashboardInstance->uriKey() === 'main'
+            ? route('admin-panel.dashboard')
+            : route('admin-panel.dashboards.show', ['uriKey' => $dashboardInstance->uriKey()]);
+
+        return static::make($dashboardInstance->name())
+            ->path($url)
+            ->icon($dashboardInstance->icon() ?? 'chart-bar')
+            ->meta('dashboard', true)
+            ->meta('dashboard_uri_key', $dashboardInstance->uriKey())
+            ->canSee(fn($req) => $dashboardInstance->authorizedToSee($req));
     }
 
     /**
@@ -347,6 +367,16 @@ class MenuSection implements JsonSerializable
         }
 
         return true;
+    }
+
+    /**
+     * Set a single metadata value.
+     */
+    public function meta(string $key, $value): static
+    {
+        $this->meta[$key] = $value;
+
+        return $this;
     }
 
     /**

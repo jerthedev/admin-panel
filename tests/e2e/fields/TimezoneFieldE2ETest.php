@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\E2E\Fields;
+namespace JTD\AdminPanel\Tests\E2E\Fields;
 
 use DateTimeZone;
 use Illuminate\Http\Request;

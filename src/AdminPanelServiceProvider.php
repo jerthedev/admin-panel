@@ -13,6 +13,7 @@ use JTD\AdminPanel\Console\Commands\CreateUserCommand;
 use JTD\AdminPanel\Console\Commands\DoctorCommand;
 use JTD\AdminPanel\Console\Commands\InstallCommand;
 use JTD\AdminPanel\Console\Commands\ListResourcesCommand;
+use JTD\AdminPanel\Console\Commands\MakeDashboardCommand;
 use JTD\AdminPanel\Console\Commands\MakeFieldCommand;
 use JTD\AdminPanel\Console\Commands\MakePageCommand;
 use JTD\AdminPanel\Console\Commands\MakeResourceCommand;
@@ -25,16 +26,14 @@ use JTD\AdminPanel\Http\Middleware\AdminAuthorize;
 use JTD\AdminPanel\Http\Middleware\HandleAdminInertiaRequests;
 use JTD\AdminPanel\Http\Middleware\TestOnlyMiddleware;
 use JTD\AdminPanel\Support\AdminPanel;
-use Tightenco\Ziggy\ZiggyServiceProvider;
 
 /**
- * AdminPanel Service Provider
+ * AdminPanel Service Provider.
  *
  * Handles package registration, configuration publishing, routes,
  * middleware, and Inertia.js integration for the admin panel.
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
- * @package JTD\AdminPanel
  */
 class AdminPanelServiceProvider extends ServiceProvider
 {
@@ -44,20 +43,23 @@ class AdminPanelServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(
-            __DIR__ . '/../config/admin-panel.php',
-            'admin-panel'
+            __DIR__.'/../config/admin-panel.php',
+            'admin-panel',
         );
 
         $this->app->singleton(AdminPanel::class, function ($app) {
-            return new AdminPanel();
+            return new AdminPanel;
         });
 
         $this->app->alias(AdminPanel::class, 'admin-panel');
 
         // Register the CustomPageManifestRegistry singleton
         $this->app->singleton(\JTD\AdminPanel\Support\CustomPageManifestRegistry::class, function ($app) {
-            return new \JTD\AdminPanel\Support\CustomPageManifestRegistry();
+            return new \JTD\AdminPanel\Support\CustomPageManifestRegistry;
         });
+
+        // Register dashboard menu service provider
+        $this->app->register(\JTD\AdminPanel\Providers\DashboardMenuServiceProvider::class);
 
         // Ziggy will be auto-discovered if installed
     }
@@ -75,6 +77,38 @@ class AdminPanelServiceProvider extends ServiceProvider
         $this->bootViews();
         $this->bootPolicies();
         $this->bootMediaLibrary();
+        $this->bootDashboards();
+    }
+
+    /**
+     * Get the dashboards that should be registered.
+     *
+     * Nova v5 compatible method for dashboard registration.
+     * Override this method in your AppServiceProvider to register dashboards.
+     *
+     * @return array<int, \JTD\AdminPanel\Dashboards\Dashboard>
+     */
+    protected function dashboards(): array
+    {
+        return [];
+    }
+
+    /**
+     * Boot dashboard registration.
+     */
+    protected function bootDashboards(): void
+    {
+        // Register dashboards from the dashboards() method
+        $dashboards = $this->dashboards();
+        if (! empty($dashboards)) {
+            AdminPanel::dashboards($dashboards);
+        }
+
+        // Auto-register dashboards from configuration
+        $configDashboards = config('admin-panel.dashboard.dashboards', []);
+        if (! empty($configDashboards)) {
+            AdminPanel::dashboards($configDashboards);
+        }
     }
 
     /**
@@ -85,37 +119,37 @@ class AdminPanelServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             // Publish configuration
             $this->publishes([
-                __DIR__ . '/../config/admin-panel.php' => config_path('admin-panel.php'),
+                __DIR__.'/../config/admin-panel.php' => config_path('admin-panel.php'),
             ], 'admin-panel-config');
 
             // Publish pre-built assets (primary method for self-contained package)
             $this->publishes([
-                __DIR__ . '/../public/build' => public_path('vendor/admin-panel'),
+                __DIR__.'/../public/build' => public_path('vendor/admin-panel'),
             ], 'admin-panel-assets');
 
             // Publish source assets (optional, for development/customization)
             $this->publishes([
-                __DIR__ . '/../resources/js' => resource_path('js/vendor/admin-panel'),
-                __DIR__ . '/../resources/css' => resource_path('css/vendor/admin-panel'),
+                __DIR__.'/../resources/js' => resource_path('js/vendor/admin-panel'),
+                __DIR__.'/../resources/css' => resource_path('css/vendor/admin-panel'),
             ], 'admin-panel-source');
 
             // Publish views
             $this->publishes([
-                __DIR__ . '/../resources/views' => resource_path('views/vendor/admin-panel'),
+                __DIR__.'/../resources/views' => resource_path('views/vendor/admin-panel'),
             ], 'admin-panel-views');
 
             // Publish migrations
             $this->publishes([
-                __DIR__ . '/../database/migrations' => database_path('migrations'),
+                __DIR__.'/../database/migrations' => database_path('migrations'),
             ], 'admin-panel-migrations');
 
             // Publish everything
             $this->publishes([
-                __DIR__ . '/../config/admin-panel.php' => config_path('admin-panel.php'),
-                __DIR__ . '/../resources/js' => resource_path('js/vendor/admin-panel'),
-                __DIR__ . '/../resources/css' => resource_path('css/vendor/admin-panel'),
-                __DIR__ . '/../resources/views' => resource_path('views/vendor/admin-panel'),
-                __DIR__ . '/../database/migrations' => database_path('migrations'),
+                __DIR__.'/../config/admin-panel.php' => config_path('admin-panel.php'),
+                __DIR__.'/../resources/js' => resource_path('js/vendor/admin-panel'),
+                __DIR__.'/../resources/css' => resource_path('css/vendor/admin-panel'),
+                __DIR__.'/../resources/views' => resource_path('views/vendor/admin-panel'),
+                __DIR__.'/../database/migrations' => database_path('migrations'),
             ], 'admin-panel');
         }
     }
@@ -131,16 +165,16 @@ class AdminPanelServiceProvider extends ServiceProvider
             'as' => 'admin-panel.',
             'middleware' => ['web'], // Only web middleware globally
         ], function () {
-            $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
+            $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
         });
 
         // API routes - only apply api middleware globally
         Route::group([
-            'prefix' => config('admin-panel.path', 'admin') . '/api',
+            'prefix' => config('admin-panel.path', 'admin').'/api',
             'as' => 'admin-panel.api.',
             'middleware' => ['api'], // Only api middleware globally
         ], function () {
-            $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
+            $this->loadRoutesFrom(__DIR__.'/../routes/api.php');
         });
 
         // Test routes - only loaded in testing environments
@@ -160,11 +194,11 @@ class AdminPanelServiceProvider extends ServiceProvider
         // Only load test routes in testing environments
         if ($this->isTestingEnvironment()) {
             Route::group([
-                'prefix' => config('admin-panel.path', 'admin') . '/api',
+                'prefix' => config('admin-panel.path', 'admin').'/api',
                 'as' => 'admin-panel.api.',
                 'middleware' => ['api'],
             ], function () {
-                $this->loadRoutesFrom(__DIR__ . '/../routes/test.php');
+                $this->loadRoutesFrom(__DIR__.'/../routes/test.php');
             });
         }
     }
@@ -222,6 +256,7 @@ class AdminPanelServiceProvider extends ServiceProvider
                 DoctorCommand::class,
                 InstallCommand::class,
                 ListResourcesCommand::class,
+                MakeDashboardCommand::class,
                 MakeFieldCommand::class,
                 MakePageCommand::class,
                 MakeResourceCommand::class,
@@ -262,7 +297,7 @@ class AdminPanelServiceProvider extends ServiceProvider
      */
     protected function bootViews(): void
     {
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'admin-panel');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'admin-panel');
     }
 
     /**
@@ -328,7 +363,7 @@ class AdminPanelServiceProvider extends ServiceProvider
         $defaultDisk = config('admin-panel.media_library.default_disk', 'public');
 
         // Ensure the disk exists in filesystem config
-        if (!config("filesystems.disks.{$defaultDisk}")) {
+        if (! config("filesystems.disks.{$defaultDisk}")) {
             // Log warning but don't fail - let the application handle this
             if (app()->hasDebugModeEnabled()) {
                 logger()->warning("Admin Panel: Media Library disk '{$defaultDisk}' not found in filesystem configuration");

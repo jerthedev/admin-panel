@@ -52,8 +52,9 @@ Route::middleware(['admin.inertia'])->group(function () {
 
 // Authenticated routes
 Route::middleware(['admin.inertia', 'admin.auth'])->group(function () {
-    // Dashboard
+    // Dashboard routes
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboards/{uriKey}', [DashboardController::class, 'showByUriKey'])->name('dashboards.show');
 
     // Authentication
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

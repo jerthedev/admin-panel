@@ -1,0 +1,506 @@
+/**
+ * Responsive Design & Mobile Support
+ * 
+ * Comprehensive responsive styles for dashboard components
+ * with mobile-first approach and touch-friendly interactions.
+ */
+
+/* ==========================================================================
+   Mobile-First Base Styles
+   ========================================================================== */
+
+/* Base mobile styles (320px and up) */
+.dashboard-container {
+  padding: 0.5rem;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.dashboard-header {
+  padding: 0.75rem 0.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dashboard-content {
+  padding: 0.5rem;
+  margin-bottom: 4rem; /* Space for mobile navigation */
+}
+
+/* ==========================================================================
+   Mobile Navigation
+   ========================================================================== */
+
+.mobile-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  padding: 0.5rem;
+  z-index: 100;
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-nav-items {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+  min-width: 44px; /* Touch target minimum */
+  min-height: 44px;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  color: #6b7280;
+}
+
+.mobile-nav-item:hover,
+.mobile-nav-item:focus {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.mobile-nav-item.active {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+
+.mobile-nav-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.mobile-nav-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* ==========================================================================
+   Touch-Friendly Components
+   ========================================================================== */
+
+/* Minimum touch target sizes */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Enhanced button styles for mobile */
+.btn-mobile {
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border-radius: 0.5rem;
+  min-height: 44px;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.btn-mobile:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}
+
+/* Card components for mobile */
+.dashboard-card-mobile {
+  margin-bottom: 1rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  background: white;
+  overflow: hidden;
+}
+
+.dashboard-card-mobile:active {
+  transform: scale(0.99);
+  transition: transform 0.1s ease;
+}
+
+.dashboard-card-header-mobile {
+  padding: 1rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.dashboard-card-content-mobile {
+  padding: 1rem;
+}
+
+/* ==========================================================================
+   Responsive Grid System
+   ========================================================================== */
+
+.dashboard-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr; /* Single column on mobile */
+}
+
+.dashboard-grid-item {
+  min-width: 0; /* Prevent overflow */
+}
+
+/* ==========================================================================
+   Mobile-Optimized Forms
+   ========================================================================== */
+
+.form-mobile {
+  padding: 1rem;
+}
+
+.form-group-mobile {
+  margin-bottom: 1.5rem;
+}
+
+.form-label-mobile {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.form-input-mobile {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem; /* Prevent zoom on iOS */
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background: white;
+  min-height: 44px;
+}
+
+.form-input-mobile:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* ==========================================================================
+   Mobile Dashboard Selector
+   ========================================================================== */
+
+.dashboard-selector-mobile {
+  position: relative;
+  width: 100%;
+}
+
+.dashboard-selector-button-mobile {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  text-align: left;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dashboard-selector-dropdown-mobile {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  max-height: 60vh;
+  overflow-y: auto;
+  margin-top: 0.25rem;
+}
+
+.dashboard-selector-item-mobile {
+  padding: 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-selector-item-mobile:hover,
+.dashboard-selector-item-mobile:focus {
+  background-color: #f9fafb;
+}
+
+.dashboard-selector-item-mobile:last-child {
+  border-bottom: none;
+}
+
+/* ==========================================================================
+   Swipe Gestures
+   ========================================================================== */
+
+.swipeable {
+  touch-action: pan-y;
+  position: relative;
+  overflow: hidden;
+}
+
+.swipe-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  background: #ef4444;
+  color: white;
+  padding: 0 1rem;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.swipeable.swiped .swipe-actions {
+  transform: translateX(0);
+}
+
+/* ==========================================================================
+   Pull-to-Refresh
+   ========================================================================== */
+
+.pull-to-refresh {
+  position: relative;
+  overflow: hidden;
+}
+
+.pull-to-refresh-indicator {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.pull-to-refresh.pulling .pull-to-refresh-indicator {
+  top: 10px;
+}
+
+.pull-to-refresh.refreshing .pull-to-refresh-indicator {
+  top: 10px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: translateX(-50%) rotate(0deg); }
+  to { transform: translateX(-50%) rotate(360deg); }
+}
+
+/* ==========================================================================
+   Tablet Styles (768px and up)
+   ========================================================================== */
+
+@media (min-width: 768px) {
+  .dashboard-container {
+    padding: 1rem;
+  }
+
+  .dashboard-content {
+    padding: 1rem;
+    margin-bottom: 0;
+  }
+
+  .mobile-nav {
+    display: none;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  .dashboard-card-mobile {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-mobile {
+    padding: 1.5rem;
+  }
+
+  .dashboard-selector-dropdown-mobile {
+    max-height: 50vh;
+  }
+}
+
+/* ==========================================================================
+   Desktop Styles (1024px and up)
+   ========================================================================== */
+
+@media (min-width: 1024px) {
+  .dashboard-container {
+    padding: 1.5rem;
+  }
+
+  .dashboard-content {
+    padding: 1.5rem;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+
+  .dashboard-card-mobile {
+    margin-bottom: 2rem;
+  }
+
+  .form-mobile {
+    padding: 2rem;
+  }
+}
+
+/* ==========================================================================
+   Large Desktop Styles (1280px and up)
+   ========================================================================== */
+
+@media (min-width: 1280px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ==========================================================================
+   Extra Large Desktop Styles (1536px and up)
+   ========================================================================== */
+
+@media (min-width: 1536px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* ==========================================================================
+   High DPI / Retina Displays
+   ========================================================================== */
+
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .dashboard-card-mobile {
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* ==========================================================================
+   Dark Mode Support
+   ========================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  .dashboard-header {
+    background: rgba(17, 24, 39, 0.95);
+    border-bottom-color: #374151;
+  }
+
+  .mobile-nav {
+    background: #1f2937;
+    border-top-color: #374151;
+  }
+
+  .mobile-nav-item {
+    color: #9ca3af;
+  }
+
+  .mobile-nav-item:hover,
+  .mobile-nav-item:focus {
+    background-color: #374151;
+    color: #d1d5db;
+  }
+
+  .mobile-nav-item.active {
+    background-color: #1e40af;
+    color: #dbeafe;
+  }
+
+  .dashboard-card-mobile {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .form-input-mobile {
+    background: #1f2937;
+    border-color: #374151;
+    color: #f9fafb;
+  }
+
+  .dashboard-selector-button-mobile,
+  .dashboard-selector-dropdown-mobile {
+    background: #1f2937;
+    border-color: #374151;
+    color: #f9fafb;
+  }
+
+  .dashboard-selector-item-mobile:hover,
+  .dashboard-selector-item-mobile:focus {
+    background-color: #374151;
+  }
+}
+
+/* ==========================================================================
+   Reduced Motion Support
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-nav-item,
+  .btn-mobile,
+  .dashboard-card-mobile,
+  .pull-to-refresh-indicator {
+    transition: none;
+  }
+
+  .pull-to-refresh.refreshing .pull-to-refresh-indicator {
+    animation: none;
+  }
+
+  .btn-mobile:active,
+  .dashboard-card-mobile:active {
+    transform: none;
+  }
+}
+
+/* ==========================================================================
+   Print Styles
+   ========================================================================== */
+
+@media print {
+  .mobile-nav,
+  .dashboard-selector-mobile,
+  .pull-to-refresh-indicator,
+  .swipe-actions {
+    display: none !important;
+  }
+
+  .dashboard-container {
+    padding: 0;
+  }
+
+  .dashboard-card-mobile {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #e5e7eb;
+  }
+}

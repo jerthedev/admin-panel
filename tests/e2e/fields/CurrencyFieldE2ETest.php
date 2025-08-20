@@ -1,10 +1,10 @@
 <?php
 
-namespace Tests\E2E\Fields;
+namespace JTD\AdminPanel\Tests\E2E\Fields;
 
 use App\Fields\Currency;
 use Illuminate\Http\Request;
-use Tests\TestCase;
+use JTD\AdminPanel\Tests\TestCase;
 
 /**
  * End-to-end tests for Currency field covering the complete flow:

@@ -1,10 +1,10 @@
 <?php
 
-namespace Tests\Integration\Fields;
+namespace JTD\AdminPanel\Tests\Integration\Fields;
 
 use App\Fields\Currency;
 use Illuminate\Http\Request;
-use Tests\TestCase;
+use JTD\AdminPanel\Tests\TestCase;
 
 class CurrencyFieldIntegrationTest extends TestCase
 {

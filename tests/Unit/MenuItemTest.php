@@ -269,10 +269,10 @@ class MenuItemTest extends TestCase
 
     public function test_menu_item_dashboard_factory(): void
     {
-        $menuItem = MenuItem::dashboard('MainDashboard');
+        $menuItem = MenuItem::dashboard(\JTD\AdminPanel\Tests\Fixtures\MainDashboard::class);
 
-        $this->assertEquals('MainDashboard', $menuItem->label);
-        $this->assertEquals('/admin/dashboards/MainDashboard', $menuItem->url);
+        $this->assertEquals('Main Dashboard', $menuItem->label);
+        $this->assertEquals('http://localhost/admin', $menuItem->url);
     }
 
     public function test_menu_item_external_link_factory(): void

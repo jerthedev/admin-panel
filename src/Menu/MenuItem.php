@@ -10,13 +10,12 @@ use Illuminate\Support\Traits\Conditionable;
 use JsonSerializable;
 
 /**
- * MenuItem Class
+ * MenuItem Class.
  *
  * Represents a customizable menu item with fluent API for badges, icons,
  * conditional visibility, and other menu properties.
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
- * @package JTD\AdminPanel\Menu
  */
 class MenuItem implements JsonSerializable
 {
@@ -122,13 +121,33 @@ class MenuItem implements JsonSerializable
 
     /**
      * Create a dashboard menu item.
+     *
+     * @param string|\JTD\AdminPanel\Dashboards\Dashboard $dashboard Dashboard class name or instance
      */
-    public static function dashboard(string $dashboard): static
+    public static function dashboard(string|\JTD\AdminPanel\Dashboards\Dashboard $dashboard): static
     {
-        $label = class_basename($dashboard);
-        $url = "/admin/dashboards/{$dashboard}";
+        if (is_string($dashboard)) {
+            // Legacy support: dashboard class name
+            $dashboardInstance = app($dashboard);
+            $request = request();
 
-        return static::make($label, $url);
+            return $dashboardInstance->menu($request)
+                ->meta('dashboard', true)
+                ->meta('dashboard_class', $dashboard)
+                ->meta('dashboard_uri_key', $dashboardInstance->uriKey())
+                ->withIcon($dashboardInstance->icon() ?? 'chart-bar')
+                ->canSee(fn($req) => $dashboardInstance->authorizedToSee($req));
+        }
+
+        // Nova v5 style: dashboard instance
+        $request = request();
+
+        return $dashboard->menu($request)
+            ->meta('dashboard', true)
+            ->meta('dashboard_class', get_class($dashboard))
+            ->meta('dashboard_uri_key', $dashboard->uriKey())
+            ->withIcon($dashboard->icon() ?? 'chart-bar')
+            ->canSee(fn($req) => $dashboard->authorizedToSee($req));
     }
 
     /**
@@ -234,7 +253,7 @@ class MenuItem implements JsonSerializable
     /**
      * Resolve conditional badge if applicable.
      */
-    public function resolveBadgeIf(Request $request = null): static
+    public function resolveBadgeIf(?Request $request = null): static
     {
         if (isset($this->meta['badgeIfCondition'])) {
             $condition = $this->meta['badgeIfCondition'];
@@ -307,11 +326,11 @@ class MenuItem implements JsonSerializable
     {
         $this->meta['method'] = $method;
 
-        if (!empty($data)) {
+        if (! empty($data)) {
             $this->meta['data'] = $data;
         }
 
-        if (!empty($headers)) {
+        if (! empty($headers)) {
             $this->meta['headers'] = $headers;
         }
 
@@ -348,7 +367,7 @@ class MenuItem implements JsonSerializable
         if ($this->authCacheTtl !== null) {
             // Clear both with and without request cache keys
             \Illuminate\Support\Facades\Cache::forget($this->getAuthCacheKey());
-            \Illuminate\Support\Facades\Cache::forget($this->getAuthCacheKey(new Request()));
+            \Illuminate\Support\Facades\Cache::forget($this->getAuthCacheKey(new Request));
         }
 
         return $this;
@@ -357,12 +376,12 @@ class MenuItem implements JsonSerializable
     /**
      * Get the authorization cache key.
      */
-    public function getAuthCacheKey(Request $request = null): string
+    public function getAuthCacheKey(?Request $request = null): string
     {
         // Create a unique identifier without serializing closures
         $callbackId = $this->canSeeCallback ? spl_object_hash($this->canSeeCallback) : 'none';
         $requestSuffix = $request ? 'with_request' : 'without_request';
-        $identifier = md5($this->label . ':' . $this->url . ':' . $callbackId . ':' . $requestSuffix);
+        $identifier = md5($this->label.':'.$this->url.':'.$callbackId.':'.$requestSuffix);
 
         return "menu_auth_{$identifier}";
     }
@@ -372,7 +391,7 @@ class MenuItem implements JsonSerializable
      */
     public function applies(string $filter, $value, array $parameters = []): static
     {
-        if (!isset($this->meta['filters'])) {
+        if (! isset($this->meta['filters'])) {
             $this->meta['filters'] = [];
         }
 
@@ -381,7 +400,7 @@ class MenuItem implements JsonSerializable
             'value' => $value,
         ];
 
-        if (!empty($parameters)) {
+        if (! empty($parameters)) {
             $filterData['parameters'] = $parameters;
         }
 
@@ -406,9 +425,9 @@ class MenuItem implements JsonSerializable
     /**
      * Get the badge cache key.
      */
-    public function getBadgeCacheKey(Request $request = null): string
+    public function getBadgeCacheKey(?Request $request = null): string
     {
-        $identifier = md5($this->label . ':' . $this->url);
+        $identifier = md5($this->label.':'.$this->url);
         $requestSuffix = $request ? 'with_request' : 'without_request';
 
         return "menu_badge_{$identifier}_{$requestSuffix}";
@@ -421,7 +440,7 @@ class MenuItem implements JsonSerializable
     {
         if ($this->badgeCacheTtl !== null) {
             \Illuminate\Support\Facades\Cache::forget($this->getBadgeCacheKey());
-            \Illuminate\Support\Facades\Cache::forget($this->getBadgeCacheKey(new Request()));
+            \Illuminate\Support\Facades\Cache::forget($this->getBadgeCacheKey(new Request));
         }
 
         return $this;
@@ -447,8 +466,8 @@ class MenuItem implements JsonSerializable
         }
 
         // Update URL with query parameters
-        if (!empty($queryParams)) {
-            $this->url = $baseUrl . '?' . http_build_query($queryParams);
+        if (! empty($queryParams)) {
+            $this->url = $baseUrl.'?'.http_build_query($queryParams);
         }
     }
 
@@ -466,12 +485,12 @@ class MenuItem implements JsonSerializable
         }
 
         // Add parameter-based suffix if needed
-        if (!empty($parameters)) {
+        if (! empty($parameters)) {
             $paramValues = array_values($parameters);
             $paramKey = implode('_', array_map(function ($value) {
                 return \Illuminate\Support\Str::snake(strtolower((string) $value));
             }, $paramValues));
-            $key .= '_' . $paramKey;
+            $key .= '_'.$paramKey;
         }
 
         return $key;
@@ -480,7 +499,7 @@ class MenuItem implements JsonSerializable
     /**
      * Resolve the badge value.
      */
-    public function resolveBadge(Request $request = null): mixed
+    public function resolveBadge(?Request $request = null): mixed
     {
         if ($this->badge instanceof Badge) {
             return $this->badge->resolve();
@@ -505,7 +524,7 @@ class MenuItem implements JsonSerializable
     /**
      * Check if the menu item should be visible.
      */
-    public function isVisible(Request $request = null): bool
+    public function isVisible(?Request $request = null): bool
     {
         if ($this->canSeeCallback) {
             // Use caching if enabled
@@ -526,7 +545,7 @@ class MenuItem implements JsonSerializable
     /**
      * Get the menu item as an array.
      */
-    public function toArray(Request $request = null): array
+    public function toArray(?Request $request = null): array
     {
         // Resolve conditional badge first
         $this->resolveBadgeIf($request);

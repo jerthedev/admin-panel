@@ -233,8 +233,392 @@ return [
     'dashboard' => [
         'refresh_interval' => 30, // seconds
         'show_welcome_card' => true,
-        'default_widgets' => [
-            // Will be populated with default widget classes
+
+        /*
+        |--------------------------------------------------------------------------
+        | Default Dashboard
+        |--------------------------------------------------------------------------
+        |
+        | The default dashboard class that will be used when no specific dashboard
+        | is requested. This should extend JTD\AdminPanel\Dashboards\Dashboard.
+        |
+        */
+        'default' => \JTD\AdminPanel\Dashboards\Main::class,
+
+        /*
+        |--------------------------------------------------------------------------
+        | Registered Dashboards
+        |--------------------------------------------------------------------------
+        |
+        | List of dashboard classes that should be available in the admin panel.
+        | These will be automatically registered and available for navigation.
+        |
+        | You can register dashboards in two ways:
+        | 1. Class names (legacy): \App\Dashboards\MyDashboard::class
+        | 2. Dashboard instances (Nova v5): MyDashboard::make()->showRefreshButton()
+        |
+        | Note: For dashboard instances, you should register them in your
+        | AppServiceProvider's dashboards() method instead of here.
+        |
+        */
+        'dashboards' => [
+            \JTD\AdminPanel\Dashboards\Main::class,
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Dashboard Navigation
+        |--------------------------------------------------------------------------
+        |
+        | Configure how dashboards appear in the navigation menu.
+        |
+        */
+        'dashboard_navigation' => [
+            // Whether to show dashboards in the main navigation
+            'show_in_navigation' => true,
+
+            // Whether to group multiple dashboards under a "Dashboards" section
+            'group_multiple_dashboards' => true,
+
+            // Icon for the dashboard navigation section
+            'section_icon' => 'chart-bar',
+
+            // Whether to show the main dashboard separately in navigation
+            'show_main_dashboard_separately' => true,
+
+            // Icon for the main dashboard menu item
+            'main_dashboard_icon' => 'home',
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Advanced Dashboard Navigation
+        |--------------------------------------------------------------------------
+        |
+        | Configure advanced navigation features like breadcrumbs, quick switcher,
+        | keyboard shortcuts, and navigation state persistence.
+        |
+        */
+        'navigation' => [
+            // Whether to show breadcrumb navigation
+            'show_breadcrumbs' => true,
+
+            // Whether to show the quick dashboard switcher
+            'show_quick_switcher' => true,
+
+            // Whether to enable keyboard shortcuts for navigation
+            'enable_keyboard_shortcuts' => true,
+
+            // Maximum number of items to keep in navigation history
+            'max_history_items' => 10,
+
+            // Maximum number of recent dashboards to show
+            'max_recent_items' => 5,
+
+            // Whether to persist navigation state in localStorage
+            'persist_state' => true,
+
+            // Whether to show navigation controls (back/forward buttons)
+            'show_navigation_controls' => true,
+
+            // Whether to show quick actions in breadcrumbs
+            'show_quick_actions' => true,
+
+            // Whether to show keyboard shortcut hints
+            'show_keyboard_hints' => true,
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Dashboard Transitions
+        |--------------------------------------------------------------------------
+        |
+        | Configure smooth transitions between dashboards including animations,
+        | loading states, error handling, and gesture navigation.
+        |
+        */
+        'transitions' => [
+            // Default transition animation
+            'default_animation' => 'fade',
+
+            // Transition duration in milliseconds
+            'transition_duration' => 300,
+
+            // Whether to show loading overlay during transitions
+            'show_transition_loading' => true,
+
+            // Loading variant (spinner, skeleton, pulse, dots, fade)
+            'loading_variant' => 'spinner',
+
+            // Whether to show transition progress bar
+            'show_transition_progress' => true,
+
+            // Whether to allow canceling transitions
+            'allow_cancel_transition' => true,
+
+            // Whether to show transition error messages
+            'show_transition_errors' => true,
+
+            // Theme for transition overlays (light, dark)
+            'theme' => 'light',
+
+            // Whether to enable gesture navigation (swipe to go back/forward)
+            'enable_gesture_navigation' => false,
+
+            // Gesture threshold in pixels
+            'gesture_threshold' => 50,
+
+            // Whether to preserve scroll position during transitions
+            'preserve_scroll' => true,
+
+            // Whether to preserve form data during transitions
+            'preserve_data' => true,
+
+            // Transition timeout in milliseconds
+            'timeout' => 10000,
+
+            // Number of retry attempts for failed transitions
+            'retry_attempts' => 3,
+
+            // Whether to preload dashboard data for faster transitions
+            'preload_data' => false,
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Dashboard Menu Integration
+        |--------------------------------------------------------------------------
+        |
+        | Configure how dashboards are integrated into the admin panel menu
+        | system including grouping, quick access, and favorites.
+        |
+        */
+        'menu' => [
+            // Whether to show quick access section in menu
+            'show_quick_access' => true,
+
+            // Number of recent dashboards to show in quick access
+            'quick_access_limit' => 3,
+
+            // Whether to show favorites section in menu
+            'show_favorites' => true,
+
+            // Whether to group dashboards by category
+            'group_by_category' => true,
+
+            // Whether to enable dashboard badges in menu
+            'enable_badges' => true,
+
+            // Whether to cache dashboard badges
+            'cache_badges' => true,
+
+            // Badge cache TTL in seconds
+            'badge_cache_ttl' => 300,
+
+            // Whether to show dashboard descriptions in menu tooltips
+            'show_descriptions' => true,
+
+            // Whether to enable dashboard menu search
+            'enable_search' => true,
+
+            // Default dashboard menu sections to show
+            'default_sections' => [
+                'quick_access' => true,
+                'favorites' => true,
+                'categories' => true,
+                'all_dashboards' => false,
+            ],
+
+            // Menu section icons by category
+            'category_icons' => [
+                'Analytics' => 'chart-bar',
+                'Reports' => 'document-text',
+                'Overview' => 'home',
+                'General' => 'view-grid',
+                'Business' => 'briefcase',
+                'Financial' => 'currency-dollar',
+                'Users' => 'users',
+                'Content' => 'document-duplicate',
+                'System' => 'cog',
+                'Monitoring' => 'eye',
+                'Security' => 'shield-check',
+                'Marketing' => 'megaphone',
+                'Sales' => 'trending-up',
+                'Support' => 'support',
+                'Admin' => 'user-circle',
+            ],
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Dashboard Metadata & Configuration
+        |--------------------------------------------------------------------------
+        |
+        | Configure dashboard metadata management, display preferences,
+        | ordering, and visibility controls.
+        |
+        */
+        'metadata' => [
+            // Whether to enable metadata caching
+            'enable_caching' => true,
+
+            // Metadata cache TTL in seconds
+            'cache_ttl' => 3600,
+
+            // Valid dashboard categories
+            'valid_categories' => [
+                'Overview',
+                'Analytics',
+                'Reports',
+                'Business',
+                'Financial',
+                'Users',
+                'Content',
+                'System',
+                'Monitoring',
+                'Security',
+                'Marketing',
+                'Sales',
+                'Support',
+                'Admin',
+                'General',
+            ],
+
+            // Valid icon types
+            'valid_icon_types' => [
+                'heroicon',
+                'fontawesome',
+                'custom',
+                'emoji',
+                'svg',
+                'image',
+            ],
+
+            // Default metadata values
+            'defaults' => [
+                'category' => 'General',
+                'priority' => 100,
+                'visible' => true,
+                'enabled' => true,
+                'tags' => [],
+                'permissions' => [],
+                'dependencies' => [],
+            ],
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Dashboard Configuration
+        |--------------------------------------------------------------------------
+        |
+        | Default configuration options for dashboard display and behavior.
+        | These can be overridden per dashboard or per user.
+        |
+        */
+        'configuration' => [
+            // Display configuration
+            'display' => [
+                'layout' => 'grid', // grid, list, cards
+                'columns' => 3,
+                'card_size' => 'medium', // small, medium, large
+                'show_descriptions' => true,
+                'show_icons' => true,
+                'show_categories' => true,
+                'compact_mode' => false,
+            ],
+
+            // Behavior configuration
+            'behavior' => [
+                'auto_refresh' => false,
+                'refresh_interval' => 300, // seconds
+                'lazy_loading' => true,
+                'preload_data' => false,
+                'cache_data' => true,
+                'cache_ttl' => 600, // seconds
+            ],
+
+            // Navigation configuration
+            'navigation' => [
+                'show_breadcrumbs' => true,
+                'show_back_button' => true,
+                'enable_keyboard_shortcuts' => true,
+                'enable_quick_switcher' => true,
+                'remember_last_dashboard' => true,
+            ],
+
+            // Accessibility configuration
+            'accessibility' => [
+                'high_contrast' => false,
+                'large_text' => false,
+                'reduce_motion' => false,
+                'screen_reader_optimized' => false,
+            ],
+
+            // Advanced configuration
+            'advanced' => [
+                'debug_mode' => false,
+                'performance_monitoring' => false,
+                'error_reporting' => true,
+                'analytics_tracking' => true,
+            ],
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Dashboard Ordering & Visibility
+        |--------------------------------------------------------------------------
+        |
+        | Configure dashboard ordering and visibility controls including
+        | sorting options and user preferences.
+        |
+        */
+        'ordering' => [
+            // Default sort criteria
+            'default_sort_by' => 'priority',
+            'default_sort_direction' => 'asc',
+
+            // Available sort options
+            'sort_options' => [
+                'priority' => 'Priority',
+                'name' => 'Name',
+                'category' => 'Category',
+                'created_at' => 'Created Date',
+                'updated_at' => 'Updated Date',
+                'usage_count' => 'Usage Count',
+                'last_accessed' => 'Last Accessed',
+                'custom' => 'Custom Order',
+            ],
+
+            // Whether to enable user-specific ordering
+            'enable_user_ordering' => true,
+
+            // Whether to enable user-specific visibility
+            'enable_user_visibility' => true,
+
+            // Whether to track dashboard usage
+            'track_usage' => true,
+
+            // Ordering cache TTL in seconds
+            'cache_ttl' => 1800,
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Dashboard Authorization
+        |--------------------------------------------------------------------------
+        |
+        | Configure dashboard authorization settings.
+        |
+        */
+        'dashboard_authorization' => [
+            // Enable authorization caching for better performance
+            'enable_caching' => true,
+
+            // Cache TTL in seconds (5 minutes default)
+            'cache_ttl' => 300,
+
+            // Cache key prefix
+            'cache_key_prefix' => 'dashboard_auth',
         ],
         'default_metrics' => [
             \JTD\AdminPanel\Metrics\UserCountMetric::class,

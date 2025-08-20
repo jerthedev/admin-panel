@@ -40,6 +40,25 @@ export function createMockForm(fields = {}, overrides = {}) {
 }
 
 /**
+ * Create a mock card configuration for testing card components
+ */
+export function createMockCard(overrides = {}) {
+  return {
+    name: 'Test Card',
+    component: 'TestCard',
+    uriKey: 'test-card',
+    meta: {
+      title: null,
+      description: null,
+      icon: null,
+      refreshable: false,
+      ...overrides.meta
+    },
+    ...overrides
+  }
+}
+
+/**
  * Mount a field component with common props and provide context
  */
 export function mountField(component, options = {}) {

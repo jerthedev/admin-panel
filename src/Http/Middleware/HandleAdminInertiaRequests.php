@@ -9,7 +9,7 @@ use Inertia\Middleware;
 use JTD\AdminPanel\Support\AdminPanel;
 
 /**
- * Handle Inertia Requests for Admin Panel
+ * Handle Inertia Requests for Admin Panel.
  *
  * This middleware handles Inertia.js requests specifically for the admin panel,
  * ensuring proper root view and shared data for admin pages.
@@ -42,8 +42,6 @@ class HandleAdminInertiaRequests extends Middleware
         $user = auth()->guard($guard)->user();
         $adminPanel = app(AdminPanel::class);
         $navigationPages = $adminPanel->getNavigationPages($request);
-
-
 
         // Check if custom main menu is defined
         $customMenu = null;
@@ -95,6 +93,23 @@ class HandleAdminInertiaRequests extends Middleware
             })->filter(function ($resource) {
                 return $resource['visible'];
             })->values(),
+            'dashboards' => $adminPanel->getNavigationDashboards($request)->map(function ($dashboard) use ($request) {
+                $menuItem = $dashboard->menu($request);
+
+                return [
+                    'uriKey' => $dashboard->uriKey(),
+                    'name' => $dashboard->name(),
+                    'url' => $menuItem->url,
+                    'icon' => $menuItem->icon ?? 'chart-bar',
+                    'badge' => $menuItem->resolveBadge($request),
+                    'badgeType' => $menuItem->badgeType,
+                    'visible' => $menuItem->isVisible($request),
+                    'showRefreshButton' => $dashboard->shouldShowRefreshButton(),
+                    'meta' => $menuItem->meta,
+                ];
+            })->filter(function ($dashboard) {
+                return $dashboard['visible'];
+            })->values(),
             'pages' => $navigationPages->map(function ($page) use ($request) {
                 $menuItem = $page->menu($request);
 
@@ -123,8 +138,6 @@ class HandleAdminInertiaRequests extends Middleware
                     : (object) [];
             },
         ]);
-
-
 
         return $sharedData;
     }

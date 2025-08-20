@@ -8,16 +8,17 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
+use JTD\AdminPanel\Dashboards\Dashboard;
+use JTD\AdminPanel\Dashboards\Main;
 use JTD\AdminPanel\Support\AdminPanel;
 
 /**
- * Dashboard Controller
+ * Dashboard Controller.
  *
- * Handles the admin panel dashboard with metrics, widgets,
+ * Handles the admin panel dashboard with metrics, cards,
  * and overview information.
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
- * @package JTD\AdminPanel\Http\Controllers
  */
 class DashboardController extends Controller
 {
@@ -26,15 +27,152 @@ class DashboardController extends Controller
      */
     public function index(Request $request): Response
     {
+        // Use Main dashboard as default
+        $dashboard = new Main;
+
+        return $this->show($request, $dashboard);
+    }
+
+    /**
+     * Display a specific dashboard by URI key.
+     */
+    public function showByUriKey(Request $request, string $uriKey): Response
+    {
         $adminPanel = app(AdminPanel::class);
 
+        // Find dashboard by URI key
+        $dashboard = $adminPanel->findDashboardByUriKey($uriKey);
+
+        if (! $dashboard) {
+            abort(404, "Dashboard '{$uriKey}' not found.");
+        }
+
+        return $this->show($request, $dashboard);
+    }
+
+    /**
+     * Display a specific dashboard.
+     */
+    public function show(Request $request, ?Dashboard $dashboard = null): Response
+    {
+        $adminPanel = app(AdminPanel::class);
+
+        // Use Main dashboard if none specified
+        if (! $dashboard) {
+            $dashboard = new Main;
+        }
+
+        // Check authorization
+        if (! $dashboard->authorizedToSee($request)) {
+            abort(403, 'Unauthorized to view this dashboard.');
+        }
+
         return Inertia::render('Dashboard', [
+            'dashboard' => [
+                'name' => $dashboard->name(),
+                'uriKey' => $dashboard->uriKey(),
+                'description' => $dashboard->description(),
+                'icon' => $dashboard->icon(),
+                'category' => $dashboard->category(),
+                'showRefreshButton' => $dashboard->shouldShowRefreshButton(),
+            ],
+            'navigation' => $this->getDashboardNavigation($adminPanel, $request, $dashboard),
             'metrics' => $this->getMetrics($adminPanel, $request),
-            'widgets' => $this->getWidgets($adminPanel, $request),
+            'cards' => $this->getCards($dashboard, $request),
             'recentActivity' => $this->getRecentActivity($request),
             'quickActions' => $this->getQuickActions($adminPanel, $request),
             'systemInfo' => $this->getSystemInfo(),
         ]);
+    }
+
+    /**
+     * Get dashboard navigation data.
+     */
+    protected function getDashboardNavigation(AdminPanel $adminPanel, Request $request, Dashboard $currentDashboard): array
+    {
+        $availableDashboards = $adminPanel->getNavigationDashboards($request);
+
+        return [
+            'currentDashboard' => [
+                'name' => $currentDashboard->name(),
+                'uriKey' => $currentDashboard->uriKey(),
+                'description' => $currentDashboard->description(),
+                'icon' => $currentDashboard->icon(),
+                'category' => $currentDashboard->category(),
+            ],
+            'availableDashboards' => $availableDashboards->map(function (Dashboard $dashboard) {
+                return [
+                    'name' => $dashboard->name(),
+                    'uriKey' => $dashboard->uriKey(),
+                    'description' => $dashboard->description(),
+                    'icon' => $dashboard->icon(),
+                    'category' => $dashboard->category(),
+                    'url' => $this->getDashboardUrl($dashboard),
+                ];
+            })->values()->toArray(),
+            'breadcrumbs' => $this->getDashboardBreadcrumbs($currentDashboard),
+            'preferences' => [
+                'showBreadcrumbs' => config('admin-panel.dashboard.navigation.show_breadcrumbs', true),
+                'showQuickSwitcher' => config('admin-panel.dashboard.navigation.show_quick_switcher', true),
+                'enableKeyboardShortcuts' => config('admin-panel.dashboard.navigation.enable_keyboard_shortcuts', true),
+                'maxHistoryItems' => config('admin-panel.dashboard.navigation.max_history_items', 10),
+                'maxRecentItems' => config('admin-panel.dashboard.navigation.max_recent_items', 5),
+                'persistState' => config('admin-panel.dashboard.navigation.persist_state', true),
+                'showNavigationControls' => config('admin-panel.dashboard.navigation.show_navigation_controls', true),
+                'showQuickActions' => config('admin-panel.dashboard.navigation.show_quick_actions', true),
+                'showKeyboardHints' => config('admin-panel.dashboard.navigation.show_keyboard_hints', true),
+
+                // Transition preferences
+                'transitionDuration' => config('admin-panel.dashboard.transitions.transition_duration', 300),
+                'showTransitionLoading' => config('admin-panel.dashboard.transitions.show_transition_loading', true),
+                'loadingVariant' => config('admin-panel.dashboard.transitions.loading_variant', 'spinner'),
+                'showTransitionProgress' => config('admin-panel.dashboard.transitions.show_transition_progress', true),
+                'allowCancelTransition' => config('admin-panel.dashboard.transitions.allow_cancel_transition', true),
+                'showTransitionErrors' => config('admin-panel.dashboard.transitions.show_transition_errors', true),
+                'theme' => config('admin-panel.dashboard.transitions.theme', 'light'),
+                'enableGestureNavigation' => config('admin-panel.dashboard.transitions.enable_gesture_navigation', false),
+            ],
+        ];
+    }
+
+    /**
+     * Get dashboard breadcrumbs.
+     */
+    protected function getDashboardBreadcrumbs(Dashboard $dashboard): array
+    {
+        $breadcrumbs = [];
+
+        // Always start with Dashboard home
+        $breadcrumbs[] = [
+            'label' => 'Dashboards',
+            'href' => route('admin-panel.dashboard'),
+            'icon' => 'HomeIcon',
+            'isHome' => true,
+        ];
+
+        // Add current dashboard if not the main dashboard
+        if ($dashboard->uriKey() !== 'main') {
+            $breadcrumbs[] = [
+                'label' => $dashboard->name(),
+                'href' => null,
+                'icon' => $dashboard->icon() ?: 'ChartBarIcon',
+                'isCurrent' => true,
+            ];
+        }
+
+        return $breadcrumbs;
+    }
+
+    /**
+     * Get dashboard URL.
+     */
+    protected function getDashboardUrl(Dashboard $dashboard): string
+    {
+        if ($dashboard->uriKey() === 'main') {
+            return route('admin-panel.dashboard');
+        }
+
+        return route('admin-panel.dashboards.show', ['uriKey' => $dashboard->uriKey()]);
     }
 
     /**
@@ -54,11 +192,11 @@ class DashboardController extends Controller
         }
 
         foreach ($registeredMetrics as $metricClass) {
-            if (!class_exists($metricClass)) {
+            if (! class_exists($metricClass)) {
                 continue;
             }
 
-            $metricInstance = new $metricClass();
+            $metricInstance = new $metricClass;
 
             if ($metricInstance->authorize($request)) {
                 try {
@@ -76,7 +214,7 @@ class DashboardController extends Controller
                     ];
                 } catch (\Exception $e) {
                     // Log error but don't break the dashboard
-                    logger()->error('Error calculating metric: ' . $metricClass, [
+                    logger()->error('Error calculating metric: '.$metricClass, [
                         'error' => $e->getMessage(),
                         'trace' => $e->getTraceAsString(),
                     ]);
@@ -88,29 +226,42 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get dashboard widgets.
+     * Get cards from a dashboard instance.
      */
-    protected function getWidgets(AdminPanel $adminPanel, Request $request): array
+    protected function getCards(Dashboard $dashboard, Request $request): array
     {
-        $widgets = [];
-        $defaultWidgets = config('admin-panel.dashboard.default_widgets', []);
+        $cards = [];
 
-        foreach ($defaultWidgets as $widget) {
-            if (class_exists($widget)) {
-                $widgetInstance = new $widget();
+        try {
+            $dashboardCards = $dashboard->cards();
 
-                if ($widgetInstance->authorize($request)) {
-                    $widgets[] = [
-                        'component' => $widgetInstance->component(),
-                        'data' => $widgetInstance->data($request),
-                        'title' => $widgetInstance->title(),
-                        'size' => $widgetInstance->size(),
-                    ];
+            foreach ($dashboardCards as $card) {
+                try {
+                    if ($card->authorize($request)) {
+                        $cards[] = [
+                            'component' => $card->component(),
+                            'data' => $card->data($request),
+                            'title' => $card->title(),
+                            'size' => $card->size(),
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    // Log error but don't break the dashboard
+                    logger()->error('Error loading dashboard card: '.get_class($card), [
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
+                    ]);
                 }
             }
+        } catch (\Exception $e) {
+            // Log error but don't break the dashboard
+            logger()->error('Error loading dashboard cards from: '.get_class($dashboard), [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
         }
 
-        return $widgets;
+        return $cards;
     }
 
     /**
@@ -219,7 +370,7 @@ class DashboardController extends Controller
             $bytes /= 1024;
         }
 
-        return round($bytes, $precision) . ' ' . $units[$i];
+        return round($bytes, $precision).' '.$units[$i];
     }
 
     /**
@@ -227,15 +378,15 @@ class DashboardController extends Controller
      */
     protected function formatMetricValue(mixed $value, string $format): string
     {
-        if (!is_numeric($value)) {
+        if (! is_numeric($value)) {
             return (string) $value;
         }
 
         $numericValue = (float) $value;
 
         return match ($format) {
-            'currency' => '$' . number_format($numericValue, 2),
-            'percentage' => number_format($numericValue, 1) . '%',
+            'currency' => '$'.number_format($numericValue, 2),
+            'percentage' => number_format($numericValue, 1).'%',
             'number' => number_format($numericValue),
             default => (string) $value,
         };

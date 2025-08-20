@@ -1,0 +1,56 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Illuminate\Http\Request;
+use JTD\AdminPanel\Dashboards\Dashboard;
+
+/**
+ * {{ class }} Dashboard
+ *
+ * Custom dashboard for the admin panel. Add your cards and
+ * customize the dashboard behavior as needed.
+ *
+ * @package {{ namespace }}
+ */
+class {{ class }} extends Dashboard
+{
+    /**
+     * Get the cards that should be displayed on the dashboard.
+     *
+     * @return array<int, \JTD\AdminPanel\Cards\Card>
+     */
+    public function cards(): array
+    {
+        return [
+            // Add your cards here
+            // new \App\Admin\Cards\YourCard,
+        ];
+    }
+
+    /**
+     * Get the displayable name of the dashboard.
+     */
+    public function name(): string
+    {
+        return '{{ class }}';
+    }
+
+    /**
+     * Get the URI key of the dashboard.
+     */
+    public function uriKey(): string
+    {
+        return '{{ uriKey }}';
+    }
+
+    /**
+     * Determine if the dashboard should be available for the given request.
+     */
+    public function authorizedToSee(Request $request): bool
+    {
+        return true;
+    }
+}

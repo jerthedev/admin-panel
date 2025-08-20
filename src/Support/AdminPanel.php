@@ -9,18 +9,14 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
 use JTD\AdminPanel\Http\Controllers\PageController;
 use JTD\AdminPanel\Resources\Resource;
-use JTD\AdminPanel\Support\ResourceDiscovery;
-use JTD\AdminPanel\Support\PageDiscovery;
-use JTD\AdminPanel\Support\PageRegistry;
 
 /**
- * AdminPanel Facade
+ * AdminPanel Facade.
  *
  * Main facade for registering resources, pages, and managing
  * the admin panel configuration.
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
- * @package JTD\AdminPanel\Support
  */
 class AdminPanel
 {
@@ -38,6 +34,18 @@ class AdminPanel
      * Dashboard metrics.
      */
     protected array $metrics = [];
+
+    /**
+     * Registered dashboards (class names).
+     */
+    protected array $dashboards = [];
+
+    /**
+     * Registered dashboard instances.
+     *
+     * @var array<int, \JTD\AdminPanel\Dashboards\Dashboard>
+     */
+    protected array $dashboardInstances = [];
 
     /**
      * Resource discovery service.
@@ -69,9 +77,9 @@ class AdminPanel
      */
     public function __construct()
     {
-        $this->discovery = new ResourceDiscovery();
-        $this->pageDiscovery = new PageDiscovery();
-        $this->pageRegistry = new PageRegistry();
+        $this->discovery = new ResourceDiscovery;
+        $this->pageDiscovery = new PageDiscovery;
+        $this->pageRegistry = new PageRegistry;
     }
 
     /**
@@ -113,7 +121,7 @@ class AdminPanel
     {
         if (! is_subclass_of($resource, Resource::class)) {
             throw new \InvalidArgumentException(
-                "Resource [{$resource}] must extend " . Resource::class
+                "Resource [{$resource}] must extend ".Resource::class,
             );
         }
 
@@ -128,7 +136,7 @@ class AdminPanel
     public function getResources(): Collection
     {
         $manualResources = collect($this->resources)->map(function (string $resource) {
-            return new $resource();
+            return new $resource;
         });
 
         $discoveredResources = $this->discovery->getResourceInstances();
@@ -241,8 +249,8 @@ class AdminPanel
 
         // Register multi-component routes if page has multiple components
         if ($pageClass::hasMultipleComponents()) {
-            Route::get($uriPath . '/{component}', [PageController::class, 'show'])
-                ->name($shortRouteName . '.component')
+            Route::get($uriPath.'/{component}', [PageController::class, 'show'])
+                ->name($shortRouteName.'.component')
                 ->where('component', '[a-zA-Z0-9_-]+');
         }
     }
@@ -299,13 +307,200 @@ class AdminPanel
     }
 
     /**
+     * Register dashboards (static version for AdminServiceProvider).
+     *
+     * Nova v5 compatible method that accepts both dashboard class names
+     * and dashboard instances with method chaining.
+     *
+     * @param array<int, string|\JTD\AdminPanel\Dashboards\Dashboard> $dashboards
+     */
+    public static function dashboards(array $dashboards): void
+    {
+        $instance = app(static::class);
+        $instance->registerDashboards($dashboards);
+    }
+
+    /**
+     * Register dashboards (instance version).
+     *
+     * Supports both dashboard class names and dashboard instances.
+     *
+     * @param array<int, string|\JTD\AdminPanel\Dashboards\Dashboard> $dashboards
+     */
+    public function registerDashboards(array $dashboards): static
+    {
+        foreach ($dashboards as $dashboard) {
+            if (is_string($dashboard)) {
+                // Legacy support: dashboard class name
+                $this->dashboards[] = $dashboard;
+            } elseif ($dashboard instanceof \JTD\AdminPanel\Dashboards\Dashboard) {
+                // Nova v5 style: dashboard instance
+                $this->dashboardInstances[] = $dashboard;
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Register a single dashboard.
+     */
+    public function dashboard(string|\JTD\AdminPanel\Dashboards\Dashboard $dashboard): static
+    {
+        if (is_string($dashboard)) {
+            $this->dashboards[] = $dashboard;
+        } else {
+            $this->dashboardInstances[] = $dashboard;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Get all registered dashboard class names.
+     */
+    public function getDashboards(): Collection
+    {
+        return collect($this->dashboards);
+    }
+
+    /**
+     * Get all registered dashboard instances.
+     *
+     * @return \Illuminate\Support\Collection<int, \JTD\AdminPanel\Dashboards\Dashboard>
+     */
+    public function getDashboardInstances(): Collection
+    {
+        return collect($this->dashboardInstances);
+    }
+
+    /**
+     * Get all dashboard instances (both from class names and instances).
+     *
+     * @return \Illuminate\Support\Collection<int, \JTD\AdminPanel\Dashboards\Dashboard>
+     */
+    public function getAllDashboardInstances(): Collection
+    {
+        // Get instances from class names
+        $classInstances = $this->getDashboards()->map(function (string $dashboardClass) {
+            return new $dashboardClass;
+        });
+
+        // Merge with direct instances
+        return $classInstances->merge($this->getDashboardInstances());
+    }
+
+    /**
+     * Find a dashboard instance by URI key.
+     */
+    public function findDashboardByUriKey(string $uriKey): ?\JTD\AdminPanel\Dashboards\Dashboard
+    {
+        return $this->getAllDashboardInstances()->first(function (\JTD\AdminPanel\Dashboards\Dashboard $dashboard) use ($uriKey) {
+            return $dashboard->uriKey() === $uriKey;
+        });
+    }
+
+    /**
+     * Get dashboards available for navigation.
+     *
+     * @return \Illuminate\Support\Collection<int, \JTD\AdminPanel\Dashboards\Dashboard>
+     */
+    public function getNavigationDashboards(?\Illuminate\Http\Request $request = null): Collection
+    {
+        $request = $request ?: request();
+
+        return $this->getAllDashboardInstances()->filter(function (\JTD\AdminPanel\Dashboards\Dashboard $dashboard) use ($request) {
+            return $dashboard->authorizedToSee($request);
+        });
+    }
+
+    /**
+     * Generate dashboard menu items for navigation.
+     *
+     * @return \Illuminate\Support\Collection<int, \JTD\AdminPanel\Menu\MenuItem>
+     */
+    public function getDashboardMenuItems(?\Illuminate\Http\Request $request = null): Collection
+    {
+        $request = $request ?: request();
+
+        return $this->getNavigationDashboards($request)->map(function (\JTD\AdminPanel\Dashboards\Dashboard $dashboard) use ($request) {
+            return $dashboard->menu($request);
+        });
+    }
+
+    /**
+     * Create a dashboard navigation section.
+     */
+    public function createDashboardNavigationSection(?\Illuminate\Http\Request $request = null): ?\JTD\AdminPanel\Menu\MenuSection
+    {
+        $request = $request ?: request();
+
+        // Check if dashboard navigation is enabled
+        if (! config('admin-panel.dashboard.dashboard_navigation.show_in_navigation', true)) {
+            return null;
+        }
+
+        $dashboardMenuItems = $this->getDashboardMenuItems($request);
+
+        if ($dashboardMenuItems->isEmpty()) {
+            return null;
+        }
+
+        // Check if we should group multiple dashboards
+        if (! config('admin-panel.dashboard.dashboard_navigation.group_multiple_dashboards', true)) {
+            return null;
+        }
+
+        // If there's only one dashboard (Main), don't create a section
+        if ($dashboardMenuItems->count() === 1) {
+            $dashboard = $this->getNavigationDashboards($request)->first();
+            if ($dashboard->uriKey() === 'main' && config('admin-panel.dashboard.dashboard_navigation.show_main_dashboard_separately', true)) {
+                return null; // Main dashboard is handled separately
+            }
+        }
+
+        $sectionIcon = config('admin-panel.dashboard.dashboard_navigation.section_icon', 'chart-bar');
+
+        return \JTD\AdminPanel\Menu\MenuSection::make('Dashboards', $dashboardMenuItems->toArray())
+            ->icon($sectionIcon);
+    }
+
+    /**
+     * Get the main dashboard menu item.
+     */
+    public function getMainDashboardMenuItem(?\Illuminate\Http\Request $request = null): ?\JTD\AdminPanel\Menu\MenuItem
+    {
+        $request = $request ?: request();
+
+        // Check if dashboard navigation is enabled
+        if (! config('admin-panel.dashboard.dashboard_navigation.show_in_navigation', true)) {
+            return null;
+        }
+
+        // Check if main dashboard should be shown separately
+        if (! config('admin-panel.dashboard.dashboard_navigation.show_main_dashboard_separately', true)) {
+            return null;
+        }
+
+        $mainDashboard = $this->findDashboardByUriKey('main');
+
+        if (! $mainDashboard || ! $mainDashboard->authorizedToSee($request)) {
+            return null;
+        }
+
+        $mainIcon = config('admin-panel.dashboard.dashboard_navigation.main_dashboard_icon', 'home');
+
+        return $mainDashboard->menu($request)->withIcon($mainIcon);
+    }
+
+    /**
      * Get the admin panel path.
      */
     public function path(string $path = ''): string
     {
         $basePath = config('admin-panel.path', '/admin');
 
-        return $basePath . ($path ? '/' . ltrim($path, '/') : '');
+        return $basePath.($path ? '/'.ltrim($path, '/') : '');
     }
 
     /**
@@ -313,7 +508,7 @@ class AdminPanel
      */
     public function route(string $name, array $parameters = []): string
     {
-        return route('admin-panel.' . $name, $parameters);
+        return route('admin-panel.'.$name, $parameters);
     }
 
     /**
@@ -390,7 +585,7 @@ class AdminPanel
     public function getPageInstances(): Collection
     {
         return $this->getPages()->map(function (string $pageClass) {
-            return new $pageClass();
+            return new $pageClass;
         });
     }
 
@@ -399,7 +594,8 @@ class AdminPanel
      */
     public function getAvailableAppComponents(): array
     {
-        $resolver = new \JTD\AdminPanel\Support\ComponentResolver();
+        $resolver = new \JTD\AdminPanel\Support\ComponentResolver;
+
         return $resolver->getAvailableAppComponents();
     }
 
@@ -515,7 +711,7 @@ class AdminPanel
 
         foreach ($menu as $item) {
             // Check if the item itself is visible
-            if (!$item->isVisible($request)) {
+            if (! $item->isVisible($request)) {
                 continue;
             }
 
@@ -523,17 +719,17 @@ class AdminPanel
             if ($item instanceof \JTD\AdminPanel\Menu\MenuSection || $item instanceof \JTD\AdminPanel\Menu\MenuGroup) {
                 $children = $item->items ?? [];
 
-                if (!empty($children)) {
+                if (! empty($children)) {
                     $filteredChildren = static::filterAuthorizedMenuItems($children, $request);
 
                     // Only include the section/group if it has visible children or is not collapsible
-                    if (!empty($filteredChildren) || !$item->collapsible) {
+                    if (! empty($filteredChildren) || ! $item->collapsible) {
                         $item->items = $filteredChildren;
                         $filtered[] = $item;
                     }
                 } else {
                     // Empty section/group - include if not collapsible
-                    if (!$item->collapsible) {
+                    if (! $item->collapsible) {
                         $filtered[] = $item;
                     }
                 }
@@ -580,7 +776,7 @@ class AdminPanel
         }
 
         // Create a default menu instance
-        $menu = new \JTD\AdminPanel\Menu\Menu();
+        $menu = new \JTD\AdminPanel\Menu\Menu;
 
         $result = call_user_func(static::$userMenuCallback, $request, $menu);
         $finalMenu = $result instanceof \JTD\AdminPanel\Menu\Menu ? $result : $menu;
@@ -594,12 +790,12 @@ class AdminPanel
             }
         }
 
-        if (!$hasLogout) {
+        if (! $hasLogout) {
             $finalMenu->append(
                 \JTD\AdminPanel\Menu\MenuItem::make('Sign out', '/logout')
                     ->withIcon('arrow-right-on-rectangle')
                     ->meta('method', 'post')
-                    ->meta('default', true)
+                    ->meta('default', true),
             );
         }
 

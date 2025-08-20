@@ -60,8 +60,8 @@ class Avatar extends Image
      *
      * @return $this
      */
-    public function rounded(): static
+    public function rounded(bool $rounded = true): static
     {
-        return $this->withMeta(['squared' => false, 'rounded' => true]);
+        return $this->withMeta(['squared' => false, 'rounded' => $rounded]);
     }
 }

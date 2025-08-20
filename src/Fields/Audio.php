@@ -37,7 +37,7 @@ class Audio extends File
     /**
      * Whether downloads are disabled for this audio field.
      */
-    protected bool $downloadsDisabled = false;
+    public bool $downloadsDisabled = false;
 
     /**
      * The preload attribute for the HTML5 audio element.

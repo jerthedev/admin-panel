@@ -151,39 +151,39 @@ test.describe('Dashboard Workflow', () => {
     expect(true).toBe(true);
   });
 
-  test('should handle dashboard widgets if present', async ({ page }) => {
+  test('should handle dashboard cards if present', async ({ page }) => {
     await page.waitForLoadState('networkidle');
-    
-    // Look for widget sections
-    const widgetSelectors = [
-      '.widget', '.dashboard-widget', '.panel',
-      '[data-testid*="widget"]', '.dashboard-section'
+
+    // Look for card sections (updated from widgets)
+    const cardSelectors = [
+      '.card', '.dashboard-card', '.panel',
+      '[data-testid*="card"]', '.dashboard-section'
     ];
-    
-    let widgetsFound = false;
-    
-    for (const selector of widgetSelectors) {
+
+    let cardsFound = false;
+
+    for (const selector of cardSelectors) {
       const elements = page.locator(selector);
       const count = await elements.count();
       if (count > 0) {
-        widgetsFound = true;
-        console.log(`🔧 Found ${count} widget elements`);
+        cardsFound = true;
+        console.log(`🃏 Found ${count} card elements`);
         break;
       }
     }
-    
-    if (widgetsFound) {
-      // Verify widgets have content
-      const firstWidget = page.locator('.widget, .dashboard-widget, .panel').first();
-      if (await firstWidget.isVisible()) {
-        const widgetText = await firstWidget.textContent();
-        expect(widgetText.trim()).toBeTruthy();
+
+    if (cardsFound) {
+      // Verify cards have content
+      const firstCard = page.locator('.card, .dashboard-card, .panel').first();
+      if (await firstCard.isVisible()) {
+        const cardText = await firstCard.textContent();
+        expect(cardText.trim()).toBeTruthy();
       }
     } else {
-      console.log('ℹ️ No widgets found - dashboard may be minimal');
+      console.log('ℹ️ No cards found - dashboard may be minimal');
     }
-    
-    // This test passes regardless of widgets presence
+
+    // This test passes regardless of cards presence
     expect(true).toBe(true);
   });
 

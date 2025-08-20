@@ -49,16 +49,69 @@ export default defineConfig({
         emptyOutDir: true,
         manifest: true,
         target: 'es2020', // Ensure compatibility while maintaining modern features
+        sourcemap: process.env.NODE_ENV === 'development',
+        minify: 'terser',
+        terserOptions: {
+            compress: {
+                drop_console: process.env.NODE_ENV === 'production',
+                drop_debugger: true,
+                pure_funcs: ['console.log', 'console.debug']
+            },
+            mangle: {
+                safari10: true
+            }
+        },
         rollupOptions: {
             output: {
                 entryFileNames: 'assets/[name]-[hash].js',
                 chunkFileNames: 'assets/[name]-[hash].js',
                 assetFileNames: 'assets/[name]-[hash].[ext]',
                 format: 'es', // Explicitly use ES modules
-                // Force single bundle to avoid dynamic import path issues
-                manualChunks: () => 'vendor',
+                // Advanced code splitting strategy
+                manualChunks: {
+                    // Vendor libraries
+                    'vendor-vue': ['vue', '@inertiajs/vue3'],
+                    'vendor-ui': ['@headlessui/vue', '@heroicons/vue'],
+                    'vendor-utils': ['axios', 'lodash-es'],
+
+                    // Dashboard-specific chunks
+                    'dashboard-core': [
+                        './resources/js/stores/dashboardNavigation.js',
+                        './resources/js/stores/dashboardCache.js',
+                        './resources/js/stores/dashboardPreferences.js'
+                    ],
+                    'dashboard-components': [
+                        './resources/js/Components/Dashboard/DashboardSelector.vue',
+                        './resources/js/Components/Dashboard/DashboardNavigation.vue'
+                    ],
+                    'dashboard-mobile': [
+                        './resources/js/Components/Mobile/MobileDashboardNavigation.vue',
+                        './resources/js/composables/useMobileGestures.js',
+                        './resources/js/composables/useMobileNavigation.js'
+                    ],
+                    'dashboard-performance': [
+                        './resources/js/services/LazyLoadingService.js',
+                        './resources/js/services/PerformanceMonitoringService.js',
+                        './resources/js/composables/usePerformanceOptimization.js'
+                    ]
+                },
+                // Optimize chunk loading
+                experimentalMinChunkSize: 1000,
+                maxParallelFileOps: 5
             },
+            // External dependencies (if using CDN)
+            external: process.env.NODE_ENV === 'production' ? [] : [],
+            // Performance optimizations
+            treeshake: {
+                moduleSideEffects: false,
+                propertyReadSideEffects: false,
+                unknownGlobalSideEffects: false
+            }
         },
+        // Chunk size warnings
+        chunkSizeWarningLimit: 1000,
+        // Asset inlining threshold
+        assetsInlineLimit: 4096
     },
 
     resolve: {
@@ -92,7 +145,48 @@ export default defineConfig({
             '@inertiajs/vue3',
             'pinia',
             'axios',
+            '@headlessui/vue',
+            '@heroicons/vue/24/outline',
+            '@heroicons/vue/24/solid',
+            'lodash-es'
         ],
+        exclude: [
+            // Exclude large libraries that should be code-split
+            '@heroicons/vue/24/outline/*',
+            '@heroicons/vue/24/solid/*'
+        ],
+        // Force optimization of specific dependencies
+        force: process.env.NODE_ENV === 'development',
+        // Enable esbuild optimization
+        esbuildOptions: {
+            target: 'es2020',
+            supported: {
+                'top-level-await': true
+            }
+        }
+    },
+
+    // Performance optimizations
+    esbuild: {
+        // Remove console logs in production
+        drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
+        // Enable tree shaking
+        treeShaking: true,
+        // Optimize for size
+        minifyIdentifiers: process.env.NODE_ENV === 'production',
+        minifySyntax: process.env.NODE_ENV === 'production',
+        minifyWhitespace: process.env.NODE_ENV === 'production'
+    },
+
+    // Experimental features for performance
+    experimental: {
+        renderBuiltUrl(filename, { hostType }) {
+            if (hostType === 'js') {
+                return { js: `/${filename}` }
+            } else {
+                return { relative: true }
+            }
+        }
     },
 
     // CSS processing is handled by @tailwindcss/vite plugin

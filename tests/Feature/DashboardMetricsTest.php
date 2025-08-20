@@ -138,6 +138,22 @@ class DashboardMetricsTest extends TestCase
         $this->assertEquals($metrics1, $metrics2);
     }
 
+    public function test_dashboard_includes_cards_not_widgets(): void
+    {
+        $admin = $this->createAdminUser();
+
+        $response = $this->actingAs($admin)
+            ->get('/admin');
+
+        $response->assertOk();
+
+        $props = $response->getOriginalContent()->getData()['page']['props'];
+
+        // Verify cards key exists and widgets key does not
+        $this->assertArrayHasKey('cards', $props);
+        $this->assertArrayNotHasKey('widgets', $props);
+    }
+
     public function test_dashboard_includes_system_info(): void
     {
         $admin = $this->createAdminUser();

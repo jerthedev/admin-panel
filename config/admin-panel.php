@@ -649,6 +649,36 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Card Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure default behavior for cards including auto-discovery,
+    | discovery path, and card-specific options.
+    |
+    */
+
+    'cards' => [
+        'auto_discovery' => true,
+        'discovery_path' => 'app/Admin/Cards',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Page Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure default behavior for pages including auto-discovery,
+    | discovery path, and page-specific options.
+    |
+    */
+
+    'pages' => [
+        'auto_discovery' => true,
+        'discovery_path' => 'app/Admin/Pages',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Field Configuration
     |--------------------------------------------------------------------------
     |
@@ -680,6 +710,8 @@ return [
 
     'performance' => [
         'cache_resources' => true,
+        'cache_pages' => true,
+        'cache_cards' => true,
         'cache_ttl' => 3600, // 1 hour
         'eager_load_relations' => true,
         'query_limit' => 1000,

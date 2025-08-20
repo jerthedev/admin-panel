@@ -17,13 +17,15 @@ const { glob } = pkg;
  *
  * @param {Object} options - Plugin configuration options
  * @param {string} options.adminPagesPath - Path to admin pages directory (default: 'resources/js/admin-pages')
+ * @param {string} options.adminCardsPath - Path to admin cards directory (default: 'resources/js/admin-cards')
  * @param {string} options.manifestPath - Path to output manifest file (default: 'public/admin-pages-manifest.json')
- * @param {boolean} options.hotReload - Enable hot reloading for admin pages (default: true)
+ * @param {boolean} options.hotReload - Enable hot reloading for admin pages and cards (default: true)
  * @returns {Object} Vite plugin configuration
  */
 export function adminPanel(options = {}) {
     const config = {
         adminPagesPath: 'resources/js/admin-pages',
+        adminCardsPath: 'resources/js/admin-cards',
         manifestPath: 'public/admin-pages-manifest.json',
         hotReload: true,
         ...options
@@ -43,22 +45,31 @@ export function adminPanel(options = {}) {
         config(userConfig, { command }) {
             const root = userConfig.root || process.cwd();
             const adminPagesFullPath = resolve(root, config.adminPagesPath);
+            const adminCardsFullPath = resolve(root, config.adminCardsPath);
 
             // Check if admin pages directory exists
-            if (!existsSync(adminPagesFullPath)) {
-                console.log('📁 Admin pages directory not found, skipping admin panel plugin');
+            const pagesExist = existsSync(adminPagesFullPath);
+            const cardsExist = existsSync(adminCardsFullPath);
+
+            if (!pagesExist && !cardsExist) {
+                console.log('📁 Admin pages and cards directories not found, skipping admin panel plugin');
                 return {};
             }
 
             // Detect admin page components
-            const components = detectAdminPageComponents(adminPagesFullPath);
+            const pageComponents = pagesExist ? detectAdminPageComponents(adminPagesFullPath) : [];
 
-            if (components.length === 0) {
-                console.log('📄 No admin page components found, skipping admin panel plugin');
+            // Detect admin card components
+            const cardComponents = cardsExist ? detectAdminCardComponents(adminCardsFullPath) : [];
+
+            const totalComponents = pageComponents.length + cardComponents.length;
+
+            if (totalComponents === 0) {
+                console.log('📄 No admin components found, skipping admin panel plugin');
                 return {};
             }
 
-            console.log(`🎯 Admin Panel Plugin: Found ${components.length} components`);
+            console.log(`🎯 Admin Panel Plugin: Found ${pageComponents.length} page components and ${cardComponents.length} card components`);
             console.log(`📦 Admin Panel Plugin: Components will be dynamically imported (not built as entries)`);
 
             // Store components for manifest generation but don't add as build entries
@@ -74,25 +85,43 @@ export function adminPanel(options = {}) {
 
             const root = viteConfig.root || process.cwd();
             const adminPagesFullPath = resolve(root, config.adminPagesPath);
-            console.log(`🔍 Checking admin pages path: ${adminPagesFullPath}`);
+            const adminCardsFullPath = resolve(root, config.adminCardsPath);
 
-            if (!existsSync(adminPagesFullPath)) {
-                console.log(`❌ Admin pages directory does not exist: ${adminPagesFullPath}`);
+            console.log(`🔍 Checking admin pages path: ${adminPagesFullPath}`);
+            console.log(`🔍 Checking admin cards path: ${adminCardsFullPath}`);
+
+            const pagesExist = existsSync(adminPagesFullPath);
+            const cardsExist = existsSync(adminCardsFullPath);
+
+            if (!pagesExist && !cardsExist) {
+                console.log(`❌ Neither admin pages nor cards directories exist`);
                 return;
             }
 
             // Detect components and generate simple manifest for dynamic imports
-            const components = detectAdminPageComponents(adminPagesFullPath);
-            console.log(`🎯 Found ${components.length} components for manifest`);
+            const pageComponents = pagesExist ? detectAdminPageComponents(adminPagesFullPath) : [];
+            const cardComponents = cardsExist ? detectAdminCardComponents(adminCardsFullPath) : [];
 
-            const manifest = generateSimpleManifest(components, adminPagesFullPath, config.adminPagesPath);
+            console.log(`🎯 Found ${pageComponents.length} page components and ${cardComponents.length} card components for manifest`);
 
-            if (Object.keys(manifest['Pages']).length > 0) {
+            const manifest = generateSimpleManifest(
+                pageComponents,
+                cardComponents,
+                adminPagesFullPath,
+                adminCardsFullPath,
+                config.adminPagesPath,
+                config.adminCardsPath
+            );
+
+            const totalComponents = Object.keys(manifest['Pages']).length + Object.keys(manifest['Cards']).length;
+
+            if (totalComponents > 0) {
                 // Write manifest file
                 const manifestFullPath = resolve(root, config.manifestPath);
                 writeFileSync(manifestFullPath, JSON.stringify(manifest, null, 2));
                 console.log(`📋 Admin Panel Manifest: Generated ${manifestFullPath} (dynamic import mode)`);
-                console.log(`📦 Components: ${Object.keys(manifest['Pages']).length}`);
+                console.log(`📦 Page Components: ${Object.keys(manifest['Pages']).length}`);
+                console.log(`🎯 Card Components: ${Object.keys(manifest['Cards']).length}`);
             } else {
                 console.log(`⚠️ No components found for manifest generation`);
             }
@@ -103,12 +132,17 @@ export function adminPanel(options = {}) {
 
             const root = viteConfig.root || process.cwd();
             const adminPagesFullPath = resolve(root, config.adminPagesPath);
+            const adminCardsFullPath = resolve(root, config.adminCardsPath);
 
-            // Check if the updated file is an admin page component
-            if (file.startsWith(adminPagesFullPath) && file.endsWith('.vue')) {
-                console.log(`🔥 Hot reload: Admin page component updated - ${relative(root, file)}`);
+            // Check if the updated file is an admin page or card component
+            const isPageComponent = file.startsWith(adminPagesFullPath) && file.endsWith('.vue');
+            const isCardComponent = file.startsWith(adminCardsFullPath) && file.endsWith('.vue');
 
-                // Trigger full reload for admin page components to ensure proper registration
+            if (isPageComponent || isCardComponent) {
+                const componentType = isPageComponent ? 'page' : 'card';
+                console.log(`🔥 Hot reload: Admin ${componentType} component updated - ${relative(root, file)}`);
+
+                // Trigger full reload for admin components to ensure proper registration
                 server.ws.send({
                     type: 'full-reload'
                 });
@@ -139,7 +173,32 @@ function detectAdminPageComponents(adminPagesPath) {
             }
         });
     } catch (error) {
-        console.warn('⚠️  Admin Panel Plugin: Error detecting components:', error.message);
+        console.warn('⚠️  Admin Panel Plugin: Error detecting page components:', error.message);
+        return [];
+    }
+}
+
+/**
+ * Detect all Vue components in the admin cards directory
+ *
+ * @param {string} adminCardsPath - Full path to admin cards directory
+ * @returns {Array<string>} Array of component file paths
+ */
+function detectAdminCardComponents(adminCardsPath) {
+    try {
+        const pattern = join(adminCardsPath, '**/*.vue').replace(/\\/g, '/');
+        const components = glob.sync(pattern);
+
+        return components.filter(component => {
+            try {
+                const stats = statSync(component);
+                return stats.isFile() && stats.size > 0;
+            } catch (error) {
+                return false;
+            }
+        });
+    } catch (error) {
+        console.warn('⚠️  Admin Panel Plugin: Error detecting card components:', error.message);
         return [];
     }
 }
@@ -174,17 +233,22 @@ function generateBuildEntries(components, adminPagesFullPath, adminPagesRelative
 /**
  * Generate simple manifest for dynamic imports
  *
- * @param {Array<string>} components - Array of component file paths
+ * @param {Array<string>} pageComponents - Array of page component file paths
+ * @param {Array<string>} cardComponents - Array of card component file paths
  * @param {string} adminPagesFullPath - Full path to admin pages directory
+ * @param {string} adminCardsFullPath - Full path to admin cards directory
  * @param {string} adminPagesRelativePath - Relative path to admin pages directory
+ * @param {string} adminCardsRelativePath - Relative path to admin cards directory
  * @returns {Object} Manifest object
  */
-function generateSimpleManifest(components, adminPagesFullPath, adminPagesRelativePath) {
+function generateSimpleManifest(pageComponents, cardComponents, adminPagesFullPath, adminCardsFullPath, adminPagesRelativePath, adminCardsRelativePath) {
     const manifest = {
-        'Pages': {}
+        'Pages': {},
+        'Cards': {}
     };
 
-    components.forEach(componentPath => {
+    // Process page components
+    pageComponents.forEach(componentPath => {
         // Get relative path from admin pages directory
         const relativePath = relative(adminPagesFullPath, componentPath);
 
@@ -195,6 +259,23 @@ function generateSimpleManifest(components, adminPagesFullPath, adminPagesRelati
         // The manifest just indicates that the component exists
         manifest['Pages'][componentName] = {
             file: `fallback:${join(adminPagesRelativePath, relativePath).replace(/\\/g, '/')}`,
+            isDynamicImport: true,
+            useFallback: true
+        };
+    });
+
+    // Process card components
+    cardComponents.forEach(componentPath => {
+        // Get relative path from admin cards directory
+        const relativePath = relative(adminCardsFullPath, componentPath);
+
+        // Remove .vue extension and create component name
+        const componentName = relativePath.replace(/\.vue$/, '');
+
+        // For main app components, we'll rely on development fallback
+        // The manifest just indicates that the component exists
+        manifest['Cards'][componentName] = {
+            file: `fallback:${join(adminCardsRelativePath, relativePath).replace(/\\/g, '/')}`,
             isDynamicImport: true,
             useFallback: true
         };

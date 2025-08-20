@@ -12,24 +12,21 @@ use JTD\AdminPanel\Pages\Page;
 use JTD\AdminPanel\Support\AdminPanel;
 
 /**
- * Page Controller
+ * Page Controller.
  *
  * Handles custom admin panel pages with field rendering,
  * data binding, and authorization.
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
- * @package JTD\AdminPanel\Http\Controllers
  */
 class PageController extends Controller
 {
     /**
      * Display a custom page.
      *
-     * @param Request $request
      * @param string|null $component Optional component name for multi-component pages
-     * @return Response
      */
-    public function show(Request $request, string $component = null): Response
+    public function show(Request $request, ?string $component = null): Response
     {
         $routeName = $request->route()->getName();
         $adminPanel = app(AdminPanel::class);
@@ -37,17 +34,17 @@ class PageController extends Controller
         // Find the page by route name
         $page = $this->findPageByRouteName($adminPanel, $routeName);
 
-        if (!$page) {
+        if (! $page) {
             abort(404, 'Page not found');
         }
 
         // Check authorization
-        if (!$page::authorizedToViewAny($request)) {
+        if (! $page::authorizedToViewAny($request)) {
             abort(403, 'Unauthorized');
         }
 
         // Get page data
-        $pageInstance = new $page();
+        $pageInstance = new $page;
 
         // Handle multi-component routing
         $targetComponent = $this->resolveTargetComponent($page, $component);
@@ -64,6 +61,7 @@ class PageController extends Controller
                 'currentComponent' => $targetComponent,
             ],
             'fields' => $this->resolveFields($pageInstance, $request),
+            'cards' => $this->resolveCards($pageInstance, $request),
             'actions' => $this->resolveActions($pageInstance, $request),
             'metrics' => $this->resolveMetrics($pageInstance, $request),
             'data' => $pageInstance->data($request),
@@ -78,10 +76,6 @@ class PageController extends Controller
 
     /**
      * Find a page class by its route name.
-     *
-     * @param AdminPanel $adminPanel
-     * @param string $routeName
-     * @return string|null
      */
     protected function findPageByRouteName(AdminPanel $adminPanel, string $routeName): ?string
     {
@@ -94,49 +88,53 @@ class PageController extends Controller
 
     /**
      * Resolve fields for the page.
-     *
-     * @param Page $page
-     * @param Request $request
-     * @return array
      */
     protected function resolveFields(Page $page, Request $request): array
     {
         $fields = $page->fields($request);
 
-        return collect($fields)->map(function ($field) use ($request) {
+        return collect($fields)->map(function ($field) {
             return $field->jsonSerialize();
         })->toArray();
     }
 
     /**
+     * Resolve cards for the page.
+     */
+    protected function resolveCards(Page $page, Request $request): array
+    {
+        $cards = $page->cards($request);
+
+        return collect($cards)->map(function ($card) use ($request) {
+            if (method_exists($card, 'authorize') && ! $card->authorize($request)) {
+                return null;
+            }
+
+            return $card->jsonSerialize();
+        })->filter()->values()->toArray();
+    }
+
+    /**
      * Resolve actions for the page.
-     *
-     * @param Page $page
-     * @param Request $request
-     * @return array
      */
     protected function resolveActions(Page $page, Request $request): array
     {
         $actions = $page->actions($request);
 
-        return collect($actions)->map(function ($action) use ($request) {
+        return collect($actions)->map(function ($action) {
             return $action->jsonSerialize();
         })->toArray();
     }
 
     /**
      * Resolve metrics for the page.
-     *
-     * @param Page $page
-     * @param Request $request
-     * @return array
      */
     protected function resolveMetrics(Page $page, Request $request): array
     {
         $metrics = $page->metrics($request);
 
         return collect($metrics)->map(function ($metric) use ($request) {
-            if (method_exists($metric, 'authorize') && !$metric->authorize($request)) {
+            if (method_exists($metric, 'authorize') && ! $metric->authorize($request)) {
                 return null;
             }
 
@@ -152,10 +150,6 @@ class PageController extends Controller
 
     /**
      * Resolve the target component for rendering.
-     *
-     * @param string $pageClass
-     * @param string|null $component
-     * @return string
      */
     protected function resolveTargetComponent(string $pageClass, ?string $component): string
     {
@@ -167,7 +161,7 @@ class PageController extends Controller
                 return strtolower(basename($comp)) === strtolower($component);
             });
 
-            if (!$targetComponent) {
+            if (! $targetComponent) {
                 abort(404, "Component '{$component}' not found for this page");
             }
 
@@ -180,9 +174,6 @@ class PageController extends Controller
 
     /**
      * Get page slug from route name.
-     *
-     * @param string $routeName
-     * @return string
      */
     protected function getPageSlug(string $routeName): string
     {
@@ -191,10 +182,6 @@ class PageController extends Controller
 
     /**
      * Generate component URLs for multi-component pages.
-     *
-     * @param string $pageClass
-     * @param string $routeName
-     * @return array
      */
     protected function generateComponentUrls(string $pageClass, string $routeName): array
     {
@@ -210,7 +197,7 @@ class PageController extends Controller
                 $urls[$componentName] = $baseUrl;
             } else {
                 // Other components get their own URLs
-                $urls[$componentName] = $baseUrl . '/' . strtolower($componentName);
+                $urls[$componentName] = $baseUrl.'/'.strtolower($componentName);
             }
         }
 

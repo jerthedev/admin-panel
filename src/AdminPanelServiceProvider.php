@@ -13,6 +13,7 @@ use JTD\AdminPanel\Console\Commands\CreateUserCommand;
 use JTD\AdminPanel\Console\Commands\DoctorCommand;
 use JTD\AdminPanel\Console\Commands\InstallCommand;
 use JTD\AdminPanel\Console\Commands\ListResourcesCommand;
+use JTD\AdminPanel\Console\Commands\MakeCardCommand;
 use JTD\AdminPanel\Console\Commands\MakeDashboardCommand;
 use JTD\AdminPanel\Console\Commands\MakeFieldCommand;
 use JTD\AdminPanel\Console\Commands\MakePageCommand;
@@ -77,7 +78,46 @@ class AdminPanelServiceProvider extends ServiceProvider
         $this->bootViews();
         $this->bootPolicies();
         $this->bootMediaLibrary();
+        $this->bootResources();
+        $this->bootPages();
+        $this->bootCards();
         $this->bootDashboards();
+    }
+
+    /**
+     * Get the resources that should be registered.
+     *
+     * Override this method in your AppServiceProvider to register resources.
+     *
+     * @return array<int, string>
+     */
+    protected function resources(): array
+    {
+        return [];
+    }
+
+    /**
+     * Get the pages that should be registered.
+     *
+     * Override this method in your AppServiceProvider to register pages.
+     *
+     * @return array<int, string>
+     */
+    protected function pages(): array
+    {
+        return [];
+    }
+
+    /**
+     * Get the cards that should be registered.
+     *
+     * Override this method in your AppServiceProvider to register cards.
+     *
+     * @return array<int, string>
+     */
+    protected function cards(): array
+    {
+        return [];
     }
 
     /**
@@ -91,6 +131,42 @@ class AdminPanelServiceProvider extends ServiceProvider
     protected function dashboards(): array
     {
         return [];
+    }
+
+    /**
+     * Boot resource registration.
+     */
+    protected function bootResources(): void
+    {
+        // Register resources from the resources() method
+        $resources = $this->resources();
+        if (! empty($resources)) {
+            AdminPanel::resources($resources);
+        }
+    }
+
+    /**
+     * Boot page registration.
+     */
+    protected function bootPages(): void
+    {
+        // Register pages from the pages() method
+        $pages = $this->pages();
+        if (! empty($pages)) {
+            AdminPanel::pages($pages);
+        }
+    }
+
+    /**
+     * Boot card registration.
+     */
+    protected function bootCards(): void
+    {
+        // Register cards from the cards() method
+        $cards = $this->cards();
+        if (! empty($cards)) {
+            AdminPanel::cards($cards);
+        }
     }
 
     /**
@@ -256,6 +332,7 @@ class AdminPanelServiceProvider extends ServiceProvider
                 DoctorCommand::class,
                 InstallCommand::class,
                 ListResourcesCommand::class,
+                MakeCardCommand::class,
                 MakeDashboardCommand::class,
                 MakeFieldCommand::class,
                 MakePageCommand::class,

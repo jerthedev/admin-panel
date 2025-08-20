@@ -1,0 +1,69 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Illuminate\Http\Request;
+use JTD\AdminPanel\Cards\Card;
+
+/**
+ * {{ class }} Card
+ *
+ * Custom card for the admin panel. Add your card functionality
+ * and customize the behavior as needed.
+ *
+ * @package {{ namespace }}
+ */
+class {{ class }} extends Card
+{
+    /**
+     * Create a new card instance.
+     */
+    public function __construct()
+    {
+        parent::__construct();
+
+        // Set custom meta data for the card
+        $this->withMeta([
+            'title' => '{{ class }}',
+            'description' => 'Custom {{ class }} card for the admin panel',
+            'icon' => '{{ icon }}',
+            'group' => '{{ group }}',
+            'refreshable' => false,
+        ]);
+    }
+
+    /**
+     * Create a new card instance with custom configuration.
+     */
+    public static function make(): static
+    {
+        return new static;
+    }
+
+
+
+    /**
+     * Get additional meta information to merge with the card payload.
+     */
+    public function meta(): array
+    {
+        return array_merge(parent::meta(), [
+            // Add custom meta data here
+            'data' => $this->getData(),
+            'timestamp' => now()->toISOString(),
+        ]);
+    }
+
+    /**
+     * Get the card's data.
+     */
+    protected function getData(): array
+    {
+        return [
+            // Add your card data here
+            'example_value' => 'This is example data for the {{ class }} card.',
+        ];
+    }
+}

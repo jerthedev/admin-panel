@@ -12,13 +12,12 @@ use Inertia\Response;
 use JTD\AdminPanel\Support\AdminPanel;
 
 /**
- * Resource Controller
+ * Resource Controller.
  *
  * Handles CRUD operations for admin panel resources with support for
  * search, filtering, sorting, and pagination.
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
- * @package JTD\AdminPanel\Http\Controllers
  */
 class ResourceController extends Controller
 {
@@ -61,7 +60,7 @@ class ResourceController extends Controller
         // Get pagination settings
         $perPage = min(
             (int) $request->get('per_page', config('admin-panel.resources.per_page', 25)),
-            config('admin-panel.resources.max_per_page', 100)
+            config('admin-panel.resources.max_per_page', 100),
         );
 
         // Paginate results
@@ -70,6 +69,7 @@ class ResourceController extends Controller
         // Transform resources for display
         $transformedResources = $resources->through(function ($model) use ($resourceInstance, $request) {
             $resource = new $resourceInstance($model);
+
             return $this->transformResourceForIndex($resource, $request);
         });
 
@@ -77,6 +77,7 @@ class ResourceController extends Controller
             'resource' => $this->getResourceMetadata($resourceInstance),
             'data' => $transformedResources, // Changed from 'resources' to 'data' to avoid conflict
             'fields' => $resourceInstance->indexFields($request)->values(),
+            'cards' => $this->resolveCards($resourceInstance, $request),
             'filters' => $resourceInstance->filters($request),
             'actions' => $resourceInstance->actions($request),
             'search' => $search,
@@ -109,6 +110,7 @@ class ResourceController extends Controller
         return Inertia::render('Resources/Create', [
             'resource' => $this->getResourceMetadata($resourceInstance),
             'fields' => $resourceInstance->creationFields($request)->values(),
+            'cards' => $this->resolveCards($resourceInstance, $request),
         ]);
     }
 
@@ -176,6 +178,7 @@ class ResourceController extends Controller
             'resource' => $this->getResourceMetadata($resourceInstance),
             'resourceData' => $this->transformResourceForDetail($resourceWithModel, $request),
             'fields' => $resourceWithModel->detailFields($request)->values(),
+            'cards' => $this->resolveCards($resourceWithModel, $request),
             'actions' => $resourceWithModel->actions($request),
         ]);
     }
@@ -208,6 +211,7 @@ class ResourceController extends Controller
             'resource' => $this->getResourceMetadata($resourceInstance),
             'resourceData' => $this->transformResourceForDetail($resourceWithModel, $request),
             'fields' => $resourceWithModel->updateFields($request)->values(),
+            'cards' => $this->resolveCards($resourceWithModel, $request),
         ]);
     }
 
@@ -345,9 +349,9 @@ class ResourceController extends Controller
             // For creation: merge base rules with creation rules
             // For update: use update rules if they exist, otherwise use base rules
             if ($context === 'creation') {
-                $fieldRules = !empty($contextRules) ? array_merge($baseRules, $contextRules) : $baseRules;
+                $fieldRules = ! empty($contextRules) ? array_merge($baseRules, $contextRules) : $baseRules;
             } else {
-                $fieldRules = !empty($contextRules) ? $contextRules : $baseRules;
+                $fieldRules = ! empty($contextRules) ? $contextRules : $baseRules;
             }
 
             if (! empty($fieldRules)) {
@@ -386,6 +390,22 @@ class ResourceController extends Controller
         }
 
         return $data;
+    }
+
+    /**
+     * Resolve cards for the resource.
+     */
+    protected function resolveCards($resource, Request $request): array
+    {
+        $cards = $resource->cards($request);
+
+        return collect($cards)->map(function ($card) use ($request) {
+            if (method_exists($card, 'authorize') && ! $card->authorize($request)) {
+                return null;
+            }
+
+            return $card->jsonSerialize();
+        })->filter()->values()->toArray();
     }
 
     /**

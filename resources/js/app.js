@@ -130,7 +130,7 @@ createInertiaApp({
             return packageComponent;
         }
 
-        // Development fallback: try dynamic import for custom pages
+        // Development fallback: try dynamic import for custom pages and cards
         if (name.startsWith('Pages/')) {
             try {
                 const componentName = name.substring(6); // Remove 'Pages/' prefix
@@ -159,6 +159,35 @@ createInertiaApp({
             }
         }
 
+        // Development fallback: try dynamic import for custom cards
+        if (name.startsWith('Cards/')) {
+            try {
+                const componentName = name.substring(6); // Remove 'Cards/' prefix
+                // Use absolute URL for development imports to work with Vite dev server
+                const module = await import(`/resources/js/admin-cards/${componentName}.vue`);
+                const component = module.default || module;
+                console.log(`✅ Loaded dev card component: ${name}`);
+
+                // Ensure the component is properly structured for Vue and is extensible
+                if (component && typeof component === 'object') {
+                    // Create a new extensible object to avoid frozen/sealed issues
+                    const extensibleComponent = { ...component };
+
+                    // Ensure inheritAttrs is properly set
+                    if (!extensibleComponent.hasOwnProperty('inheritAttrs')) {
+                        extensibleComponent.inheritAttrs = false;
+                    }
+
+                    // Cache the component
+                    componentCache.set(name, extensibleComponent);
+                    return extensibleComponent;
+                }
+                throw new Error('Invalid component structure');
+            } catch (cardError) {
+                console.log(`🎯 Dev card component not found: ${name}`);
+            }
+        }
+
         // If not found anywhere, show helpful fallback
         console.warn(`❌ Component not found: ${name}. Using fallback.`);
 
@@ -182,6 +211,9 @@ createInertiaApp({
                                         <p class="mt-1">Expected location: <code class="bg-yellow-100 px-1 rounded font-mono">resources/js/admin-panel/pages/${name.substring(6)}.vue</code></p>
                                         <p class="mt-1">Create the component or use: <code class="bg-yellow-100 px-1 rounded font-mono">php artisan admin-panel:make-page ${name.substring(6)}</code></p>
                                         <p class="mt-1">Or run: <code class="bg-yellow-100 px-1 rounded font-mono">php artisan admin-panel:setup-custom-pages</code></p>
+                                    ` : name.startsWith('Cards/') ? `
+                                        <p class="mt-1">Expected location: <code class="bg-yellow-100 px-1 rounded font-mono">resources/js/admin-cards/${name.substring(6)}.vue</code></p>
+                                        <p class="mt-1">Create the component or use: <code class="bg-yellow-100 px-1 rounded font-mono">php artisan admin-panel:make-card ${name.substring(6)}</code></p>
                                     ` : ''}
                                 </div>
                             </div>

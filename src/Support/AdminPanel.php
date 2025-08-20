@@ -7,6 +7,7 @@ namespace JTD\AdminPanel\Support;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
+use JTD\AdminPanel\Cards\Card;
 use JTD\AdminPanel\Http\Controllers\PageController;
 use JTD\AdminPanel\Resources\Resource;
 
@@ -29,6 +30,11 @@ class AdminPanel
      * Registered pages.
      */
     protected array $pages = [];
+
+    /**
+     * Registered cards.
+     */
+    protected array $cards = [];
 
     /**
      * Dashboard metrics.
@@ -63,6 +69,11 @@ class AdminPanel
     protected PageRegistry $pageRegistry;
 
     /**
+     * Card discovery service.
+     */
+    protected CardDiscovery $cardDiscovery;
+
+    /**
      * The main menu closure.
      */
     protected static $mainMenuCallback = null;
@@ -80,6 +91,7 @@ class AdminPanel
         $this->discovery = new ResourceDiscovery;
         $this->pageDiscovery = new PageDiscovery;
         $this->pageRegistry = new PageRegistry;
+        $this->cardDiscovery = new CardDiscovery;
     }
 
     /**
@@ -267,6 +279,153 @@ class AdminPanel
                 'class' => $pageClass,
             ];
         });
+    }
+
+    /**
+     * Register cards with the admin panel (static version for AdminServiceProvider).
+     */
+    public static function cards(array $cards): void
+    {
+        $instance = app(static::class);
+        $instance->registerCards($cards);
+    }
+
+    /**
+     * Register cards with the admin panel (instance version).
+     */
+    public function registerCards(array $cards): static
+    {
+        foreach ($cards as $card) {
+            $this->card($card);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Register a single card.
+     */
+    public function card(string $card): static
+    {
+        if (! is_subclass_of($card, Card::class)) {
+            throw new \InvalidArgumentException(
+                "Card [{$card}] must extend ".Card::class,
+            );
+        }
+
+        $this->cards[] = $card;
+
+        return $this;
+    }
+
+    /**
+     * Automatically discover and register cards from a directory.
+     */
+    public static function cardsIn(string $path): void
+    {
+        $instance = app(static::class);
+        $instance->discoverCardsIn($path);
+    }
+
+    /**
+     * Discover cards in a specific directory (instance version).
+     */
+    public function discoverCardsIn(string $path): static
+    {
+        $discoveredCards = $this->cardDiscovery->discoverIn($path);
+
+        if ($discoveredCards->isNotEmpty()) {
+            $this->registerCards($discoveredCards->toArray());
+        }
+
+        return $this;
+    }
+
+    /**
+     * Get all registered cards.
+     */
+    public function getCards(): Collection
+    {
+        // Combine manually registered cards with discovered cards
+        $manualCards = collect($this->cards)->map(function (string $card) {
+            return new $card;
+        });
+
+        $discoveredCards = $this->cardDiscovery->getCardInstances();
+
+        return $manualCards->merge($discoveredCards)->unique(function (Card $card) {
+            return get_class($card);
+        });
+    }
+
+    /**
+     * Get cards grouped by their group.
+     */
+    public function getGroupedCards(): Collection
+    {
+        return $this->getCards()
+            ->groupBy(function (Card $card) {
+                return $card->meta()['group'] ?? 'Default';
+            })
+            ->map(function (Collection $groupCards) {
+                // Sort cards alphabetically within each group
+                return $groupCards->sortBy(function (Card $card) {
+                    return $card->name();
+                })->values();
+            });
+    }
+
+    /**
+     * Find a card by its URI key.
+     */
+    public function findCard(string $uriKey): ?Card
+    {
+        // First check manually registered cards
+        $manualCard = $this->getCards()->first(function (Card $card) use ($uriKey) {
+            return $card->uriKey() === $uriKey;
+        });
+
+        if ($manualCard) {
+            return $manualCard;
+        }
+
+        // Then check discovered cards
+        return $this->cardDiscovery->findByUriKey($uriKey);
+    }
+
+    /**
+     * Get cards available for the given request.
+     */
+    public function getAuthorizedCards(Request $request): Collection
+    {
+        return $this->getCards()->filter(function (Card $card) use ($request) {
+            return $card->authorize($request);
+        });
+    }
+
+    /**
+     * Get cards grouped by their group for the given request.
+     */
+    public function getAuthorizedGroupedCards(Request $request): Collection
+    {
+        return $this->getAuthorizedCards($request)
+            ->groupBy(function (Card $card) {
+                return $card->meta()['group'] ?? 'Default';
+            })
+            ->map(function (Collection $groupCards) {
+                // Sort cards alphabetically within each group
+                return $groupCards->sortBy(function (Card $card) {
+                    return $card->name();
+                })->values();
+            });
+    }
+
+    /**
+     * Clear the card discovery cache.
+     */
+    public function clearCardCache(): void
+    {
+        $this->cardDiscovery->clearCache();
     }
 
     /**

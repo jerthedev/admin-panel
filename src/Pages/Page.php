@@ -8,13 +8,12 @@ use Illuminate\Http\Request;
 use JTD\AdminPanel\Menu\MenuItem;
 
 /**
- * Base Page Class
+ * Base Page Class.
  *
  * Abstract base class for all admin panel custom pages. Provides common
  * functionality for page registration, field definition, and authorization.
  *
  * @author Jeremy Fall <jerthedev@gmail.com>
- * @package JTD\AdminPanel\Pages
  */
 abstract class Page
 {
@@ -47,17 +46,19 @@ abstract class Page
 
     /**
      * Get the fields available for the page.
-     *
-     * @param Request $request
-     * @return array
      */
     abstract public function fields(Request $request): array;
 
     /**
+     * Get the cards available for the page.
+     */
+    public function cards(Request $request): array
+    {
+        return [];
+    }
+
+    /**
      * Get the actions available for the page.
-     *
-     * @param Request $request
-     * @return array
      */
     public function actions(Request $request): array
     {
@@ -66,9 +67,6 @@ abstract class Page
 
     /**
      * Get the metrics available for the page.
-     *
-     * @param Request $request
-     * @return array
      */
     public function metrics(Request $request): array
     {
@@ -77,9 +75,6 @@ abstract class Page
 
     /**
      * Get the custom data for the page.
-     *
-     * @param Request $request
-     * @return array
      */
     public function data(Request $request): array
     {
@@ -88,9 +83,6 @@ abstract class Page
 
     /**
      * Determine if the current user can view any instances of this page.
-     *
-     * @param Request $request
-     * @return bool
      */
     public static function authorizedToViewAny(Request $request): bool
     {
@@ -99,8 +91,6 @@ abstract class Page
 
     /**
      * Get the displayable label of the page.
-     *
-     * @return string
      */
     public static function label(): string
     {
@@ -120,8 +110,6 @@ abstract class Page
 
     /**
      * Get the menu group for the page.
-     *
-     * @return string|null
      */
     public static function group(): ?string
     {
@@ -130,8 +118,6 @@ abstract class Page
 
     /**
      * Get the icon for the page.
-     *
-     * @return string|null
      */
     public static function icon(): ?string
     {
@@ -141,13 +127,11 @@ abstract class Page
     /**
      * Get the primary Vue component name for the page.
      * Supports both single component (legacy) and multi-component formats.
-     *
-     * @return string
      */
     public static function component(): string
     {
         // Multi-component format takes precedence
-        if (!empty(static::$components)) {
+        if (! empty(static::$components)) {
             return static::$components[0];
         }
 
@@ -162,13 +146,11 @@ abstract class Page
     /**
      * Get all Vue components for the page.
      * Returns array format for both single and multi-component pages.
-     *
-     * @return array
      */
     public static function components(): array
     {
         // Multi-component format
-        if (!empty(static::$components)) {
+        if (! empty(static::$components)) {
             return static::$components;
         }
 
@@ -182,8 +164,6 @@ abstract class Page
 
     /**
      * Get the primary (first) component.
-     *
-     * @return string
      */
     public static function primaryComponent(): string
     {
@@ -192,19 +172,16 @@ abstract class Page
 
     /**
      * Get secondary (non-primary) components.
-     *
-     * @return array
      */
     public static function secondaryComponents(): array
     {
         $components = static::components();
+
         return array_slice($components, 1);
     }
 
     /**
      * Check if the page has multiple components.
-     *
-     * @return bool
      */
     public static function hasMultipleComponents(): bool
     {
@@ -213,8 +190,6 @@ abstract class Page
 
     /**
      * Get the total number of components.
-     *
-     * @return int
      */
     public static function componentCount(): int
     {
@@ -229,7 +204,7 @@ abstract class Page
     public static function validateComponents(): void
     {
         // Check for explicitly empty components array
-        if (!empty(static::$components) || static::$component !== null) {
+        if (! empty(static::$components) || static::$component !== null) {
             // We have components, validate them
             $components = static::components();
 
@@ -239,7 +214,7 @@ abstract class Page
 
             // All components must be strings
             foreach ($components as $component) {
-                if (!is_string($component)) {
+                if (! is_string($component)) {
                     throw new \InvalidArgumentException('All components must be strings');
                 }
             }
@@ -256,8 +231,6 @@ abstract class Page
 
     /**
      * Get the route name for the page.
-     *
-     * @return string
      */
     public static function routeName(): string
     {
@@ -268,13 +241,11 @@ abstract class Page
             $className = substr($className, 0, -4);
         }
 
-        return 'admin-panel.pages.' . strtolower($className);
+        return 'admin-panel.pages.'.strtolower($className);
     }
 
     /**
      * Get the URI path for the page.
-     *
-     * @return string
      */
     public static function uriPath(): string
     {
@@ -285,14 +256,11 @@ abstract class Page
             $className = substr($className, 0, -4);
         }
 
-        return 'pages/' . strtolower($className);
+        return 'pages/'.strtolower($className);
     }
 
     /**
      * Get the menu item that should represent the page.
-     *
-     * @param Request $request
-     * @return MenuItem
      */
     public function menu(Request $request): MenuItem
     {
@@ -307,9 +275,6 @@ abstract class Page
 
     /**
      * Determine if this page is available for navigation.
-     *
-     * @param Request $request
-     * @return bool
      */
     public static function availableForNavigation(Request $request): bool
     {

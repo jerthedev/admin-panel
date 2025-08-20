@@ -37,6 +37,7 @@ class AdminPanelPlugin
         $this->files = $files;
         $this->config = array_merge([
             'adminPagesPath' => 'resources/js/admin-pages',
+            'adminCardsPath' => 'resources/js/admin-cards',
             'manifestPath' => 'public/admin-pages-manifest.json',
             'hotReload' => true,
         ], $config);
@@ -54,10 +55,41 @@ class AdminPanelPlugin
         }
 
         $components = [];
-        
+
         try {
             $iterator = new RecursiveIteratorIterator(
                 new RecursiveDirectoryIterator($adminPagesPath, RecursiveDirectoryIterator::SKIP_DOTS)
+            );
+
+            foreach ($iterator as $file) {
+                if ($file->getExtension() === 'vue' && $file->getSize() > 0) {
+                    $components[] = $file->getPathname();
+                }
+            }
+        } catch (\Exception $e) {
+            // Handle directory access errors gracefully
+            return [];
+        }
+
+        return $components;
+    }
+
+    /**
+     * Detect all Vue components in the admin cards directory.
+     */
+    public function detectAdminCardComponents(string $basePath): array
+    {
+        $adminCardsPath = $basePath . '/' . $this->config['adminCardsPath'];
+
+        if (!$this->files->exists($adminCardsPath)) {
+            return [];
+        }
+
+        $components = [];
+
+        try {
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($adminCardsPath, RecursiveDirectoryIterator::SKIP_DOTS)
             );
 
             foreach ($iterator as $file) {
@@ -78,17 +110,33 @@ class AdminPanelPlugin
      */
     public function generateBuildEntries(string $basePath): array
     {
-        $components = $this->detectAdminPageComponents($basePath);
+        $pageComponents = $this->detectAdminPageComponents($basePath);
+        $cardComponents = $this->detectAdminCardComponents($basePath);
         $entries = [];
-        $adminPagesPath = $basePath . '/' . $this->config['adminPagesPath'];
 
-        foreach ($components as $componentPath) {
+        $adminPagesPath = $basePath . '/' . $this->config['adminPagesPath'];
+        $adminCardsPath = $basePath . '/' . $this->config['adminCardsPath'];
+
+        // Process page components
+        foreach ($pageComponents as $componentPath) {
             // Get relative path from admin pages directory
             $relativePath = str_replace($adminPagesPath . '/', '', $componentPath);
-            
+
             // Remove .vue extension and create entry name
             $entryName = 'admin-pages/' . str_replace('.vue', '', $relativePath);
-            
+
+            // Store the full path for the entry
+            $entries[$entryName] = $componentPath;
+        }
+
+        // Process card components
+        foreach ($cardComponents as $componentPath) {
+            // Get relative path from admin cards directory
+            $relativePath = str_replace($adminCardsPath . '/', '', $componentPath);
+
+            // Remove .vue extension and create entry name
+            $entryName = 'admin-cards/' . str_replace('.vue', '', $relativePath);
+
             // Store the full path for the entry
             $entries[$entryName] = $componentPath;
         }
@@ -101,12 +149,18 @@ class AdminPanelPlugin
      */
     public function generateManifest(array $builtAssets, string $basePath): array
     {
-        $manifest = ['admin-pages' => []];
+        $manifest = [
+            'admin-pages' => [],
+            'admin-cards' => []
+        ];
 
         foreach ($builtAssets as $entryName => $asset) {
             if (str_starts_with($entryName, 'admin-pages/')) {
                 $componentName = str_replace('admin-pages/', '', $entryName);
                 $manifest['admin-pages'][$componentName] = $asset;
+            } elseif (str_starts_with($entryName, 'admin-cards/')) {
+                $componentName = str_replace('admin-cards/', '', $entryName);
+                $manifest['admin-cards'][$componentName] = $asset;
             }
         }
 
@@ -166,6 +220,14 @@ class AdminPanelPlugin
     }
 
     /**
+     * Get the admin cards path relative to base path.
+     */
+    public function getAdminCardsPath(): string
+    {
+        return $this->config['adminCardsPath'];
+    }
+
+    /**
      * Get the manifest output path.
      */
     public function getManifestPath(): string
@@ -187,9 +249,18 @@ class AdminPanelPlugin
     public function generateComponentPath(string $componentPath, string $basePath): string
     {
         $adminPagesPath = $basePath . '/' . $this->config['adminPagesPath'];
-        $relativePath = str_replace($adminPagesPath . '/', '', $componentPath);
-        
-        return 'Pages/' . str_replace('.vue', '', $relativePath);
+        $adminCardsPath = $basePath . '/' . $this->config['adminCardsPath'];
+
+        if (str_starts_with($componentPath, $adminPagesPath)) {
+            $relativePath = str_replace($adminPagesPath . '/', '', $componentPath);
+            return 'Pages/' . str_replace('.vue', '', $relativePath);
+        } elseif (str_starts_with($componentPath, $adminCardsPath)) {
+            $relativePath = str_replace($adminCardsPath . '/', '', $componentPath);
+            return 'Cards/' . str_replace('.vue', '', $relativePath);
+        }
+
+        // Fallback for unknown paths
+        return str_replace('.vue', '', basename($componentPath));
     }
 
     /**

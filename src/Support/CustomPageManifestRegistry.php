@@ -79,9 +79,11 @@ class CustomPageManifestRegistry
 
             // Extract components from manifest data
             $components = [];
+            $cards = [];
             if ($manifestData) {
-                // Handle both formats: direct components or nested under 'Pages'
-                $components = $manifestData['Pages'] ?? $manifestData;
+                // Handle both formats: direct components or nested under 'Pages'/'Cards'
+                $components = $manifestData['Pages'] ?? ($manifestData['admin-pages'] ?? $manifestData);
+                $cards = $manifestData['Cards'] ?? ($manifestData['admin-cards'] ?? []);
             }
 
             // Always include the package, even if manifest data is empty (graceful degradation)
@@ -89,6 +91,7 @@ class CustomPageManifestRegistry
                 'base_url' => $config['base_url'],
                 'priority' => $config['priority'],
                 'components' => $components,
+                'cards' => $cards,
             ];
         }
 
@@ -109,15 +112,47 @@ class CustomPageManifestRegistry
         foreach ($manifests as $config) {
             $manifestData = $this->loadManifestData($config);
 
-            if ($manifestData && isset($manifestData[$componentName])) {
-                return [
-                    'type' => 'manifest',
-                    'component_name' => $componentName,
-                    'asset_path' => $manifestData[$componentName],
-                    'base_url' => $config['base_url'],
-                    'source' => $config['package'],
-                    'priority' => $config['priority'],
-                ];
+            if ($manifestData) {
+                // Check in Pages section
+                $pages = $manifestData['Pages'] ?? ($manifestData['admin-pages'] ?? $manifestData);
+                if (isset($pages[$componentName])) {
+                    return [
+                        'type' => 'manifest',
+                        'component_name' => $componentName,
+                        'asset_path' => $pages[$componentName],
+                        'base_url' => $config['base_url'],
+                        'source' => $config['package'],
+                        'priority' => $config['priority'],
+                        'component_type' => 'page',
+                    ];
+                }
+
+                // Check in Cards section
+                $cards = $manifestData['Cards'] ?? ($manifestData['admin-cards'] ?? []);
+                if (isset($cards[$componentName])) {
+                    return [
+                        'type' => 'manifest',
+                        'component_name' => $componentName,
+                        'asset_path' => $cards[$componentName],
+                        'base_url' => $config['base_url'],
+                        'source' => $config['package'],
+                        'priority' => $config['priority'],
+                        'component_type' => 'card',
+                    ];
+                }
+
+                // Fallback: check direct manifest data (legacy support)
+                if (isset($manifestData[$componentName])) {
+                    return [
+                        'type' => 'manifest',
+                        'component_name' => $componentName,
+                        'asset_path' => $manifestData[$componentName],
+                        'base_url' => $config['base_url'],
+                        'source' => $config['package'],
+                        'priority' => $config['priority'],
+                        'component_type' => 'unknown',
+                    ];
+                }
             }
         }
 
@@ -138,12 +173,39 @@ class CustomPageManifestRegistry
             $manifestData = $this->loadManifestData($config);
 
             if ($manifestData) {
-                foreach (array_keys($manifestData) as $componentName) {
+                // Get page components
+                $pages = $manifestData['Pages'] ?? ($manifestData['admin-pages'] ?? []);
+                foreach (array_keys($pages) as $componentName) {
                     $components[] = [
                         'name' => $componentName,
                         'source' => $config['package'],
                         'priority' => $config['priority'],
+                        'type' => 'page',
                     ];
+                }
+
+                // Get card components
+                $cards = $manifestData['Cards'] ?? ($manifestData['admin-cards'] ?? []);
+                foreach (array_keys($cards) as $componentName) {
+                    $components[] = [
+                        'name' => $componentName,
+                        'source' => $config['package'],
+                        'priority' => $config['priority'],
+                        'type' => 'card',
+                    ];
+                }
+
+                // Handle legacy direct manifest format
+                if (!isset($manifestData['Pages']) && !isset($manifestData['Cards']) &&
+                    !isset($manifestData['admin-pages']) && !isset($manifestData['admin-cards'])) {
+                    foreach (array_keys($manifestData) as $componentName) {
+                        $components[] = [
+                            'name' => $componentName,
+                            'source' => $config['package'],
+                            'priority' => $config['priority'],
+                            'type' => 'unknown',
+                        ];
+                    }
                 }
             }
         }

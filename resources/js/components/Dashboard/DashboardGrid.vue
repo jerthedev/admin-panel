@@ -30,6 +30,7 @@
         v-bind="card.props"
         :card="card"
         @error="handleCardError"
+        @refresh="handleCardRefresh"
       />
     </div>
   </div>
@@ -87,7 +88,8 @@ export default {
     'drag-end',
     'card-activate',
     'grid-resize',
-    'card-error'
+    'card-error',
+    'card-refresh'
   ],
   setup(props, { emit }) {
     const gridRef = ref(null)
@@ -251,6 +253,10 @@ export default {
       emit('card-error', error, card)
     }
 
+    const handleCardRefresh = (card) => {
+      emit('card-refresh', card)
+    }
+
     const handleResize = () => {
       emit('grid-resize', {
         breakpoint: currentBreakpoint.value,
@@ -305,6 +311,7 @@ export default {
       handleDrop,
       handleKeyDown,
       handleCardError,
+      handleCardRefresh,
       handleResize,
       cards: computed(() => props.cards)
     }

@@ -38,5 +38,9 @@ Route::post('/resources/{resource}/actions/{action}', [ApiController::class, 'ex
 // Dashboard metrics
 Route::get('/metrics', [ApiController::class, 'metrics'])->name('metrics');
 
+// Dashboard cards
+Route::get('/dashboards/{dashboard}/cards', [ApiController::class, 'dashboardCards'])->name('dashboard-cards');
+Route::post('/dashboards/{dashboard}/cards/{card}/refresh', [ApiController::class, 'refreshCard'])->name('refresh-card');
+
 // System actions
 Route::post('/system/clear-cache', [ApiController::class, 'clearCache'])->name('clear-cache');

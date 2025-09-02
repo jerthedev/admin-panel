@@ -219,6 +219,12 @@ class AdminPanelServiceProvider extends ServiceProvider
                 __DIR__.'/../database/migrations' => database_path('migrations'),
             ], 'admin-panel-migrations');
 
+            // Publish examples
+            $this->publishes([
+                __DIR__.'/../stubs/examples/cards/AnalyticsCard.php' => app_path('Admin/Cards/AnalyticsCard.php'),
+                __DIR__.'/../stubs/examples/vue-components/AnalyticsCard.vue' => resource_path('js/admin-cards/AnalyticsCard.vue'),
+            ], 'admin-panel-examples');
+
             // Publish everything
             $this->publishes([
                 __DIR__.'/../config/admin-panel.php' => config_path('admin-panel.php'),
@@ -226,6 +232,8 @@ class AdminPanelServiceProvider extends ServiceProvider
                 __DIR__.'/../resources/css' => resource_path('css/vendor/admin-panel'),
                 __DIR__.'/../resources/views' => resource_path('views/vendor/admin-panel'),
                 __DIR__.'/../database/migrations' => database_path('migrations'),
+                __DIR__.'/../stubs/examples/cards/AnalyticsCard.php' => app_path('Admin/Cards/AnalyticsCard.php'),
+                __DIR__.'/../stubs/examples/vue-components/AnalyticsCard.vue' => resource_path('js/admin-cards/AnalyticsCard.vue'),
             ], 'admin-panel');
         }
     }

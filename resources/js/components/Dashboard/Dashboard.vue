@@ -51,16 +51,16 @@
     <div class="dashboard-content">
       <!-- Cards Grid -->
       <div v-if="cards && cards.length > 0" class="dashboard-cards">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          <DashboardCard
-            v-for="(card, index) in cards"
-            :key="`card-${index}-${card.component || 'unknown'}`"
-            :card="card"
-            :dashboard="dashboard"
-            @card-action="handleCardAction"
-            @card-error="handleCardError"
-          />
-        </div>
+        <DashboardGrid
+          :cards="formattedCards"
+          :columns="{ mobile: 1, tablet: 2, desktop: 3, wide: 4 }"
+          gap="1.5rem"
+          auto-rows="minmax(200px, auto)"
+          min-card-width="280px"
+          @card-click="handleCardClick"
+          @card-error="handleCardError"
+          @card-refresh="handleCardRefresh"
+        />
       </div>
 
       <!-- Empty State -->
@@ -136,12 +136,14 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 import DashboardCard from './DashboardCard.vue'
+import DashboardGrid from './DashboardGrid.vue'
 import DashboardSelector from './DashboardSelector.vue'
 
 export default {
   name: 'Dashboard',
   components: {
     DashboardCard,
+    DashboardGrid,
     DashboardSelector,
   },
   props: {
@@ -170,9 +172,46 @@ export default {
 
     // Computed properties
     const hasCards = computed(() => props.cards && props.cards.length > 0)
-    const hasMultipleDashboards = computed(() => 
+    const hasMultipleDashboards = computed(() =>
       props.availableDashboards && props.availableDashboards.length > 1
     )
+
+    // Format cards for DashboardGrid component
+    const formattedCards = computed(() => {
+      if (!props.cards || !Array.isArray(props.cards)) {
+        return []
+      }
+
+      return props.cards.map((card, index) => {
+        const size = card.size || 'md'
+
+        // Map card sizes to grid area spans
+        const sizeToSpan = {
+          'sm': { rowSpan: 1, columnSpan: 1 },
+          'md': { rowSpan: 1, columnSpan: 1 },
+          'lg': { rowSpan: 1, columnSpan: 2 },
+          'xl': { rowSpan: 2, columnSpan: 2 },
+          'full': { rowSpan: 1, columnSpan: 4 }
+        }
+
+        const spans = sizeToSpan[size] || sizeToSpan['md']
+
+        return {
+          id: card.id || `card-${index}`,
+          component: card.component || 'DashboardCard',
+          title: card.title || '',
+          gridArea: {
+            row: 'auto',
+            column: 'auto',
+            ...spans
+          },
+          props: {
+            card: card,
+            dashboard: props.dashboard
+          }
+        }
+      })
+    })
 
     // Methods
     const refreshDashboard = async () => {
@@ -247,6 +286,95 @@ export default {
       })
     }
 
+    const handleCardClick = (card, event) => {
+      // Handle card click events
+      // This can be extended to support card-specific actions
+      console.log('Card clicked:', card.title || card.id)
+    }
+
+    const handleCardError = (error, card) => {
+      console.error('Card error:', error, card)
+      // Could emit an event or show a notification
+    }
+
+    const handleCardRefresh = async (card) => {
+      try {
+        await refreshCard(card.id)
+      } catch (error) {
+        console.error('Failed to refresh card:', error)
+        // Could show a notification to the user
+      }
+    }
+
+    const refreshCard = async (cardId) => {
+      try {
+        const response = await fetch(`/admin/api/dashboards/${props.dashboard.uriKey}/cards/${cardId}/refresh`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+          },
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const data = await response.json()
+
+        // Update the card data in the cards array
+        const cardIndex = props.cards.findIndex(card => card.id === cardId)
+        if (cardIndex !== -1) {
+          // Create a new array with the updated card
+          const updatedCards = [...props.cards]
+          updatedCards[cardIndex] = { ...updatedCards[cardIndex], ...data.card }
+
+          // Emit an event to notify parent component of the update
+          // This would require the parent to handle the update
+          console.log('Card refreshed:', data.card)
+        }
+
+        return data.card
+      } catch (error) {
+        console.error('Failed to refresh card:', error)
+        throw error
+      }
+    }
+
+    const refreshAllCards = async () => {
+      if (isRefreshing.value) return
+
+      isRefreshing.value = true
+      error.value = null
+
+      try {
+        const response = await fetch(`/admin/api/dashboards/${props.dashboard.uriKey}/cards`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+          },
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const data = await response.json()
+
+        // Emit event to parent to update all cards
+        console.log('All cards refreshed:', data.cards)
+
+        // For now, we'll use the existing dashboard refresh
+        await refreshDashboard()
+      } catch (err) {
+        error.value = 'Failed to refresh cards. Please try again.'
+        console.error('Cards refresh error:', err)
+      } finally {
+        isRefreshing.value = false
+      }
+    }
+
     // Lifecycle
     onMounted(() => {
       // Dashboard is already loaded via Inertia, no need to fetch
@@ -266,10 +394,14 @@ export default {
       error,
       hasCards,
       hasMultipleDashboards,
+      formattedCards,
       refreshDashboard,
+      refreshCard,
+      refreshAllCards,
       handleDashboardChange,
-      handleCardAction,
+      handleCardClick,
       handleCardError,
+      handleCardRefresh,
       retryLoad
     }
   }

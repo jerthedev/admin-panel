@@ -6,7 +6,6 @@ namespace JTD\AdminPanel\Tests\Integration\Dashboards;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
-use Inertia\Testing\AssertableInertia as Assert;
 use JTD\AdminPanel\Cards\Card;
 use JTD\AdminPanel\Dashboards\Dashboard;
 use JTD\AdminPanel\Http\Controllers\DashboardController;
@@ -30,17 +29,20 @@ class DashboardControllerIntegrationTest extends TestCase
 
     public function test_index_renders_main_dashboard_by_default(): void
     {
-        $request = Request::create('/admin');
+        $admin = $this->createAdminUser();
 
-        $response = $this->controller->index($request);
+        $response = $this->actingAs($admin)->get('/admin');
 
-        $response->assertInertia(fn (Assert $page) => $page
-            ->component('Dashboard')
-            ->has('dashboard')
-            ->where('dashboard.name', 'Main')
-            ->where('dashboard.uriKey', 'main')
-            ->where('dashboard.showRefreshButton', false),
-        );
+        $response->assertOk();
+
+        $pageData = $response->getOriginalContent()->getData()['page'];
+        $this->assertEquals('Dashboard', $pageData['component']);
+
+        $props = $pageData['props'];
+        $this->assertArrayHasKey('dashboard', $props);
+        $this->assertEquals('Main', $props['dashboard']['name']);
+        $this->assertEquals('main', $props['dashboard']['uriKey']);
+        $this->assertFalse($props['dashboard']['showRefreshButton']);
     }
 
     public function test_show_renders_specific_dashboard(): void
@@ -50,13 +52,19 @@ class DashboardControllerIntegrationTest extends TestCase
 
         $response = $this->controller->show($request, $dashboard);
 
-        $response->assertInertia(fn (Assert $page) => $page
-            ->component('Dashboard')
-            ->has('dashboard')
-            ->where('dashboard.name', 'Test Dashboard')
-            ->where('dashboard.uriKey', 'test-dashboard')
-            ->where('dashboard.showRefreshButton', false),
-        );
+        // Test the response structure using reflection since properties are protected
+        $reflection = new \ReflectionClass($response);
+        $componentProperty = $reflection->getProperty('component');
+        $componentProperty->setAccessible(true);
+        $propsProperty = $reflection->getProperty('props');
+        $propsProperty->setAccessible(true);
+
+        $this->assertEquals('Dashboard', $componentProperty->getValue($response));
+        $props = $propsProperty->getValue($response);
+        $this->assertArrayHasKey('dashboard', $props);
+        $this->assertEquals('Test Dashboard', $props['dashboard']['name']);
+        $this->assertEquals('test-dashboard', $props['dashboard']['uriKey']);
+        $this->assertFalse($props['dashboard']['showRefreshButton']);
     }
 
     public function test_show_uses_main_dashboard_when_null_provided(): void
@@ -65,12 +73,18 @@ class DashboardControllerIntegrationTest extends TestCase
 
         $response = $this->controller->show($request, null);
 
-        $response->assertInertia(fn (Assert $page) => $page
-            ->component('Dashboard')
-            ->has('dashboard')
-            ->where('dashboard.name', 'Main')
-            ->where('dashboard.uriKey', 'main'),
-        );
+        // Test the response structure using reflection since properties are protected
+        $reflection = new \ReflectionClass($response);
+        $componentProperty = $reflection->getProperty('component');
+        $componentProperty->setAccessible(true);
+        $propsProperty = $reflection->getProperty('props');
+        $propsProperty->setAccessible(true);
+
+        $this->assertEquals('Dashboard', $componentProperty->getValue($response));
+        $props = $propsProperty->getValue($response);
+        $this->assertArrayHasKey('dashboard', $props);
+        $this->assertEquals('Main', $props['dashboard']['name']);
+        $this->assertEquals('main', $props['dashboard']['uriKey']);
     }
 
     public function test_dashboard_authorization_is_enforced(): void
@@ -93,12 +107,19 @@ class DashboardControllerIntegrationTest extends TestCase
 
         $response = $this->controller->show($request, $dashboard);
 
-        $response->assertInertia(fn (Assert $page) => $page
-            ->component('Dashboard')
-            ->has('cards', 1)
-            ->where('cards.0.component', 'test-card')
-            ->where('cards.0.title', 'Test Card'),
-        );
+        // Test the response structure using reflection since properties are protected
+        $reflection = new \ReflectionClass($response);
+        $componentProperty = $reflection->getProperty('component');
+        $componentProperty->setAccessible(true);
+        $propsProperty = $reflection->getProperty('props');
+        $propsProperty->setAccessible(true);
+
+        $this->assertEquals('Dashboard', $componentProperty->getValue($response));
+        $props = $propsProperty->getValue($response);
+        $this->assertArrayHasKey('cards', $props);
+        $this->assertCount(1, $props['cards']);
+        $this->assertEquals('test-card', $props['cards'][0]['component']);
+        $this->assertEquals('Test Card', $props['cards'][0]['title']);
     }
 
     public function test_main_dashboard_loads_empty_cards_by_default(): void
@@ -107,10 +128,17 @@ class DashboardControllerIntegrationTest extends TestCase
 
         $response = $this->controller->index($request);
 
-        $response->assertInertia(fn (Assert $page) => $page
-            ->component('Dashboard')
-            ->has('cards', 0),
-        );
+        // Test the response structure using reflection since properties are protected
+        $reflection = new \ReflectionClass($response);
+        $componentProperty = $reflection->getProperty('component');
+        $componentProperty->setAccessible(true);
+        $propsProperty = $reflection->getProperty('props');
+        $propsProperty->setAccessible(true);
+
+        $this->assertEquals('Dashboard', $componentProperty->getValue($response));
+        $props = $propsProperty->getValue($response);
+        $this->assertArrayHasKey('cards', $props);
+        $this->assertCount(0, $props['cards']);
     }
 
     public function test_dashboard_with_refresh_button_enabled(): void
@@ -121,10 +149,17 @@ class DashboardControllerIntegrationTest extends TestCase
 
         $response = $this->controller->show($request, $dashboard);
 
-        $response->assertInertia(fn (Assert $page) => $page
-            ->component('Dashboard')
-            ->where('dashboard.showRefreshButton', true),
-        );
+        // Test the response structure using reflection since properties are protected
+        $reflection = new \ReflectionClass($response);
+        $componentProperty = $reflection->getProperty('component');
+        $componentProperty->setAccessible(true);
+        $propsProperty = $reflection->getProperty('props');
+        $propsProperty->setAccessible(true);
+
+        $this->assertEquals('Dashboard', $componentProperty->getValue($response));
+        $props = $propsProperty->getValue($response);
+        $this->assertArrayHasKey('dashboard', $props);
+        $this->assertTrue($props['dashboard']['showRefreshButton']);
     }
 
     public function test_dashboard_controller_includes_all_required_data(): void
@@ -133,15 +168,21 @@ class DashboardControllerIntegrationTest extends TestCase
 
         $response = $this->controller->index($request);
 
-        $response->assertInertia(fn (Assert $page) => $page
-            ->component('Dashboard')
-            ->has('dashboard')
-            ->has('metrics')
-            ->has('cards')
-            ->has('recentActivity')
-            ->has('quickActions')
-            ->has('systemInfo'),
-        );
+        // Test the response structure using reflection since properties are protected
+        $reflection = new \ReflectionClass($response);
+        $componentProperty = $reflection->getProperty('component');
+        $componentProperty->setAccessible(true);
+        $propsProperty = $reflection->getProperty('props');
+        $propsProperty->setAccessible(true);
+
+        $this->assertEquals('Dashboard', $componentProperty->getValue($response));
+        $props = $propsProperty->getValue($response);
+        $this->assertArrayHasKey('dashboard', $props);
+        $this->assertArrayHasKey('metrics', $props);
+        $this->assertArrayHasKey('cards', $props);
+        $this->assertArrayHasKey('recentActivity', $props);
+        $this->assertArrayHasKey('quickActions', $props);
+        $this->assertArrayHasKey('systemInfo', $props);
     }
 
     public function test_dashboard_card_authorization_is_respected(): void
@@ -151,10 +192,17 @@ class DashboardControllerIntegrationTest extends TestCase
 
         $response = $this->controller->show($request, $dashboard);
 
-        $response->assertInertia(fn (Assert $page) => $page
-            ->component('Dashboard')
-            ->has('cards', 0), // Unauthorized card should be filtered out
-        );
+        // Test the response structure using reflection since properties are protected
+        $reflection = new \ReflectionClass($response);
+        $componentProperty = $reflection->getProperty('component');
+        $componentProperty->setAccessible(true);
+        $propsProperty = $reflection->getProperty('props');
+        $propsProperty->setAccessible(true);
+
+        $this->assertEquals('Dashboard', $componentProperty->getValue($response));
+        $props = $propsProperty->getValue($response);
+        $this->assertArrayHasKey('cards', $props);
+        $this->assertCount(0, $props['cards']); // Unauthorized card should be filtered out
     }
 
     public function test_dashboard_handles_card_loading_errors_gracefully(): void
@@ -165,23 +213,30 @@ class DashboardControllerIntegrationTest extends TestCase
         // Should not throw exception, should handle gracefully
         $response = $this->controller->show($request, $dashboard);
 
-        $response->assertInertia(fn (Assert $page) => $page
-            ->component('Dashboard')
-            ->has('cards', 0), // Error card should be filtered out
-        );
+        // Test the response structure using reflection since properties are protected
+        $reflection = new \ReflectionClass($response);
+        $componentProperty = $reflection->getProperty('component');
+        $componentProperty->setAccessible(true);
+        $propsProperty = $reflection->getProperty('props');
+        $propsProperty->setAccessible(true);
+
+        $this->assertEquals('Dashboard', $componentProperty->getValue($response));
+        $props = $propsProperty->getValue($response);
+        $this->assertArrayHasKey('cards', $props);
+        $this->assertCount(0, $props['cards']); // Error card should be filtered out
     }
 
     public function test_backward_compatibility_with_legacy_get_cards_method(): void
     {
-        // Test that the legacy getCards method still works
+        // Test that the getCards method works with dashboard instances
         $reflection = new \ReflectionClass($this->controller);
         $method = $reflection->getMethod('getCards');
         $method->setAccessible(true);
 
-        $adminPanel = app(\JTD\AdminPanel\Support\AdminPanel::class);
+        $dashboard = new ControllerIntegrationTestDashboard;
         $request = Request::create('/admin');
 
-        $cards = $method->invoke($this->controller, $adminPanel, $request);
+        $cards = $method->invoke($this->controller, $dashboard, $request);
 
         $this->assertIsArray($cards);
     }

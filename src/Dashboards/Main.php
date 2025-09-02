@@ -24,12 +24,26 @@ class Main extends Dashboard
      */
     public function cards(): array
     {
-        return [
-            // Add your default cards here
-            // Example:
-            // new \App\Admin\Cards\UserCountCard,
-            // new \App\Admin\Cards\RevenueCard,
-        ];
+        $cards = [];
+
+        // Load cards from configuration
+        $defaultCards = config('admin-panel.dashboard.default_cards', []);
+
+        foreach ($defaultCards as $cardClass) {
+            if (class_exists($cardClass) && is_subclass_of($cardClass, \JTD\AdminPanel\Cards\Card::class)) {
+                try {
+                    $cards[] = new $cardClass;
+                } catch (\Exception $e) {
+                    // Log error but don't break the dashboard
+                    logger()->error('Error instantiating default card: '.$cardClass, [
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
+                    ]);
+                }
+            }
+        }
+
+        return $cards;
     }
 
     /**

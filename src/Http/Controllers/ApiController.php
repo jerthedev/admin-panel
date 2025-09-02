@@ -214,6 +214,89 @@ class ApiController extends Controller
     }
 
     /**
+     * Get dashboard cards data.
+     */
+    public function dashboardCards(Request $request, string $dashboard): JsonResponse
+    {
+        $adminPanel = app(AdminPanel::class);
+        $dashboardInstance = $adminPanel->findDashboardByUriKey($dashboard);
+
+        if (! $dashboardInstance) {
+            return response()->json(['error' => 'Dashboard not found'], 404);
+        }
+
+        $cards = $dashboardInstance->cards();
+        $serializedCards = [];
+
+        foreach ($cards as $card) {
+            if ($card->authorize($request)) {
+                $serializedCards[] = [
+                    'id' => $card->uriKey(),
+                    'component' => $card->component(),
+                    'title' => $card->title(),
+                    'data' => $card->data($request),
+                    'size' => $card->size(),
+                    'meta' => $card->meta,
+                    'updated_at' => now()->toISOString(),
+                ];
+            }
+        }
+
+        return response()->json([
+            'cards' => $serializedCards,
+        ]);
+    }
+
+    /**
+     * Refresh a specific card's data.
+     */
+    public function refreshCard(Request $request, string $dashboard, string $card): JsonResponse
+    {
+        $adminPanel = app(AdminPanel::class);
+        $dashboardInstance = $adminPanel->findDashboardByUriKey($dashboard);
+
+        if (! $dashboardInstance) {
+            return response()->json(['error' => 'Dashboard not found'], 404);
+        }
+
+        $cards = $dashboardInstance->cards();
+        $targetCard = null;
+
+        foreach ($cards as $cardInstance) {
+            if ($cardInstance->uriKey() === $card) {
+                $targetCard = $cardInstance;
+                break;
+            }
+        }
+
+        if (! $targetCard) {
+            return response()->json(['error' => 'Card not found'], 404);
+        }
+
+        if (! $targetCard->authorize($request)) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        try {
+            return response()->json([
+                'card' => [
+                    'id' => $targetCard->uriKey(),
+                    'component' => $targetCard->component(),
+                    'title' => $targetCard->title(),
+                    'data' => $targetCard->data($request),
+                    'size' => $targetCard->size(),
+                    'meta' => $targetCard->meta,
+                    'updated_at' => now()->toISOString(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to refresh card: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Clear application cache.
      */
     public function clearCache(Request $request): JsonResponse

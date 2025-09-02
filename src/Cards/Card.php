@@ -277,6 +277,33 @@ abstract class Card
     }
 
     /**
+     * Get the card's title.
+     */
+    public function title(): string
+    {
+        return $this->meta['title'] ?? $this->name();
+    }
+
+    /**
+     * Get the card's size.
+     */
+    public function size(): string
+    {
+        return $this->meta['size'] ?? 'md';
+    }
+
+    /**
+     * Get the card's data for rendering.
+     *
+     * This method should be overridden by concrete card implementations
+     * to provide specific data for the card.
+     */
+    public function data(Request $request): array
+    {
+        return $this->meta['data'] ?? [];
+    }
+
+    /**
      * Generate a display name from the class name.
      */
     protected function generateName(): string

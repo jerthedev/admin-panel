@@ -627,6 +627,23 @@ return [
             \JTD\AdminPanel\Metrics\SystemHealthMetric::class,
         ],
         'metrics_cache_ttl' => 300, // 5 minutes
+
+        /*
+        |--------------------------------------------------------------------------
+        | Default Cards
+        |--------------------------------------------------------------------------
+        |
+        | Default cards that should be displayed on the main dashboard when no
+        | specific cards are defined. These cards will be loaded and rendered
+        | automatically on the main dashboard.
+        |
+        */
+        'default_cards' => [
+            // Add your default dashboard cards here
+            // Example:
+            // \App\Admin\Cards\WelcomeCard::class,
+            // \App\Admin\Cards\QuickStatsCard::class,
+        ],
     ],
 
     /*

@@ -335,6 +335,8 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .audio-field {
   @apply space-y-4;
 }

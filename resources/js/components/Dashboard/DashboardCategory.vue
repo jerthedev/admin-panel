@@ -168,6 +168,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .dashboard-category {
   @apply inline-flex items-center font-medium transition-all duration-200;
 }

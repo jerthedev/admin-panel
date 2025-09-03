@@ -9,8 +9,7 @@
 
 import { resolve, relative, join } from 'path';
 import { existsSync, readdirSync, statSync, writeFileSync } from 'fs';
-import pkg from 'glob';
-const { glob } = pkg;
+import { glob } from 'glob';
 
 /**
  * Admin Panel Vite Plugin

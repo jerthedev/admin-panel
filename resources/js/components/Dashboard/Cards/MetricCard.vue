@@ -524,6 +524,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../../css/admin.css' reference;
+
 .metric-card {
   @apply space-y-4 transition-all duration-200 ease-in-out;
 }

@@ -8,7 +8,7 @@
       <div
         v-for="notification in notifications"
         :key="notification.id"
-        class="max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden"
+        class="max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black/5 overflow-hidden"
         :class="{ 'bg-gray-800 ring-gray-700': isDarkTheme }"
       >
         <div class="p-4">

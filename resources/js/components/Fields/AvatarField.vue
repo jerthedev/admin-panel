@@ -339,6 +339,8 @@ defineExpose({
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 /* Ensure proper spacing */
 .space-y-4 > * + * {
   margin-top: 1rem;

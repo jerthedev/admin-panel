@@ -171,7 +171,7 @@
     <!-- Lightbox Modal -->
     <div
       v-if="showLightbox"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/75"
       @click="closeLightbox"
     >
       <div class="relative max-w-lg max-h-full p-4">
@@ -183,7 +183,7 @@
         />
         <button
           type="button"
-          class="absolute top-4 right-4 p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 transition-all"
+          class="absolute top-4 right-4 p-2 bg-black/50 rounded-full text-white hover:bg-black/75 transition-all"
           @click="closeLightbox"
         >
           <XMarkIcon class="h-6 w-6" />
@@ -480,6 +480,8 @@ const handleBlur = (event) => {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .avatar-container {
   @apply relative w-20 h-20 rounded-full overflow-hidden bg-gray-200 border-2 border-gray-300 cursor-pointer group;
 }
@@ -501,7 +503,7 @@ const handleBlur = (event) => {
 }
 
 .avatar-overlay {
-  @apply absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer;
+  @apply absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer;
 }
 
 .avatar-size-preview {

@@ -15,12 +15,13 @@ import ResourceShow from './pages/Resources/Show.vue'
 
 // Admin panel page components (from main project)
 // Note: These need to be imported statically for production builds
-import SystemDashboard from '../../../../../resources/js/admin-panel/pages/SystemDashboard.vue'
-import Welcome from '../../../../../resources/js/admin-panel/pages/Welcome.vue'
-import MultiComponentTestSimple from '../../../../../resources/js/admin-panel/pages/MultiComponentTestSimple.vue'
-import MultiComponentTestDashboard from '../../../../../resources/js/admin-panel/pages/MultiComponentTest/Dashboard.vue'
-import MultiComponentTestSettings from '../../../../../resources/js/admin-panel/pages/MultiComponentTest/Settings.vue'
-import MultiComponentTestAnalytics from '../../../../../resources/js/admin-panel/pages/MultiComponentTest/Analytics.vue'
+// These imports are commented out for package testing - they reference the host Laravel application
+// import SystemDashboard from '../../../../../resources/js/admin-panel/pages/SystemDashboard.vue'
+// import Welcome from '../../../../../resources/js/admin-panel/pages/Welcome.vue'
+// import MultiComponentTestSimple from '../../../../../resources/js/admin-panel/pages/MultiComponentTestSimple.vue'
+// import MultiComponentTestDashboard from '../../../../../resources/js/admin-panel/pages/MultiComponentTest/Dashboard.vue'
+// import MultiComponentTestSettings from '../../../../../resources/js/admin-panel/pages/MultiComponentTest/Settings.vue'
+// import MultiComponentTestAnalytics from '../../../../../resources/js/admin-panel/pages/MultiComponentTest/Analytics.vue'
 
 /**
  * Admin Panel Vue.js Application
@@ -114,13 +115,13 @@ createInertiaApp({
             'Resources/Create': ResourceCreate,
             'Resources/Edit': ResourceEdit,
             'Resources/Show': ResourceShow,
-            // Admin panel page components
-            'Pages/SystemDashboard': SystemDashboard,
-            'Pages/Welcome': Welcome,
-            'Pages/MultiComponentTestSimple': MultiComponentTestSimple,
-            'Pages/MultiComponentTest/Dashboard': MultiComponentTestDashboard,
-            'Pages/MultiComponentTest/Settings': MultiComponentTestSettings,
-            'Pages/MultiComponentTest/Analytics': MultiComponentTestAnalytics,
+            // Admin panel page components - commented out for package testing
+            // 'Pages/SystemDashboard': SystemDashboard,
+            // 'Pages/Welcome': Welcome,
+            // 'Pages/MultiComponentTestSimple': MultiComponentTestSimple,
+            // 'Pages/MultiComponentTest/Dashboard': MultiComponentTestDashboard,
+            // 'Pages/MultiComponentTest/Settings': MultiComponentTestSettings,
+            // 'Pages/MultiComponentTest/Analytics': MultiComponentTestAnalytics,
         }
 
         const packageComponent = packagePages[name];
@@ -130,63 +131,9 @@ createInertiaApp({
             return packageComponent;
         }
 
-        // Development fallback: try dynamic import for custom pages and cards
-        if (name.startsWith('Pages/')) {
-            try {
-                const componentName = name.substring(6); // Remove 'Pages/' prefix
-                // Use absolute URL for development imports to work with Vite dev server
-                const module = await import(`/resources/js/admin-panel/pages/${componentName}.vue`);
-                const component = module.default || module;
-                console.log(`✅ Loaded dev app component: ${name}`);
-
-                // Ensure the component is properly structured for Vue and is extensible
-                if (component && typeof component === 'object') {
-                    // Create a new extensible object to avoid frozen/sealed issues
-                    const extensibleComponent = { ...component };
-
-                    // Ensure inheritAttrs is properly set
-                    if (!extensibleComponent.hasOwnProperty('inheritAttrs')) {
-                        extensibleComponent.inheritAttrs = false;
-                    }
-
-                    // Cache the component
-                    componentCache.set(name, extensibleComponent);
-                    return extensibleComponent;
-                }
-                throw new Error('Invalid component structure');
-            } catch (appError) {
-                console.log(`📦 Dev app component not found: ${name}`);
-            }
-        }
-
-        // Development fallback: try dynamic import for custom cards
-        if (name.startsWith('Cards/')) {
-            try {
-                const componentName = name.substring(6); // Remove 'Cards/' prefix
-                // Use absolute URL for development imports to work with Vite dev server
-                const module = await import(`/resources/js/admin-cards/${componentName}.vue`);
-                const component = module.default || module;
-                console.log(`✅ Loaded dev card component: ${name}`);
-
-                // Ensure the component is properly structured for Vue and is extensible
-                if (component && typeof component === 'object') {
-                    // Create a new extensible object to avoid frozen/sealed issues
-                    const extensibleComponent = { ...component };
-
-                    // Ensure inheritAttrs is properly set
-                    if (!extensibleComponent.hasOwnProperty('inheritAttrs')) {
-                        extensibleComponent.inheritAttrs = false;
-                    }
-
-                    // Cache the component
-                    componentCache.set(name, extensibleComponent);
-                    return extensibleComponent;
-                }
-                throw new Error('Invalid component structure');
-            } catch (cardError) {
-                console.log(`🎯 Dev card component not found: ${name}`);
-            }
-        }
+        // Note: Dynamic imports for host application pages/cards are handled via manifests
+        // loaded in the blade template when the package is installed in a Laravel app.
+        // The manifests are created by the vite plugin and loaded at runtime.
 
         // If not found anywhere, show helpful fallback
         console.warn(`❌ Component not found: ${name}. Using fallback.`);

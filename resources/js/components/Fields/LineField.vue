@@ -146,6 +146,8 @@ defineExpose({
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .line-field {
   @apply mb-1;
 }

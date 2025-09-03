@@ -314,6 +314,8 @@ defineExpose({
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .image-preview-container {
   @apply relative inline-block;
 }

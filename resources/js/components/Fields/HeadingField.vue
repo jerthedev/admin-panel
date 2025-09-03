@@ -103,6 +103,8 @@ defineExpose({
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .heading-field {
   @apply mb-6;
 }

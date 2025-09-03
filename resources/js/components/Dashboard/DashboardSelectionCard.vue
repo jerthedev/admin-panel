@@ -458,6 +458,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .dashboard-selection-card {
   @apply relative bg-white border border-gray-200 rounded-lg shadow-sm transition-all duration-200 overflow-hidden;
 }
@@ -531,7 +533,7 @@ export default {
 
 /* Card loading overlay */
 .card-loading-overlay {
-  @apply absolute inset-0 bg-white bg-opacity-90 z-10;
+  @apply absolute inset-0 bg-white/90 z-10;
 }
 
 /* Card header */
@@ -653,7 +655,7 @@ export default {
   }
 
   .card-loading-overlay {
-    @apply bg-gray-800 bg-opacity-90;
+    @apply bg-gray-800/90;
   }
 
   .dashboard-title {

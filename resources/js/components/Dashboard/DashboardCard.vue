@@ -304,6 +304,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .dashboard-card {
   @apply flex flex-col h-full;
 }

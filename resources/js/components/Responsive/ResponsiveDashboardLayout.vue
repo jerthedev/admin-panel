@@ -619,8 +619,9 @@ export default {
 </script>
 
 <style scoped>
-@import '@/css/responsive.css';
+/* Responsive styles are included in admin.css */
 
+@import '../../../css/admin.css' reference;
 .responsive-dashboard-layout {
   @apply min-h-screen bg-gray-50;
 }

@@ -139,6 +139,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .dashboard-tags {
   @apply flex flex-wrap items-center gap-1;
 }

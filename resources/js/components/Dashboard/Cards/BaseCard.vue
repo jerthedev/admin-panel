@@ -54,6 +54,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../../css/admin.css' reference;
+
 .base-card {
   @apply h-full;
 }

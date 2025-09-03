@@ -692,8 +692,9 @@ export default {
 </script>
 
 <style scoped>
-/* Component styles will be imported from responsive.css */
-@import '@/css/responsive.css';
+@import '../../../css/admin.css' reference;
+
+/* Responsive styles are included in admin.css */
 
 /* Additional component-specific styles */
 .mobile-dashboard-navigation {
@@ -711,7 +712,7 @@ export default {
 }
 
 .menu-toggle {
-  @apply p-2 -ml-2 text-gray-600 hover:text-gray-900 touch-target;
+  @apply p-2 -ml-2 text-gray-600 hover:text-gray-900 min-w-[44px] min-h-[44px];
 }
 
 .menu-icon {
@@ -735,7 +736,7 @@ export default {
 }
 
 .header-action {
-  @apply relative p-2 text-gray-600 hover:text-gray-900 touch-target;
+  @apply relative p-2 text-gray-600 hover:text-gray-900 min-w-[44px] min-h-[44px];
 }
 
 .action-icon {
@@ -747,7 +748,7 @@ export default {
 }
 
 .menu-overlay {
-  @apply fixed inset-0 bg-black bg-opacity-50 z-50;
+  @apply fixed inset-0 bg-black/50 z-50;
 }
 
 .slide-menu {
@@ -771,7 +772,7 @@ export default {
 }
 
 .close-menu {
-  @apply p-1 text-gray-500 hover:text-gray-700 touch-target;
+  @apply p-1 text-gray-500 hover:text-gray-700 min-w-[44px] min-h-[44px];
 }
 
 .close-icon {
@@ -783,7 +784,7 @@ export default {
 }
 
 .quick-action {
-  @apply p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded touch-target;
+  @apply p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded min-w-[44px] min-h-[44px];
 }
 
 .quick-action-icon {
@@ -816,7 +817,7 @@ export default {
 }
 
 .bottom-nav-item {
-  @apply relative flex flex-col items-center p-2 min-w-16 touch-target;
+  @apply relative flex flex-col items-center p-2 min-w-16 min-h-[44px];
 }
 
 .bottom-nav-item.active {
@@ -840,7 +841,7 @@ export default {
 }
 
 .gesture-hint {
-  @apply flex items-center justify-center bg-black bg-opacity-75 text-white text-sm rounded-lg p-2 mb-2;
+  @apply flex items-center justify-center bg-black/75 text-white text-sm rounded-lg p-2 mb-2;
 }
 
 .gesture-icon {

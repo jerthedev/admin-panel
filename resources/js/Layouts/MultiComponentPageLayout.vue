@@ -246,6 +246,8 @@ function executeAction(action) {
 </script>
 
 <style scoped>
+@import '../../css/admin.css' reference;
+
 .multi-component-page {
   @apply min-h-screen flex flex-col;
 }

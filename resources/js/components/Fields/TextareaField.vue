@@ -167,6 +167,8 @@ defineExpose({
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 /* Character count positioning */
 .relative textarea {
   padding-bottom: 2rem;

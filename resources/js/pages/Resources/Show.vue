@@ -250,6 +250,8 @@ const executeAction = (action) => {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 /* Custom styles for the show page */
 .admin-card dl {
 }

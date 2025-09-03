@@ -292,11 +292,6 @@ export default {
       console.log('Card clicked:', card.title || card.id)
     }
 
-    const handleCardError = (error, card) => {
-      console.error('Card error:', error, card)
-      // Could emit an event or show a notification
-    }
-
     const handleCardRefresh = async (card) => {
       try {
         await refreshCard(card.id)
@@ -409,6 +404,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .dashboard {
   @apply min-h-full;
 }

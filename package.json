@@ -33,7 +33,7 @@
   "devDependencies": {
     "@headlessui/vue": "^1.7.16",
     "@heroicons/vue": "^2.0.18",
-    "@inertiajs/vue3": "^1.0.14",
+    "@inertiajs/vue3": "^2.0.0",
     "@playwright/test": "^1.54.2",
     "@tailwindcss/vite": "^4.0.0",
     "@vitejs/plugin-vue": "^4.5.2",

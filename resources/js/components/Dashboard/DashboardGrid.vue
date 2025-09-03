@@ -320,6 +320,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .dashboard-grid {
   width: 100%;
   min-height: 200px;

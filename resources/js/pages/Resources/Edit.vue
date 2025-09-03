@@ -379,6 +379,8 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .field-group {
 }
 

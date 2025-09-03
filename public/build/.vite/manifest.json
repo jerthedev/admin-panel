@@ -1,20 +1,110 @@
 {
-  "resources/css/admin.css": {
-    "file": "assets/admin-gw_Kxjp4.js",
-    "name": "admin",
-    "src": "resources/css/admin.css",
-    "isEntry": true,
-    "css": [
-      "assets/admin-CYTXdnCZ.css"
+  "_vendor-ui-gyNJPtaX.js": {
+    "file": "assets/vendor-ui-gyNJPtaX.js",
+    "name": "vendor-ui",
+    "imports": [
+      "_vendor-vue-CUF9J8lG.js"
     ]
   },
+  "_vendor-utils-lKlX8tUN.js": {
+    "file": "assets/vendor-utils-lKlX8tUN.js",
+    "name": "vendor-utils"
+  },
+  "_vendor-vue-CUF9J8lG.js": {
+    "file": "assets/vendor-vue-CUF9J8lG.js",
+    "name": "vendor-vue",
+    "imports": [
+      "_vendor-utils-lKlX8tUN.js"
+    ]
+  },
+  "resources/css/admin.css": {
+    "file": "assets/admin-CsLLbLzz.css",
+    "src": "resources/css/admin.css",
+    "isEntry": true
+  },
   "resources/js/app.js": {
-    "file": "assets/app-sQE41UWo.js",
+    "file": "assets/app-H91gP8Vi.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "imports": [
-      "resources/css/admin.css"
+      "_vendor-vue-CUF9J8lG.js",
+      "_vendor-ui-gyNJPtaX.js",
+      "_vendor-utils-lKlX8tUN.js"
+    ],
+    "dynamicImports": [
+      "resources/js/components/Cards/Card.vue",
+      "resources/js/components/Dashboard/Cards/BaseCard.vue",
+      "resources/js/components/Dashboard/Cards/MetricCard.vue",
+      "resources/js/components/Dashboard/Cards/WelcomeCard.vue"
+    ],
+    "css": [
+      "assets/app-DRVMXn8t.css",
+      "assets/admin-CsLLbLzz.css"
+    ]
+  },
+  "resources/js/components/Cards/Card.vue": {
+    "file": "assets/Card-CHTxFDdX.js",
+    "name": "Card",
+    "src": "resources/js/components/Cards/Card.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_vendor-vue-CUF9J8lG.js",
+      "_vendor-ui-gyNJPtaX.js",
+      "_vendor-utils-lKlX8tUN.js"
+    ],
+    "css": [
+      "assets/Card-BkMzuSov.css",
+      "assets/admin-CsLLbLzz.css"
+    ]
+  },
+  "resources/js/components/Dashboard/Cards/BaseCard.vue": {
+    "file": "assets/BaseCard-Cok-kP4g.js",
+    "name": "BaseCard",
+    "src": "resources/js/components/Dashboard/Cards/BaseCard.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_vendor-vue-CUF9J8lG.js",
+      "_vendor-ui-gyNJPtaX.js",
+      "_vendor-utils-lKlX8tUN.js"
+    ],
+    "css": [
+      "assets/BaseCard-ClDSh2Mf.css",
+      "assets/admin-CsLLbLzz.css"
+    ]
+  },
+  "resources/js/components/Dashboard/Cards/MetricCard.vue": {
+    "file": "assets/MetricCard-CnGu4dp0.js",
+    "name": "MetricCard",
+    "src": "resources/js/components/Dashboard/Cards/MetricCard.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_vendor-vue-CUF9J8lG.js",
+      "_vendor-ui-gyNJPtaX.js",
+      "_vendor-utils-lKlX8tUN.js"
+    ],
+    "css": [
+      "assets/MetricCard-BLgN-cFC.css",
+      "assets/admin-CsLLbLzz.css"
+    ]
+  },
+  "resources/js/components/Dashboard/Cards/WelcomeCard.vue": {
+    "file": "assets/WelcomeCard--gEIVJ-y.js",
+    "name": "WelcomeCard",
+    "src": "resources/js/components/Dashboard/Cards/WelcomeCard.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_vendor-vue-CUF9J8lG.js",
+      "_vendor-ui-gyNJPtaX.js",
+      "_vendor-utils-lKlX8tUN.js"
+    ],
+    "css": [
+      "assets/WelcomeCard-FANne6_s.css",
+      "assets/admin-CsLLbLzz.css"
     ]
   }
 }

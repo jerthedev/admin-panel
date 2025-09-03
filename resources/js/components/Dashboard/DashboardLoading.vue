@@ -222,12 +222,14 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .dashboard-loading-overlay {
   @apply fixed inset-0 z-50 flex items-center justify-center;
 }
 
 .dashboard-loading-overlay.with-overlay {
-  @apply bg-white bg-opacity-90 backdrop-blur-sm;
+  @apply bg-white/90 backdrop-blur-sm;
 }
 
 .dashboard-loading-overlay.without-overlay {
@@ -235,7 +237,7 @@ export default {
 }
 
 .dashboard-loading-overlay.dark-theme.with-overlay {
-  @apply bg-gray-900 bg-opacity-90;
+  @apply bg-gray-900/90;
 }
 
 .progress-container {

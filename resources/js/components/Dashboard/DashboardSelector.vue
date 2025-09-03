@@ -647,12 +647,14 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .dashboard-selector {
   @apply relative inline-block text-left z-20;
 }
 
 .dashboard-dropdown {
-  @apply absolute right-0 mt-2 w-96 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-30;
+  @apply absolute right-0 mt-2 w-96 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black/5 focus:outline-none z-30;
 }
 
 .dropdown-header {

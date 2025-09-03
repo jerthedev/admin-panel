@@ -39,7 +39,7 @@ export default defineConfig({
         }),
         adminPanel({
             adminPagesPath: '../../../resources/js/admin-panel/pages',
-            manifestPath: '../../../public/admin-panel-pages-manifest.json',
+            manifestPath: 'public/admin-panel-pages-manifest.json',
             hotReload: true
         }),
     ],
@@ -72,32 +72,10 @@ export default defineConfig({
                     // Vendor libraries
                     'vendor-vue': ['vue', '@inertiajs/vue3'],
                     'vendor-ui': ['@headlessui/vue', '@heroicons/vue'],
-                    'vendor-utils': ['axios', 'lodash-es'],
-
-                    // Dashboard-specific chunks
-                    'dashboard-core': [
-                        './resources/js/stores/dashboardNavigation.js',
-                        './resources/js/stores/dashboardCache.js',
-                        './resources/js/stores/dashboardPreferences.js'
-                    ],
-                    'dashboard-components': [
-                        './resources/js/Components/Dashboard/DashboardSelector.vue',
-                        './resources/js/Components/Dashboard/DashboardNavigation.vue'
-                    ],
-                    'dashboard-mobile': [
-                        './resources/js/Components/Mobile/MobileDashboardNavigation.vue',
-                        './resources/js/composables/useMobileGestures.js',
-                        './resources/js/composables/useMobileNavigation.js'
-                    ],
-                    'dashboard-performance': [
-                        './resources/js/services/LazyLoadingService.js',
-                        './resources/js/services/PerformanceMonitoringService.js',
-                        './resources/js/composables/usePerformanceOptimization.js'
-                    ]
+                    'vendor-utils': ['axios', 'lodash-es']
                 },
                 // Optimize chunk loading
-                experimentalMinChunkSize: 1000,
-                maxParallelFileOps: 5
+                experimentalMinChunkSize: 1000
             },
             // External dependencies (if using CDN)
             external: process.env.NODE_ENV === 'production' ? [] : [],

@@ -358,6 +358,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .dashboard-error {
   @apply flex flex-col items-center text-center;
 }

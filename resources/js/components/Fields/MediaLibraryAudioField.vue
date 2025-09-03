@@ -414,6 +414,8 @@ onUnmounted(cleanup)
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .media-library-audio-field {
   @apply w-full;
 }

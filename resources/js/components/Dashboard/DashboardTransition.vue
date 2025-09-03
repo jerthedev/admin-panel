@@ -438,6 +438,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .dashboard-transition-container {
   @apply relative;
 }

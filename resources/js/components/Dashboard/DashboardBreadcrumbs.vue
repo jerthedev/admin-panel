@@ -504,6 +504,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .dashboard-breadcrumbs {
   @apply bg-white border-b border-gray-200 px-6 py-3 relative;
 }
@@ -589,7 +591,7 @@ export default {
 }
 
 .quick-switcher-dropdown {
-  @apply absolute top-full right-0 mt-2 w-80 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50;
+  @apply absolute top-full right-0 mt-2 w-80 bg-white rounded-md shadow-lg ring-1 ring-black/5 z-50;
 }
 
 .dropdown-header {

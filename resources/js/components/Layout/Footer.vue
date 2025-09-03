@@ -108,6 +108,8 @@ const isDevelopment = computed(() => {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 footer {
   flex-shrink: 0;
 }

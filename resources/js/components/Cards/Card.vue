@@ -262,7 +262,7 @@ const iconClasses = computed(() => {
 
 const loadingOverlayClasses = computed(() => {
   return [
-    'absolute inset-0 bg-white bg-opacity-75 dark:bg-gray-800 dark:bg-opacity-75',
+    'absolute inset-0 bg-white/75 dark:bg-gray-800/75',
     'flex items-center justify-center z-10'
   ].join(' ')
 })

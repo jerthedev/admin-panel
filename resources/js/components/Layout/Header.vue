@@ -70,7 +70,7 @@
           <!-- Notifications dropdown -->
           <div
             v-if="showNotifications"
-            class="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+            class="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg ring-1 ring-black/5 focus:outline-none z-50"
             :class="{ 'bg-gray-800 ring-gray-700': isDarkTheme }"
           >
             <NotificationDropdown @close="showNotifications = false" />
@@ -98,7 +98,7 @@
           <!-- User dropdown -->
           <div
             v-if="showUserMenu"
-            class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+            class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black/5 focus:outline-none z-50"
             :class="{ 'bg-gray-800 ring-gray-700': isDarkTheme }"
           >
             <UserDropdown @close="showUserMenu = false" />

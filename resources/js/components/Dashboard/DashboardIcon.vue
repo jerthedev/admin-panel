@@ -233,6 +233,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .dashboard-icon-container {
   @apply inline-flex items-center justify-center flex-shrink-0;
 }

@@ -56,7 +56,7 @@
         <!-- Searchable dropdown -->
         <div
           v-if="showDropdown"
-          class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-hidden focus:outline-none sm:text-sm"
+          class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black/5 overflow-hidden focus:outline-none sm:text-sm"
           :class="{ 'bg-gray-800 ring-gray-700': isDarkTheme }"
         >
           <!-- Search input -->

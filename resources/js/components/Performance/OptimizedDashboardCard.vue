@@ -416,6 +416,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .optimized-dashboard-card {
   @apply relative bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden;
   min-height: 200px;
@@ -508,7 +510,7 @@ export default {
 
 /* Performance Overlay */
 .performance-overlay {
-  @apply absolute top-2 right-2 bg-black bg-opacity-75 text-white text-xs rounded px-2 py-1;
+  @apply absolute top-2 right-2 bg-black/75 text-white text-xs rounded px-2 py-1;
 }
 
 .performance-stats {

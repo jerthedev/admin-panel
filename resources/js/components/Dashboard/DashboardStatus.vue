@@ -208,6 +208,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .dashboard-status {
   @apply flex flex-wrap items-center gap-2;
 }

@@ -1133,6 +1133,8 @@ defineExpose({
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 /* STEP 1: Basic styling for the placeholder editor */
 [contenteditable] {
   outline: none;

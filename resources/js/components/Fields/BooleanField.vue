@@ -196,6 +196,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 /* Additional boolean field specific styles if needed */
 .boolean-field {
   /* Custom styles */

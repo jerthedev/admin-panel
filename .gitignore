@@ -85,3 +85,4 @@ bootstrap/cache/
 
 # Playwright Browser Downloads
 /ms-playwright/
+/public

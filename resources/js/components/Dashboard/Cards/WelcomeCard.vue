@@ -196,6 +196,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../../css/admin.css' reference;
+
 .welcome-card {
   @apply space-y-6;
 }

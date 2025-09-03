@@ -280,6 +280,8 @@ const route = (name, params = {}) => {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 /* Form styling */
 .admin-input {
 }

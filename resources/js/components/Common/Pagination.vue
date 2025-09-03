@@ -162,6 +162,8 @@ const pageLinks = computed(() => {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 /* Ensure proper spacing and alignment */
 nav {
 }

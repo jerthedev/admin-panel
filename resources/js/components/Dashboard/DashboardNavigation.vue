@@ -454,6 +454,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .dashboard-navigation {
   @apply flex flex-col space-y-4 p-4 bg-white border-b border-gray-200;
 }

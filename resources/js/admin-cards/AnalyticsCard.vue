@@ -239,6 +239,8 @@ defineExpose({
 </script>
 
 <style scoped>
+@import '../../css/admin.css' reference;
+
 /* Component-specific styles */
 .analytics-card {
   transition: all 0.2s ease-in-out;

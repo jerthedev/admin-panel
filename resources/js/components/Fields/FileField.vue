@@ -327,6 +327,8 @@ defineExpose({
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .file-input-wrapper {
   @apply border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer transition-colors;
 }

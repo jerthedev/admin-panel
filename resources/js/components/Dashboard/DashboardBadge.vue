@@ -221,6 +221,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .dashboard-badge {
   @apply inline-flex items-center justify-center font-medium relative;
 }

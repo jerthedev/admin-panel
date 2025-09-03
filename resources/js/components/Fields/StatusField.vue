@@ -258,6 +258,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 /* Additional status-specific styles if needed */
 .status-field {
   /* Custom status field styles */

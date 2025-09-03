@@ -196,6 +196,8 @@ const route = (name, params = {}) => {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 /* Loading spinner animation */
 @keyframes spin {
   to {

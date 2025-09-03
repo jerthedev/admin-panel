@@ -188,6 +188,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 /* Additional badge-specific styles if needed */
 .badge-field {
   /* Custom badge field styles */

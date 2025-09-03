@@ -3,7 +3,7 @@
     <!-- Mobile sidebar overlay -->
     <div
       v-if="!sidebarOpen && isMobile"
-      class="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 transition-opacity duration-300 ease-linear"
+      class="fixed inset-0 z-40 bg-gray-600/75 transition-opacity duration-300 ease-linear"
       @click="closeSidebar"
     ></div>
 

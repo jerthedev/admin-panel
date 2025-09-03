@@ -324,6 +324,8 @@ const formatDate = (date) => {
 </script>
 
 <style scoped>
+@import '../../../../resources/css/admin.css' reference;
+
 .system-dashboard {
     @apply p-6;
 }

@@ -352,6 +352,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 /* Additional key-value field specific styles if needed */
 .keyvalue-field {
   /* Custom styles */

@@ -285,6 +285,8 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 /* Additional code field specific styles if needed */
 .code-field {
   /* Custom styles */

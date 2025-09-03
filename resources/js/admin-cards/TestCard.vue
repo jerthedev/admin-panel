@@ -94,6 +94,8 @@ defineExpose({
 </script>
 
 <style scoped>
+@import '../../css/admin.css' reference;
+
 /* Component-specific styles */
 .card-loading {
   opacity: 0.6;

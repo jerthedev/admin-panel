@@ -30,12 +30,12 @@
             />
 
             <!-- Image Overlay -->
-            <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
+            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-200 flex items-center justify-center">
               <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-2">
                 <!-- View button -->
                 <button
                   type="button"
-                  class="p-2 bg-white bg-opacity-90 rounded-full text-gray-700 hover:bg-opacity-100 transition-all"
+                  class="p-2 bg-white/90 rounded-full text-gray-700 hover:bg-white/100 transition-all"
                   @click="openLightbox(image, index)"
                   title="View image"
                 >
@@ -45,7 +45,7 @@
                 <button
                   v-if="!field.downloadDisabled && image.download_url"
                   type="button"
-                  class="p-2 bg-blue-500 bg-opacity-90 rounded-full text-white hover:bg-opacity-100 transition-all"
+                  class="p-2 bg-blue-500/90 rounded-full text-white hover:bg-blue-500/100 transition-all"
                   @click="downloadImage(image)"
                   title="Download image"
                 >
@@ -55,7 +55,7 @@
                 <button
                   v-if="!readonly"
                   type="button"
-                  class="p-2 bg-red-500 bg-opacity-90 rounded-full text-white hover:bg-opacity-100 transition-all"
+                  class="p-2 bg-red-500/90 rounded-full text-white hover:bg-red-500/100 transition-all"
                   @click="removeImage(index)"
                   title="Remove image"
                 >
@@ -65,14 +65,14 @@
             </div>
 
             <!-- Image Info -->
-            <div v-if="field.showImageDimensions && image.width && image.height" class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white text-xs p-1 text-center">
+            <div v-if="field.showImageDimensions && image.width && image.height" class="absolute bottom-0 left-0 right-0 bg-black/75 text-white text-xs p-1 text-center">
               {{ image.width }} × {{ image.height }}
             </div>
 
             <!-- Drag Handle for Reordering -->
             <div
               v-if="!readonly && field.multiple && existingImages.length > 1"
-              class="absolute top-1 left-1 p-1 bg-black bg-opacity-50 rounded cursor-move opacity-0 group-hover:opacity-100 transition-opacity"
+              class="absolute top-1 left-1 p-1 bg-black/50 rounded cursor-move opacity-0 group-hover:opacity-100 transition-opacity"
               @mousedown="startDrag(index)"
             >
               <Bars3Icon class="h-3 w-3 text-white" />
@@ -151,7 +151,7 @@
     <!-- Lightbox Modal -->
     <div
       v-if="lightboxImage"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/75"
       @click="closeLightbox"
     >
       <div class="relative max-w-4xl max-h-full p-4">
@@ -163,7 +163,7 @@
         />
         <button
           type="button"
-          class="absolute top-4 right-4 p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 transition-all"
+          class="absolute top-4 right-4 p-2 bg-black/50 rounded-full text-white hover:bg-black/75 transition-all"
           @click="closeLightbox"
         >
           <XMarkIcon class="h-6 w-6" />
@@ -173,7 +173,7 @@
         <button
           v-if="existingImages.length > 1 && lightboxIndex > 0"
           type="button"
-          class="absolute left-4 top-1/2 transform -translate-y-1/2 p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 transition-all"
+          class="absolute left-4 top-1/2 transform -translate-y-1/2 p-2 bg-black/50 rounded-full text-white hover:bg-black/75 transition-all"
           @click.stop="navigateLightbox(-1)"
         >
           <ChevronLeftIcon class="h-6 w-6" />
@@ -181,7 +181,7 @@
         <button
           v-if="existingImages.length > 1 && lightboxIndex < existingImages.length - 1"
           type="button"
-          class="absolute right-4 top-1/2 transform -translate-y-1/2 p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-75 transition-all"
+          class="absolute right-4 top-1/2 transform -translate-y-1/2 p-2 bg-black/50 rounded-full text-white hover:bg-black/75 transition-all"
           @click.stop="navigateLightbox(1)"
         >
           <ChevronRightIcon class="h-6 w-6" />
@@ -529,6 +529,8 @@ const getGridStyles = () => {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .upload-area {
   @apply border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer transition-colors;
 }

@@ -514,8 +514,10 @@ export default {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .quick-switcher-overlay {
-  @apply fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center pt-20 z-50;
+  @apply fixed inset-0 bg-black/50 flex items-start justify-center pt-20 z-50;
 }
 
 .quick-switcher-modal {

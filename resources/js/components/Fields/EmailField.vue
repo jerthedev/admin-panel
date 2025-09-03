@@ -179,6 +179,8 @@ defineExpose({
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 /* Ensure proper spacing for icon */
 .pl-10 {
   padding-left: 2.5rem;

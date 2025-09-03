@@ -249,6 +249,8 @@ const getBadgeClasses = (badgeType) => {
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 /* Smooth transitions for hover effects */
 a, button {
   transition: all 0.15s ease-in-out;

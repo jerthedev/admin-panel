@@ -168,6 +168,8 @@ defineExpose({
 </script>
 
 <style scoped>
+@import '../../../css/admin.css' reference;
+
 .stack-field {
   @apply w-full;
 }
